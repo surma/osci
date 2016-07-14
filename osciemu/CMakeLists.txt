@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.5)
-project (libosciemu)
+project (osciemu)
 
 set (LIBOSCIEMU_VERSION_MAJOR 0)
 set (LIBOSCIEMU_VERSION_MINOR 0)
@@ -13,4 +13,8 @@ configure_file (
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${PROJECT_BINARY_DIR}/include")
  
-add_library(osciemu src/osciemu/vm.cpp)
+set (SRCS
+  ${PROJECT_SOURCE_DIR}/src/osciemu/vm.cpp
+)
+
+add_library(${PROJECT_NAME} STATIC ${SRCS})

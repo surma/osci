@@ -3,4 +3,8 @@
 
 #include "osciemu/config.h"
 
+namespace osciemu {
+  std::string GetSomeString();
+}
+
 #endif // _OSCIEMU_H_
