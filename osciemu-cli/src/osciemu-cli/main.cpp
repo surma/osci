@@ -4,7 +4,6 @@
 #include "osciemu/osciemu.h"
 
 int main() {
-  auto s = osciemu::GetSomeString();
-  std::cout << s;
+  std::cout << "Not implemented";
   return 0;
 }

@@ -1,38 +1,26 @@
-#include <string>
-#include "osciemu/osciemu.h"
+#include <cstdint>
+#include "osciemu/memory.h"
 
 namespace osciemu {
-  class MemoryInterface {
-    public:
-      virtual ~MemoryInterface() {}
-
-      virtual uint8 GetCell(uint32 addr) = 0;
-      virtual void SetCell(uint32 addr, uint8 value) = 0;
-      virtual uint32 GetSize() = 0;
+  ArrayMemory::ArrayMemory(uint32_t size) {
+    memory_ = new uint8_t[size];
+    size_ = size;
   }
 
-  class ArrayMemory : MemoryInterface {
-    public:
-      ArrayMemory(size uint32) {
-        memory_ = new[] uint8(size);
-        size_ = size;
-      }
+  ArrayMemory::~ArrayMemory() {
+    delete[] memory_;
+  }
 
-      uint32 GetSize() {
-        return size_;
-      }
+  uint32_t ArrayMemory::GetSize() {
+    return size_;
+  }
 
-      uint8 GetCell(uint32 addr) {
-        return memory_[addr];
-      }
+  uint8_t ArrayMemory::GetCell(uint32_t addr) {
+    return memory_[addr];
+  }
 
-      void SetCell(uint32 addr, uint8 value) {
-        memory_[addr] = value;
-      }
-
-    private:
-      uint8[] memory_;
-      uint32 size_;
+  void ArrayMemory::SetCell(uint32_t addr, uint8_t value) {
+    memory_[addr] = value;
   }
 }
 
