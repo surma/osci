@@ -49,7 +49,7 @@ namespace osciemu {
     if (IsMapped(start_addr)) {
       throw new std::range_error("start_addr is a already mapped address");
     }
-    maps_.insert(MappedMemoryEntry(start_addr, m));
+    maps_.insert(Entry(start_addr, m));
     size_ = RecalculateSize();
   }
 
@@ -83,13 +83,13 @@ namespace osciemu {
     return global_max_addr;
   }
 
-  MappedMemoryEntry MappedMemory::MemoryForAddress(uint32_t addr) const {
+  MappedMemory::Entry MappedMemory::MemoryForAddress(uint32_t addr) const {
     uint32_t map_start_addr, map_end_addr;
     for (auto map_entry : maps_) {
       map_start_addr = map_entry.first;
       map_end_addr = map_entry.first + map_entry.second.GetSize();
       if (map_start_addr <= addr && addr <   map_end_addr) {
-        return MappedMemoryEntry(map_entry);
+        return MappedMemory::Entry(map_entry);
       }
     }
     throw std::out_of_range("No mapping at addr");
