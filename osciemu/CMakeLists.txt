@@ -1,13 +1,14 @@
 cmake_minimum_required (VERSION 3.5)
 project (osciemu)
 
-set (LIBOSCIEMU_VERSION_MAJOR 0)
-set (LIBOSCIEMU_VERSION_MINOR 0)
-set (LIBOSCIEMU_VERSION_PATCH 1)
+set (VERSION_MAJOR 0)
+set (VERSION_MINOR 0)
+set (VERSION_PATCH 1)
 
 SET(CMAKE_BUILD_TYPE Release)
 
 option(test "Build tests" NO)
+option(documentation "Build documentation" NO)
 
 configure_file (
   "${PROJECT_SOURCE_DIR}/include/osciemu/config.h.in"
@@ -42,4 +43,22 @@ if (test)
   add_executable(unittests ${TEST_SRCS} ${SRCS})
   target_link_libraries(unittests gtest gtest_main)
   add_test(unittests unittests)
+endif()
+
+if (documentation)
+  find_package(Doxygen)
+  if(NOT DOXYGEN_FOUND)
+    message(FATAL_ERROR "Doxygen is needed to build the documentation.")
+  endif()
+
+  configure_file (
+    "${PROJECT_SOURCE_DIR}/Doxyfile.in"
+    "${PROJECT_BINARY_DIR}/Doxyfile"
+  )
+
+  add_custom_target(doc
+    ALL
+    COMMAND ${DOXYGEN_EXECUTABLE} "${PROJECT_BINARY_DIR}/Doxyfile"
+    COMMENT "Generating API documentation with Doxygen"
+    VERBATIM)
 endif()
