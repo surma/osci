@@ -46,8 +46,17 @@ namespace osciemu {
   }
 
   void MappedMemory::Map(uint32_t start_addr, MemoryInterface& m) {
-    if (IsMapped(start_addr)) {
-      throw new std::range_error("start_addr is a already mapped address");
+    uint32_t end_addr = start_addr + m.GetSize();
+    for (auto map_entry : maps_) {
+      uint32_t local_start_addr = map_entry.first;
+      uint32_t local_end_addr = local_start_addr + map_entry.second.GetSize();
+      if (
+        (start_addr > local_start_addr && start_addr < local_end_addr)
+        ||
+        (end_addr > local_start_addr && end_addr < local_end_addr)
+      ) {
+        throw std::range_error("Mapping overlaps with another mapping");
+      }
     }
     maps_.insert(Entry(start_addr, m));
     size_ = RecalculateSize();
@@ -56,7 +65,7 @@ namespace osciemu {
   void MappedMemory::Unmap(uint32_t start_addr) {
     auto it = maps_.find(start_addr);
     if (it == maps_.end()) {
-      throw new std::range_error("No mapping starts at start_addr");
+      throw std::range_error("No mapping starts at start_addr");
     }
     maps_.erase(it);
     size_ = RecalculateSize();

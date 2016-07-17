@@ -1,3 +1,5 @@
+#include <stdexcept>
+
 #include "gtest/gtest.h"
 #include "osciemu/osciemu.h"
 
@@ -82,4 +84,50 @@ TEST_F(MappedMemoryTest, DistributesReadsAndWrites) {
   for(int i = 0; i < 16; i++) {
     ASSERT_EQ(m2.GetCell(i), 128+16+i);
   }
+}
+
+TEST_F(MappedMemoryTest, CanTellIfACellIsMapped) {
+  osciemu::ArrayMemory m1(8);
+
+  ASSERT_FALSE(mapped_memory.IsMapped(0));
+  ASSERT_FALSE(mapped_memory.IsMapped(8));
+  ASSERT_FALSE(mapped_memory.IsMapped(15));
+  ASSERT_FALSE(mapped_memory.IsMapped(16));
+
+  mapped_memory.Map(8, m1);
+
+  ASSERT_FALSE(mapped_memory.IsMapped(0));
+  ASSERT_TRUE(mapped_memory.IsMapped(8));
+  ASSERT_TRUE(mapped_memory.IsMapped(15));
+  ASSERT_FALSE(mapped_memory.IsMapped(16));
+}
+
+TEST_F(MappedMemoryTest, ThrowsOnInvalidMap_A) {
+  osciemu::ArrayMemory m1(16), m2(16);
+
+  try {
+    // m1[15] =:= m2[0]
+    mapped_memory.Map(0, m1);
+    mapped_memory.Map(15, m2);
+  }
+  catch(std::range_error e) {
+    SUCCEED();
+    return;
+  }
+  FAIL();
+}
+
+TEST_F(MappedMemoryTest, ThrowsOnInvalidMap_B) {
+  osciemu::ArrayMemory m1(16), m2(16);
+
+  try {
+    // m1[0] =:= m2[15]
+    mapped_memory.Map(15, m1);
+    mapped_memory.Map(0, m2);
+  }
+  catch(std::range_error e) {
+    SUCCEED();
+    return;
+  }
+  FAIL();
 }
