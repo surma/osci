@@ -131,3 +131,12 @@ TEST_F(MappedMemoryTest, ThrowsOnInvalidMap_B) {
   }
   FAIL();
 }
+
+TEST(ReadWriteMemory, CombinationIsIdempotent) {
+  osciemu::ArrayMemory m(8);
+  uint32_t v1 = 0x55AA9966;
+
+  osciemu::WriteIntToMemory(m, 0, v1);
+  auto v2 = osciemu::ReadIntFromMemory(m, 0);
+  ASSERT_EQ(v1, v2);
+}

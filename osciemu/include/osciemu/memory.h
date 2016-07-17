@@ -4,9 +4,6 @@
 #include <cstdint>
 #include <map>
 
-#include "osciemu/config.h"
-#include "osciemu/memory.h"
-
 namespace osciemu {
   /**
    * `MemoryInterface` is the common interface for a
@@ -120,6 +117,24 @@ namespace osciemu {
       uint32_t RecalculateSize() const;
       Entry MemoryForAddress(uint32_t addr) const;
   };
+
+  /**
+   * `WriteIntToMemory` writes a `uint32_t` to memory at the given address in little-endian.
+   * @param m Memory to write to
+   * @param addr Address to write `value` at
+   * @Param value Value to write
+   * @throws std::out_of_range If write is invalid
+   */
+  void WriteIntToMemory(MemoryInterface& m, uint32_t addr, uint32_t value);
+
+  /**
+   * `ReadIntFromMemory` reads a `uint32_t` from memory at the given address in little-endian.
+   * @param m Memory to read from
+   * @param addr Address to read from
+   * @returns Value read at address
+   * @throws std::out_of_range If read is invalid
+   */
+  uint32_t ReadIntFromMemory(MemoryInterface& m, uint32_t addr);
 }
 
 #endif // _MEMORY_H
