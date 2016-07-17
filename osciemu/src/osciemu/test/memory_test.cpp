@@ -12,9 +12,6 @@ const int TEST_MEMORY_SIZE = 512;
 class ArrayMemoryTest : public ::testing::Test {
   protected:
     ArrayMemoryTest() : memory(TEST_MEMORY_SIZE) {}
-    virtual void SetUp() {}
-
-    virtual void TearDown() {}
 
     osciemu::ArrayMemory memory;
 };

@@ -20,14 +20,17 @@ include_directories("${PROJECT_BINARY_DIR}/include")
 
 set (SRCS
   ${PROJECT_SOURCE_DIR}/src/osciemu/memory.cpp
+  ${PROJECT_SOURCE_DIR}/src/osciemu/instruction.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC ${SRCS})
-target_compile_features(${PROJECT_NAME} PUBLIC
+set (CXX_FEATURES
   cxx_auto_type
   cxx_decltype_auto
   cxx_range_for
+  cxx_delegating_constructors
 )
+target_compile_features(${PROJECT_NAME} PUBLIC ${CXX_FEATURES})
 
 if (test)
   SET(CMAKE_BUILD_TYPE Debug)
@@ -38,9 +41,12 @@ if (test)
   set (TEST_SRCS
     "${PROJECT_SOURCE_DIR}/src/osciemu/test/main_test.cpp"
     "${PROJECT_SOURCE_DIR}/src/osciemu/test/memory_test.cpp"
+    "${PROJECT_SOURCE_DIR}/src/osciemu/test/instruction_test.cpp"
   )
 
   add_executable(unittests ${TEST_SRCS} ${SRCS})
+  target_compile_features(unittests PUBLIC ${CXX_FEATURES})
+
   target_link_libraries(unittests gtest gtest_main)
   add_test(unittests unittests)
 endif()
