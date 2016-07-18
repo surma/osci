@@ -125,7 +125,7 @@ namespace osciemu {
    * @Param value Value to write
    * @throws std::out_of_range If write is invalid
    */
-  void WriteIntToMemory(MemoryInterface& m, uint32_t addr, uint32_t value);
+  void WriteIntToMemory(MemoryInterface& m, uint32_t addr, int32_t value);
 
   /**
    * `ReadIntFromMemory` reads a `uint32_t` from memory at the given address in little-endian.
@@ -134,7 +134,7 @@ namespace osciemu {
    * @returns Value read at address
    * @throws std::out_of_range If read is invalid
    */
-  uint32_t ReadIntFromMemory(MemoryInterface& m, uint32_t addr);
+  int32_t ReadIntFromMemory(MemoryInterface& m, uint32_t addr);
 }
 
 #endif // _MEMORY_H

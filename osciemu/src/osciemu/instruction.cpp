@@ -26,13 +26,13 @@ namespace osciemu {
 
   void Instruction::Execute(MemoryInterface& m, uint32_t& ip) {
     auto inst = Instruction::ReadFromMemory(m, ip);
-    auto a = m.GetCell(inst.operand_a);
-    auto b = m.GetCell(inst.operand_b);
-    m.SetCell(inst.target, a-b);
+    auto a = ReadIntFromMemory(m, inst.operand_a);
+    auto b = ReadIntFromMemory(m, inst.operand_b);
+    WriteIntToMemory(m, inst.target, a-b);
     if (a-b <= 0) {
       ip = inst.jmp;
     } else {
-      ip += 4;
+      ip += Size;
     }
   }
 

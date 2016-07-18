@@ -104,15 +104,15 @@ namespace osciemu {
     throw std::out_of_range("No mapping at addr");
   }
 
-  void WriteIntToMemory(MemoryInterface& m, uint32_t addr, uint32_t value) {
+  void WriteIntToMemory(MemoryInterface& m, uint32_t addr, int32_t value) {
     m.SetCell(addr+0, (value>> 0)&0xFF);
     m.SetCell(addr+1, (value>> 8)&0xFF);
     m.SetCell(addr+2, (value>>16)&0xFF);
     m.SetCell(addr+3, (value>>24)&0xFF);
   }
 
-  uint32_t ReadIntFromMemory(MemoryInterface& m, uint32_t addr) {
-    uint32_t x = 0;
+  int32_t ReadIntFromMemory(MemoryInterface& m, uint32_t addr) {
+    int32_t x = 0;
     x = (x<<8) | m.GetCell(addr+3);
     x = (x<<8) | m.GetCell(addr+2);
     x = (x<<8) | m.GetCell(addr+1);

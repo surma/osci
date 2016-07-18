@@ -12,3 +12,42 @@ TEST(InstructionTest, ReadWriteCombinationIsIdempotent) {
   auto i2 = osciemu::Instruction::ReadFromMemory(m, 0);
   ASSERT_EQ(i1, i2);
 }
+
+TEST(InstructionTest, CanExecuteInstruction) {
+  auto m = osciemu::ArrayMemory(32);
+  uint32_t ip = 0;
+
+  osciemu::Instruction(16, 20, 24, 0).WriteToMemory(m, 0);
+  osciemu::WriteIntToMemory(m, 16, 1234);
+  osciemu::WriteIntToMemory(m, 20, 123);
+
+  osciemu::Instruction::Execute(m, ip);
+
+  ASSERT_EQ(ip, 1*osciemu::Instruction::Size);
+  ASSERT_EQ(osciemu::ReadIntFromMemory(m, 24), 1111);
+}
+
+TEST(InstructionTest, CanExecuteMultipleInstructions) {
+  auto m = osciemu::ArrayMemory(512);
+  uint32_t ip = 0;
+
+  osciemu::WriteIntToMemory(m, 116, 1);
+  osciemu::WriteIntToMemory(m, 120, 2);
+  osciemu::WriteIntToMemory(m, 124, 3);
+
+  osciemu::Instruction(116, 120, 128, 12*osciemu::Instruction::Size)
+    .WriteToMemory(m,  0*osciemu::Instruction::Size);
+  osciemu::Instruction(124, 128, 128,  0)
+    .WriteToMemory(m, 12*osciemu::Instruction::Size);
+  osciemu::Instruction(128, 116, 128,  0)
+    .WriteToMemory(m, 13*osciemu::Instruction::Size);
+
+  osciemu::Instruction::Execute(m, ip);
+  ASSERT_EQ(ip, 12*osciemu::Instruction::Size);
+  osciemu::Instruction::Execute(m, ip);
+  ASSERT_EQ(ip, 13*osciemu::Instruction::Size);
+  osciemu::Instruction::Execute(m, ip);
+  ASSERT_EQ(ip, 14*osciemu::Instruction::Size);
+
+  ASSERT_EQ(osciemu::ReadIntFromMemory(m, 128), 3);
+}

@@ -68,6 +68,11 @@ namespace osciemu {
 
       friend bool operator==(const Instruction& lhs, const Instruction& rhs);
       friend bool operator!=(const Instruction& lhs, const Instruction& rhs);
+
+      /**
+       * `Size` is the size of a marshalled instruction.
+       */
+      static const uint32_t Size = 4*4;
   };
 }
 
