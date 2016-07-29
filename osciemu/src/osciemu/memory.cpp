@@ -1,15 +1,14 @@
 #include <cstdint>
 #include <stdexcept>
+#include <memory>
 #include "osciemu/memory.h"
 
 namespace osciemu {
-  ArrayMemory::ArrayMemory(uint32_t size) {
-    memory_ = new uint8_t[size];
-    size_ = size;
+  ArrayMemory::ArrayMemory(uint32_t size)
+    : memory_(new uint8_t[size]), size_(size) {
   }
 
   ArrayMemory::~ArrayMemory() {
-    delete[] memory_;
   }
 
   uint32_t ArrayMemory::GetSize() const {
@@ -17,11 +16,11 @@ namespace osciemu {
   }
 
   uint8_t ArrayMemory::GetCell(uint32_t addr) const {
-    return memory_[addr];
+    return memory_.get()[addr];
   }
 
   void ArrayMemory::SetCell(uint32_t addr, uint8_t value) {
-    memory_[addr] = value;
+    memory_.get()[addr] = value;
   }
 
   MappedMemory::MappedMemory()

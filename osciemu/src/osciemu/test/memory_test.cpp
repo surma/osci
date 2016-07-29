@@ -29,6 +29,14 @@ TEST_F(ArrayMemoryTest, StoresData) {
   ASSERT_EQ(memory.GetCell(max_addr), 9);
 }
 
+TEST_F(ArrayMemoryTest, HandlesCopying) {
+  osciemu::ArrayMemory memory2;
+  memory.SetCell(TEST_MEMORY_SIZE-1, 9);
+
+  memory2 = osciemu::ArrayMemory(memory);
+}
+
+
 /**
  * MappedMemory
  */

@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <map>
+#include <memory>
 
 namespace osciemu {
   /**
@@ -61,7 +62,7 @@ namespace osciemu {
       void SetCell(uint32_t addr, uint8_t value);
 
     private:
-      uint8_t *memory_;
+      std::shared_ptr<uint8_t> memory_;
       uint32_t size_;
   };
 
