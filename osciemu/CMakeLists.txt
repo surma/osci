@@ -21,6 +21,7 @@ include_directories("${PROJECT_BINARY_DIR}/include")
 set (SRCS
   ${PROJECT_SOURCE_DIR}/src/osciemu/memory.cpp
   ${PROJECT_SOURCE_DIR}/src/osciemu/instruction.cpp
+  ${PROJECT_SOURCE_DIR}/src/osciemu/emulator.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC ${SRCS})
@@ -42,6 +43,7 @@ if (test)
     "${PROJECT_SOURCE_DIR}/src/osciemu/test/main_test.cpp"
     "${PROJECT_SOURCE_DIR}/src/osciemu/test/memory_test.cpp"
     "${PROJECT_SOURCE_DIR}/src/osciemu/test/instruction_test.cpp"
+    "${PROJECT_SOURCE_DIR}/src/osciemu/test/emulator_test.cpp"
   )
 
   add_executable(unittests ${TEST_SRCS} ${SRCS})
