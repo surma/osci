@@ -120,6 +120,32 @@ namespace osciemu {
   };
 
   /**
+   * `ZeroMemory` wraps a MemoryInterface and catches all read/write errors.
+   * Reads will return 0.
+   */
+  class ZeroMemory : public MemoryInterface {
+    public:
+      ZeroMemory(MemoryInterface& m);
+      ~ZeroMemory();
+
+      /**
+       * @see MemoryInterface::GetSize
+       */
+      uint32_t GetSize() const;
+      /**
+       * @see MemoryInterface::GetCell
+       */
+      uint8_t GetCell(uint32_t addr) const;
+      /**
+       * @see MemoryInterface::SetCell
+       */
+      void SetCell(uint32_t addr, uint8_t value);
+
+    private:
+      MemoryInterface& memory_;
+  };
+
+  /**
    * `WriteIntToMemory` writes a `uint32_t` to memory at the given address in little-endian.
    * @param m Memory to write to
    * @param addr Address to write `value` at
@@ -137,5 +163,4 @@ namespace osciemu {
    */
   int32_t ReadIntFromMemory(MemoryInterface& m, uint32_t addr);
 }
-
 #endif // _MEMORY_H

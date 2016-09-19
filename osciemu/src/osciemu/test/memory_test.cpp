@@ -145,3 +145,38 @@ TEST(ReadWriteMemory, CombinationIsIdempotent) {
   auto v2 = osciemu::ReadIntFromMemory(m, 0);
   ASSERT_EQ(v1, v2);
 }
+
+/**
+ * ZeroMemory
+ */
+
+class ZeroTest : public ::testing::Test {
+  protected:
+    ZeroTest()
+      : mainMemory(TEST_MEMORY_SIZE), memory(mainMemory) {}
+
+    osciemu::ZeroMemory memory;
+    osciemu::ArrayMemory mainMemory;
+};
+
+TEST_F(ZeroTest, ReportsCorrectSize) {
+  ASSERT_EQ(memory.GetSize(), mainMemory.GetSize());
+}
+
+TEST_F(ZeroTest, WritesToMemory) {
+  memory.SetCell(0, 1);
+  ASSERT_EQ(mainMemory.GetCell(0), 1);
+}
+
+TEST_F(ZeroTest, ReadsFromMemory) {
+  mainMemory.SetCell(0, 1);
+  ASSERT_EQ(memory.GetCell(0), 1);
+}
+
+TEST_F(ZeroTest, CatchesOutsideWrites) {
+  memory.SetCell(TEST_MEMORY_SIZE, 1);
+}
+
+TEST_F(ZeroTest, CatchesOutsideReads) {
+  ASSERT_EQ(memory.GetCell(TEST_MEMORY_SIZE), 0);
+}

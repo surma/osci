@@ -16,10 +16,16 @@ namespace osciemu {
   }
 
   uint8_t ArrayMemory::GetCell(uint32_t addr) const {
+    if(addr >= size_) {
+      throw std::out_of_range("Address out of range");
+    }
     return memory_.get()[addr];
   }
 
   void ArrayMemory::SetCell(uint32_t addr, uint8_t value) {
+    if(addr >= size_) {
+      throw std::out_of_range("Address out of range");
+    }
     memory_.get()[addr] = value;
   }
 
@@ -101,6 +107,32 @@ namespace osciemu {
       }
     }
     throw std::out_of_range("No mapping at addr");
+  }
+
+  ZeroMemory::ZeroMemory(MemoryInterface& m)
+    : memory_(m) {
+  }
+
+  ZeroMemory::~ZeroMemory() {
+  }
+
+  uint32_t ZeroMemory::GetSize() const {
+    return memory_.GetSize();
+  }
+
+  uint8_t ZeroMemory::GetCell(uint32_t addr) const {
+    try {
+      return memory_.GetCell(addr);
+    } catch(std::out_of_range e) {
+      return 0;
+    }
+  }
+
+  void ZeroMemory::SetCell(uint32_t addr, uint8_t value) {
+    try {
+      memory_.SetCell(addr, value);
+    } catch(std::out_of_range e) {
+    }
   }
 
   void WriteIntToMemory(MemoryInterface& m, uint32_t addr, int32_t value) {
