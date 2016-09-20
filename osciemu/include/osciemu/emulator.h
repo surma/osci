@@ -47,7 +47,7 @@ namespace osciemu {
    *
    * ```
    * +-----------------------------------+---+
-   * |    |    |    |    |    |    |    | bD | Byte 0
+   * |    |    |    |    |    |    | bD | H  | Byte 0
    * +---------------------------------------+
    * |                 Unused                |
    * +---------------------------------------+
@@ -58,6 +58,7 @@ namespace osciemu {
    * ```
    *
    * * biosDone (bD): Unmaps the BIOS from the address space
+   * * halt (H): Halts the CPU
    *
    */
   class Emulator : public MemoryInterface {
@@ -93,6 +94,10 @@ namespace osciemu {
        * @param state true if the BIOS should be mapped
        */
       void SetBiosMap(bool newState);
+      /**
+       * `IsHalted` checks if the halted bit (H) is set.
+       */
+      bool IsHalted() const;
 
       static const uint32_t kBiosBoundary = 1<<31;
       static const uint32_t kMaxAddress = 0xFFFFFFFF;
@@ -107,15 +112,13 @@ namespace osciemu {
 
 
     private:
-      uint8_t FlagRead(uint32_t addr) const;
-      void FlagWrite(uint32_t addr, uint8_t value);
+      void ProcessFlagChanges();
+      inline uint32_t GetFlagByteAddress(uint8_t flag, uint8_t byte) const;
 
       ZeroMemory memory_;
       MappedMemory mappedMemory_;
       MemoryInterface& biosMemory_;
       ArrayMemory controlMemory_;
-
-      bool biosDoneFlag_;
   };
 }
 

@@ -9,13 +9,12 @@ namespace osciemu {
     : ip_(kBiosBoundary),
       mappedMemory_(),
       biosMemory_(bios),
-      biosDoneFlag_(false),
       controlMemory_(kMaxAddress - kFlagBoundary),
       memory_(mappedMemory_)
     {
       mappedMemory_.Map(0, main);
       mappedMemory_.Map(kBiosBoundary, bios);
-      mappedMemory_.Map(kFlagBoundary, controlMemory_);
+      mappedMemory_.Map(kControlBoundary, controlMemory_);
     }
 
   Emulator::~Emulator() {
@@ -31,49 +30,38 @@ namespace osciemu {
   }
 
   uint8_t Emulator::GetCell(uint32_t addr) const {
-    if(addr >= kFlagBoundary && addr < kIvtBoundary) {
-      return FlagRead(addr);
-    } else {
-      return memory_.GetCell(addr);
-    }
+    return memory_.GetCell(addr);
   }
 
   void Emulator::SetCell(uint32_t addr, uint8_t value) {
+    memory_.SetCell(addr, value);
     if(addr >= kFlagBoundary && addr < kIvtBoundary) {
-      FlagWrite(addr, value);
-    } else {
-      memory_.SetCell(addr, value);
+      ProcessFlagChanges();
     }
   }
 
-  uint8_t Emulator::FlagRead(uint32_t addr) const {
-    switch(addr - kFlagBoundary) {
-      case 0:
-        return biosDoneFlag_; // lol
-      default:
-        throw std::range_error("Invalid flag read");
-    }
+  inline uint32_t Emulator::GetFlagByteAddress(uint8_t flag, uint8_t byte) const {
+    return kFlagBoundary + flag*Instruction::Word + byte;
   }
 
-  void Emulator::FlagWrite(uint32_t addr, uint8_t value) {
-    switch(addr - kFlagBoundary) {
-      case 0:
-        return SetBiosDoneFlag((value & 1) == 1);
-      default:
-        throw std::range_error("Invalid flag write");
-    }
+  void Emulator::ProcessFlagChanges() {
+    const auto flag = GetCell(GetFlagByteAddress(0, 0));
+    // *un*map the BIOS when bD is true
+    SetBiosMap(((flag >> 1) & 1) == 0);
   }
 
-  void Emulator::SetBiosDoneFlag(bool state) {
-    if(state == biosDoneFlag_) {
-      return;
-    }
+  bool Emulator::IsHalted() const {
+    const auto flag = GetCell(GetFlagByteAddress(0, 0));
+    return ((flag >> 0) & 1) == 1;
+  }
 
-    if(state) {
-      mappedMemory_.Unmap(kBiosBoundary);
-    } else {
+  void Emulator::SetBiosMap(bool newState) {
+    const auto isMapped = mappedMemory_.IsMapped(kBiosBoundary);
+    if(newState && !isMapped) {
       mappedMemory_.Map(kBiosBoundary, biosMemory_);
     }
-    biosDoneFlag_ = state;
+    if(!newState && isMapped) {
+      mappedMemory_.Unmap(kBiosBoundary);
+    }
   }
 }

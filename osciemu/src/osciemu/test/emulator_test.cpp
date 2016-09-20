@@ -31,7 +31,7 @@ TEST_F(EmulatorTest, CanUnmapBios) {
   biosMemory.SetCell(0, 1);
 
   ASSERT_EQ(emulator.GetCell(osciemu::Emulator::kBiosBoundary), 1);
-  emulator.SetCell(osciemu::Emulator::kFlagBoundary, 1);
+  emulator.SetCell(osciemu::Emulator::kFlagBoundary, 1<<1);
   ASSERT_EQ(emulator.GetCell(osciemu::Emulator::kBiosBoundary), 0);
   emulator.SetCell(osciemu::Emulator::kFlagBoundary, 0);
   ASSERT_EQ(emulator.GetCell(osciemu::Emulator::kBiosBoundary), 1);
@@ -48,4 +48,13 @@ TEST_F(EmulatorTest, ExecutesInstructions) {
   emulator.Step();
   ASSERT_EQ(osciemu::ReadIntFromMemory(emulator, 8), 12-128);
   ASSERT_EQ(emulator.ip_, 128);
+}
+
+TEST_F(EmulatorTest, CanHalt) {
+  osciemu::Instruction(0, 4, osciemu::Emulator::kFlagBoundary, 0).WriteToMemory(biosMemory, 0);
+  osciemu::WriteIntToMemory(emulator, 0, 0xFFFFFFFF);
+  osciemu::WriteIntToMemory(emulator, 4, 0);
+  ASSERT_EQ(emulator.IsHalted(), false);
+  emulator.Step();
+  ASSERT_EQ(emulator.IsHalted(), true);
 }
