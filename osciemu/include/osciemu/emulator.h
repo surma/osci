@@ -4,14 +4,15 @@
 #include "osciemu/memory.h"
 #include "osciemu/instruction.h"
 
+#define CEIL(x, y) ((x) + (y) - 1)/(y)
+
 namespace osciemu {
   /**
    * `Emulator` is a class wiring up memory and instruction interpreter
    * to behave like an osci CPU.
    *
-   * At the start, the bios memory is mapped to the address space
-   * at 2^31 and the instruction pointer (IP) is set to 2^31. By setting
-   * the biosDone (bD) flag to 1, the bios will be unmapped.
+   * At the start, the BIOS memory is mapped to the address space
+   * at 2^31 and the instruction pointer (IP) is set to 2^31.
    *
    * The end of the virtual memory is an area of mapped memory for
    * control flags, peripherals and interrupts.
@@ -36,10 +37,11 @@ namespace osciemu {
    * +---------------------------------------+ kMaxAddress
    * ```
    *
-   * A word is 4 byte. osci CPU always has 2^32 bytes of
-   * virtual memory. Not all the memory is necessarily backed
-   * by physical memory. Reads from purely virtual memory yield
-   * 0. Writes to purely virtual memory are ignored.
+   * A word is 4 byte in little endian. osci CPU always has
+   * 2^32 bytes of virtual memory.
+   * Not all the memory is necessarily backed by physical
+   * memory. Reads from purely virtual memory yiel 0. Writes
+   * to purely virtual memory are ignored.
    *
    * Flags Word 0:
    *
@@ -54,6 +56,9 @@ namespace osciemu {
    * |                 Unused                | Byte 3
    * +---------------------------------------+
    * ```
+   *
+   * * biosDone (bD): Unmaps the BIOS from the address space
+   *
    */
   class Emulator : public MemoryInterface {
     public:
@@ -84,19 +89,20 @@ namespace osciemu {
       void SetCell(uint32_t addr, uint8_t value);
 
       /**
-       * `SetBiosDoneFlag` sets the bD flag to `state`.
-       * @param state State to set the bD flag to
+       * `SetBiosMap` maps or unmaps the BIOS
+       * @param state true if the BIOS should be mapped
        */
-      void SetBiosDoneFlag(bool state);
+      void SetBiosMap(bool newState);
 
       static const uint32_t kBiosBoundary = 1<<31;
       static const uint32_t kMaxAddress = 0xFFFFFFFF;
       static const uint8_t kNumRegisters = 4;
       static const uint8_t kNumIvts = 1;
       static const uint8_t kNumFlags = 1;
-      static const uint32_t kRegisterBoundary = kMaxAddress - kNumRegisters*Instruction::Size;
-      static const uint32_t kIvtBoundary = kMaxAddress - (kNumRegisters + kNumIvts)*Instruction::Size;
-      static const uint32_t kFlagBoundary = kIvtBoundary - (kNumFlags + 32 - 1)/32; // = kIvtBoundary - ceil(kNumFlags / 32);
+      static const uint32_t kRegisterBoundary = kMaxAddress - kNumRegisters*Instruction::Word;
+      static const uint32_t kIvtBoundary = kRegisterBoundary - kNumIvts*Instruction::Word;
+      static const uint32_t kFlagBoundary = kIvtBoundary - CEIL(kNumFlags, Instruction::Word*8)*Instruction::Word;
+      static const uint32_t kControlBoundary = kFlagBoundary;
       uint32_t ip_;
 
 

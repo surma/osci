@@ -27,17 +27,7 @@ TEST_F(EmulatorTest, CanWriteToUnmappedMemory) {
   ASSERT_EQ(emulator.GetCell(TEST_MEMORY_SIZE), 0);
 }
 
-TEST_F(EmulatorTest, CanUnmapBiosViaApi) {
-  biosMemory.SetCell(0, 1);
-
-  ASSERT_EQ(emulator.GetCell(osciemu::Emulator::kBiosBoundary), 1);
-  emulator.SetBiosDoneFlag(true);
-  ASSERT_EQ(emulator.GetCell(osciemu::Emulator::kBiosBoundary), 0);
-  emulator.SetBiosDoneFlag(false);
-  ASSERT_EQ(emulator.GetCell(osciemu::Emulator::kBiosBoundary), 1);
-}
-
-TEST_F(EmulatorTest, CanUnmapBiosViaMemoryWrite) {
+TEST_F(EmulatorTest, CanUnmapBios) {
   biosMemory.SetCell(0, 1);
 
   ASSERT_EQ(emulator.GetCell(osciemu::Emulator::kBiosBoundary), 1);

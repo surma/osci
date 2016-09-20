@@ -70,9 +70,13 @@ namespace osciemu {
       friend bool operator!=(const Instruction& lhs, const Instruction& rhs);
 
       /**
+       * `Word` is the length of a CPU word
+       */
+      static const uint32_t Word = 4;
+      /**
        * `Size` is the size of a marshalled instruction.
        */
-      static const uint32_t Size = 4*4;
+      static const uint32_t Size = 4*Word;
   };
 }
 

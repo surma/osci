@@ -18,13 +18,13 @@ TEST(InstructionTest, CanExecuteInstruction) {
   uint32_t ip = 0;
 
   osciemu::Instruction(16, 20, 24, 0).WriteToMemory(m, 0);
-  osciemu::WriteIntToMemory(m, 16, 1234);
-  osciemu::WriteIntToMemory(m, 20, 123);
+  osciemu::WriteIntToMemory(m, 16, 0x31323334);
+  osciemu::WriteIntToMemory(m, 20, 0x01020304);
 
   osciemu::Instruction::Execute(m, ip);
 
   ASSERT_EQ(ip, 1*osciemu::Instruction::Size);
-  ASSERT_EQ(osciemu::ReadIntFromMemory(m, 24), 1111);
+  ASSERT_EQ(osciemu::ReadIntFromMemory(m, 24), 0x30303030);
 }
 
 TEST(InstructionTest, CanExecuteMultipleInstructions) {
