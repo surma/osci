@@ -45,16 +45,17 @@ int main(int argc, char *argv[]) {
   auto bios = LoadFileAsArrayMemory(biosFilename);
   auto emu = osciemu::Emulator(image, bios);
 
-  int i = 0, regAddr;
+  uint32_t i = 0, regAddr, stepCounter = 0;
   while(!emu.IsHalted()) {
     printf("\e[u");
     printf("\e[s");
-    printf("ip: %08x, ", emu.ip_);
+    printf("(%8d) ip: %08x, ", stepCounter, emu.ip_);
     for(i = 0; i < osciemu::Emulator::kNumRegisters; i++) {
       regAddr = osciemu::Emulator::kRegisterBoundary + i*osciemu::Instruction::Word;
       printf("r%d: %08x, ", i, osciemu::ReadIntFromMemory(emu, regAddr));
     }
     emu.Step();
+    stepCounter++;
   }
   printf("\n");
 }
