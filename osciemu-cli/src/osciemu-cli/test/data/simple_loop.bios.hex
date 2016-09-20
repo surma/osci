@@ -1,0 +1,29 @@
+# &r[0] = 0xFFFFFFEF
+# &r[1] = 0xFFFFFFF3
+# &flags[0] = 0xFFFFFFE7
+
+# start: kBiosBoundary = 0x80000000
+# do something, jump to start (i.e. jump *over* data)
+00000000 01000000 02000000 20000080
+
+# data:  0x80000010
+00000000 # data[0] = 0
+01000000 # data[1] = 1
+80000000 # data[2] = 128
+00000000 # data[3] = 0
+
+# start: 0x80000020
+# r[0] = data[2] - data[0]; set r[0] to 128
+18000080 10000080 efffffff 30000080
+
+# loop: (kBiosBoundary + 4) = 0x80000030
+# r[0] = r[0] - data[1], goto end; decrease r[0] by 1, jump to end when we reach 0
+efffffff 14000080 efffffff 50000080
+
+# r[1] = data[0] - data[1], goto loop; jmp to loop
+10000080 14000080 f3ffffff 30000080
+
+# end: (kBiosBoundary + 12) = 0x80000050
+# flags[0] = data[3] - data[0]; set halt bit
+14000080 10000080 e7ffffff 00000000
+

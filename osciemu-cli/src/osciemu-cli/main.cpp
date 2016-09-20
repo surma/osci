@@ -41,10 +41,20 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  std::cout << "Loading memory image from " << imageFilename << "..." << std::endl;
   auto image = LoadFileAsArrayMemory(imageFilename);
-  std::cout << "Done." << std::endl;
-  std::cout << "Loading bios image from " << biosFilename << "..." << std::endl;
   auto bios = LoadFileAsArrayMemory(biosFilename);
-  std::cout << "Done." << std::endl;
+  auto emu = osciemu::Emulator(image, bios);
+
+  int i = 0, regAddr;
+  while(!emu.IsHalted()) {
+    printf("\e[u");
+    printf("\e[s");
+    printf("ip: %08x, ", emu.ip_);
+    for(i = 0; i < osciemu::Emulator::kNumRegisters; i++) {
+      regAddr = osciemu::Emulator::kRegisterBoundary + i*osciemu::Instruction::Word;
+      printf("r%d: %08x, ", i, osciemu::ReadIntFromMemory(emu, regAddr));
+    }
+    emu.Step();
+  }
+  printf("\n");
 }
