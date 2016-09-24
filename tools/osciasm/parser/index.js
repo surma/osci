@@ -14,13 +14,16 @@
   function parseInstruction(source) {
     eatWhitespace(source);
     const position = source.position();
-    let label = parseSymbol(source);
+    const label = parseSymbol(source);
     if (source.peek() !== ':') {
       source = new ConcatSource(new StringSource(label.value, position), source);
-      label = null;
     } else {
       // eat ':'
       source.pop();
+      return {
+        type: 'label',
+        value: label.value
+      };
     }
     eatWhitespace(source);
     switch(source.peek()) {
@@ -33,15 +36,12 @@
         source.pop();
         return parseInstruction(source);
       case '.':
-        const instr = parseAssemblerInstruction(source);
-        instr.label = label;
-        return instr;
+        return parseAssemblerInstruction(source);
       case null:
         return eof;
       default:
         return {
           type: 'cpuInstruction',
-          label,
           operandA: parseExpression(source),
           operandB: parseExpression(source),
           target: parseExpression(source),
@@ -54,11 +54,14 @@
   function parseAssemblerInstruction(source) {
     eatWhitespace(source);
     const position = source.position();
-    const instruction = parseString(source);
+    if(source.pop() !== '.') {
+      throw new Error(`Assembler instruction didn't start with . at ${position}`);
+    }
+    const instruction = parseSymbol(source).value;
     return {
       type: 'asmInstruction',
       instruction,
-      addr: parseExpression(source),
+      value: parseExpression(source),
       position
     };
   }
@@ -67,15 +70,31 @@
     eatWhitespace(source);
     const position = source.position();
     const op1 = parseExpression2(source);
-    if (['+', '-'].indexOf(source.peek()) === -1) {
+    const op2 = parseExpressionPrime(source);
+    if(!op2) {
       return op1;
     }
+    return {
+      type: 'op',
+      op: 'expr',
+      ops: [op1, op2],
+      position
+    };
+  }
+
+  function parseExpressionPrime(source) {
+    eatWhitespace(source);
+    const position = source.position();
+    if (['+', '-'].indexOf(source.peek()) === -1) {
+      return null;
+    }
     const op = source.pop();
-    const op2 = parseExpression(source);
+    const op2 = parseExpression2(source);
+    const op3 = parseExpressionPrime(source);
     return {
       type: 'op',
       op,
-      ops: [op1, op2],
+      ops: [op2, op3].filter(x => !!x),
       position
     }
   }
@@ -84,20 +103,37 @@
     eatWhitespace(source);
     const position = source.position();
     const op1 = parseExpression3(source);
-    if (['*', '/'].indexOf(source.peek()) === -1) {
+    const op2 = parseExpression2Prime(source);
+    if(!op2) {
       return op1;
     }
-    const op = source.pop();
-    const op2 = parseExpression2(source);
     return {
       type: 'op',
-      op,
+      op: 'expr',
       ops: [op1, op2],
       position
     }
   }
 
+  function parseExpression2Prime(source) {
+    eatWhitespace(source);
+    const position = source.position();
+    if (['*', '/'].indexOf(source.peek()) === -1) {
+      return null;
+    }
+    const op = source.pop();
+    const op2 = parseExpression3(source);
+    const op3 = parseExpression2Prime(source) ;
+    return {
+      type: 'op',
+      op,
+      ops: [op2, op3].filter(x => !!x),
+      position
+    }
+  }
+
   function parseExpression3(source) {
+    eatWhitespace(source);
     const position = source.position();
     switch(source.peek()) {
       case endOfSource:
@@ -125,11 +161,7 @@
           position
         };
       case '"':
-        return {
-          type: 'string',
-          value: parseString(source),
-          position
-        };
+        return parseString(source);
       default:
         if('1234567890'.indexOf(source.peek()) !== -1) {
           return {
@@ -139,11 +171,7 @@
           };
         }
         if("acbdefghijklmnopqrstuvwxyz".indexOf(source.peek()) !== -1) {
-          return {
-            type: 'symbol',
-            value: parseSymbol(source),
-            position
-          };
+          return parseSymbol(source);
         }
         throw new Error(`Unexpected character '${source.peek()}' at ${source.position()}`);
     }
@@ -167,7 +195,7 @@
     eatWhitespace(source);
     let value = '';
     while (/[0-9a-fA-Fx]/.test(source.peek())) {
-      value = source.pop();
+      value += source.pop();
     }
     return value;
   }
@@ -176,21 +204,21 @@
     eatWhitespace(source);
     const position = source.position();
     let value = '';
-    if(s.pop() !== '"') {
+    if(source.pop() !== '"') {
       throw new Error(`String literal didn't start with " at ${source.position()}`);
     }
     let c;
     // Collect chars in `lit` until we reach the other quote
-    while(c = s.pop() !== '"') {
+    while((c = source.pop()) !== '"') {
       // If we find a blackslash, take the character after the
       // backslash verbatim.
       if(c === '\\') {
-        c = s.pop();
+        c = source.pop();
       }
       value += c;
     }
     // Eat closing quite
-    s.pop();
+    source.pop();
     return {
       type: 'stringLiteral',
       value,

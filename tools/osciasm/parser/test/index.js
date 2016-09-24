@@ -6,29 +6,28 @@ const parser = require('../');
 describe('Parser', function() {
   it('should have a parsing function', function() {
     expect(parser).to.have.property('parse');
-  })
+  });
 
   it('should ignore comments', function() {
     const code =
     `
     ; This is a comment
-    `
+    `;
     expect(parser.parse(new parser.StringSource(code))).to.have.length(0);
-  })
+  });
 
-  it.only('should parse instructions', function() {
+  it('should parse instructions', function() {
     const code =
     `
     1 2 3 4
     4 3 2 1
-    `
+    `;
     const ast = parser.parse(new parser.StringSource(code));
     ast.forEach(i => parser.stripPositions(i))
-    expect(ast).to.have.length(2);
+
     expect(ast).to.deep.equal([
       {
         type: 'cpuInstruction',
-        label: null,
         operandA: {
           type: 'numberLiteral',
           value: '1'
@@ -48,7 +47,6 @@ describe('Parser', function() {
       },
       {
         type: 'cpuInstruction',
-        label: null,
         operandA: {
           type: 'numberLiteral',
           value: '4'
@@ -67,8 +65,462 @@ describe('Parser', function() {
         }
       }
     ]);
-  })
+  });
 
+  it('should parse labels before instructions', function() {
+    const code =
+    `
+    label: 1 2 3 4
+    `;
+    const ast = parser.parse(new parser.StringSource(code));
+    ast.forEach(i => parser.stripPositions(i))
+
+    expect(ast).to.deep.equal([
+      {
+        type: 'label',
+        value: 'label'
+      },
+      {
+        type: 'cpuInstruction',
+        operandA: {
+          type: 'numberLiteral',
+          value: '1'
+        },
+        operandB: {
+          type: 'numberLiteral',
+          value: '2'
+        },
+        target: {
+          type: 'numberLiteral',
+          value: '3'
+        },
+        jump: {
+          type: 'numberLiteral',
+          value: '4'
+        }
+      }
+    ]);
+  });
+
+  it('should parse standalone labels', function() {
+    const code =
+    `
+    label1: ; we use 2 labels
+    label2:
+      1 2 3 4
+    `;
+    const ast = parser.parse(new parser.StringSource(code));
+    ast.forEach(i => parser.stripPositions(i))
+
+    expect(ast).to.deep.equal([
+      {
+        type: 'label',
+        value: 'label1'
+      },
+      {
+        type: 'label',
+        value: 'label2'
+      },
+      {
+        type: 'cpuInstruction',
+        operandA: {
+          type: 'numberLiteral',
+          value: '1'
+        },
+        operandB: {
+          type: 'numberLiteral',
+          value: '2'
+        },
+        target: {
+          type: 'numberLiteral',
+          value: '3'
+        },
+        jump: {
+          type: 'numberLiteral',
+          value: '4'
+        }
+      }
+    ]);
+  });
+
+  it('should parse assembler instructions', function() {
+    const code =
+    `
+    .addr 256
+    .db 127
+    `;
+    const ast = parser.parse(new parser.StringSource(code));
+    ast.forEach(i => parser.stripPositions(i))
+
+    expect(ast).to.deep.equal([
+      {
+        type: 'asmInstruction',
+        instruction: 'addr',
+        value: {
+          type: 'numberLiteral',
+          value: '256'
+        }
+      },
+      {
+        type: 'asmInstruction',
+        instruction: 'db',
+        value: {
+          type: 'numberLiteral',
+          value: '127'
+        }
+      }
+    ]);
+  });
+
+  it('should handle left-associativity', function() {
+    const code =
+    `
+    .db 1+1+1
+    .db 1*1*1
+    `;
+    const ast = parser.parse(new parser.StringSource(code));
+    ast.forEach(i => parser.stripPositions(i))
+
+    expect(ast).to.deep.equal([
+      {
+        type: 'asmInstruction',
+        instruction: 'db',
+        value: {
+          type: 'op',
+          op: 'expr',
+          ops: [
+            {
+              type: 'numberLiteral',
+              value: '1'
+            },
+            {
+              type: 'op',
+              op: '+',
+              ops: [
+                {
+                  type: 'numberLiteral',
+                  value: '1'
+                },
+                {
+                  type: 'op',
+                  op: '+',
+                  ops: [
+                    {
+                      type: 'numberLiteral',
+                      value: '1'
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        type: 'asmInstruction',
+        instruction: 'db',
+        value: {
+          type: 'op',
+          op: 'expr',
+          ops: [
+            {
+              type: 'numberLiteral',
+              value: '1'
+            },
+            {
+              type: 'op',
+              op: '*',
+              ops: [
+                {
+                  type: 'numberLiteral',
+                  value: '1'
+                },
+                {
+                  type: 'op',
+                  op: '*',
+                  ops: [
+                    {
+                      type: 'numberLiteral',
+                      value: '1'
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]);
+  });
+
+  it('should parse "current address" symbol', function() {
+    const code =
+    `
+    .db 2*($+1)
+    `;
+    const ast = parser.parse(new parser.StringSource(code));
+    ast.forEach(i => parser.stripPositions(i))
+
+    expect(ast).to.deep.equal([
+      {
+        type: 'asmInstruction',
+        instruction: 'db',
+        value: {
+          type: 'op',
+          op: 'expr',
+          ops: [
+            {
+              type: 'numberLiteral',
+              value: '2'
+            },
+            {
+              type: 'op',
+              op: '*',
+              ops: [
+                {
+                  type: 'op',
+                  op: 'expr',
+                  ops: [
+                    {
+                      type: 'symbol',
+                      value: '$'
+                    },
+                    {
+                      type: 'op',
+                      op: '+',
+                      ops: [
+                        {
+                          type: 'numberLiteral',
+                          value: '1'
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]);
+  });
+
+  it('should parse labels', function() {
+    const code =
+    `
+    .db someLabel+2
+    `;
+    const ast = parser.parse(new parser.StringSource(code));
+    ast.forEach(i => parser.stripPositions(i))
+
+    expect(ast).to.deep.equal([
+      {
+        type: 'asmInstruction',
+        instruction: 'db',
+        value: {
+          type: 'op',
+          op: 'expr',
+          ops: [
+            {
+              type: 'symbol',
+              value: 'someLabel'
+            },
+            {
+              type: 'op',
+              op: '+',
+              ops: [
+                {
+                  type: 'numberLiteral',
+                  value: '2'
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]);
+  });
+
+  it('should parse hexadecimal, octal and binary literals', function() {
+    const code =
+    `
+    .db 0xFF - 0777 + 0b111 ; With spaces!
+    `;
+    const ast = parser.parse(new parser.StringSource(code));
+    ast.forEach(i => parser.stripPositions(i))
+
+    expect(ast).to.deep.equal([
+      {
+        type: 'asmInstruction',
+        instruction: 'db',
+        value: {
+          type: 'op',
+          op: 'expr',
+          ops: [
+            {
+              type: 'numberLiteral',
+              value: '0xFF'
+            },
+            {
+              type: 'op',
+              op: '-',
+              ops: [
+                {
+                  type: 'numberLiteral',
+                  value: '0777'
+                },
+                {
+                  type: 'op',
+                  op: '+',
+                  ops: [
+                    {
+                      type: 'numberLiteral',
+                      value: '0b111'
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]);
+  });
+
+  it('should parse string literals', function() {
+    const code =
+    `
+    .db "Lets try a string"
+    `;
+    const ast = parser.parse(new parser.StringSource(code));
+    ast.forEach(i => parser.stripPositions(i))
+
+    expect(ast).to.deep.equal([
+      {
+        type: 'asmInstruction',
+        instruction: 'db',
+        value: {
+          type: 'stringLiteral',
+          value: 'Lets try a string'
+        }
+      }
+    ]);
+  });
+
+  it('should parse complex instructions', function() {
+    const code =
+    `
+    loop: someStringLabel+4*someCounter someOtherString+someCounter register0 $+4*12
+    `;
+    const ast = parser.parse(new parser.StringSource(code));
+    ast.forEach(i => parser.stripPositions(i))
+
+    expect(ast).to.deep.equal([
+      {
+        type: 'label',
+        value: 'loop'
+      },
+      {
+        type: 'cpuInstruction',
+        operandA: {
+          type: 'op',
+          op: 'expr',
+          ops: [
+            {
+              type: 'symbol',
+              value: 'someStringLabel'
+            },
+            {
+              type: 'op',
+              op: '+',
+              ops: [
+                {
+                  type: 'op',
+                  op: 'expr',
+                  ops: [
+                    {
+                      type: 'numberLiteral',
+                      value: '4'
+                    },
+                    {
+                      type: 'op',
+                      op: '*',
+                      ops: [
+                        {
+                          type: 'symbol',
+                          value: 'someCounter'
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        operandB: {
+          type: 'op',
+          op: 'expr',
+          ops: [
+            {
+              type: 'symbol',
+              value: 'someOtherString'
+            },
+            {
+              type: 'op',
+              op: '+',
+              ops: [
+                {
+                  type: 'symbol',
+                  value: 'someCounter'
+                }
+              ]
+            }
+          ]
+        },
+        target: {
+          type: 'symbol',
+          value: 'register0'
+        },
+        jump: {
+          type: 'op',
+          op: 'expr',
+          ops: [
+            {
+              type: 'symbol',
+              value: '$'
+            },
+            {
+              type: 'op',
+              op: '+',
+              ops: [
+                {
+                  type: 'op',
+                  op: 'expr',
+                  ops: [
+                    {
+                      type: 'numberLiteral',
+                      value: '4'
+                    },
+                    {
+                      type: 'op',
+                      op: '*',
+                      ops: [
+                        {
+                          type: 'numberLiteral',
+                          value: '12'
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]);
+  });
 });
 
 describe('StringSource', function() {
@@ -175,5 +627,5 @@ describe('ConcatSource', function() {
 
     expect(source.peek()).to.equal('A');
     expect(source.pop()).to.equal('A');
-  })
+  });
 });
