@@ -28,41 +28,41 @@ describe('Parser', function() {
     expect(ast).to.deep.equal([
       {
         type: 'cpuInstruction',
-        operandA: {
+        operandA: [{
           type: 'numberLiteral',
           value: '1'
-        },
-        operandB: {
+        }],
+        operandB: [{
           type: 'numberLiteral',
           value: '2'
-        },
-        target: {
+        }],
+        target: [{
           type: 'numberLiteral',
           value: '3'
-        },
-        jump: {
+        }],
+        jump: [{
           type: 'numberLiteral',
           value: '4'
-        }
+        }]
       },
       {
         type: 'cpuInstruction',
-        operandA: {
+        operandA: [{
           type: 'numberLiteral',
           value: '4'
-        },
-        operandB: {
+        }],
+        operandB: [{
           type: 'numberLiteral',
           value: '3'
-        },
-        target: {
+        }],
+        target: [{
           type: 'numberLiteral',
           value: '2'
-        },
-        jump: {
+        }],
+        jump: [{
           type: 'numberLiteral',
           value: '1'
-        }
+        }]
       }
     ]);
   });
@@ -82,22 +82,22 @@ describe('Parser', function() {
       },
       {
         type: 'cpuInstruction',
-        operandA: {
+        operandA: [{
           type: 'numberLiteral',
           value: '1'
-        },
-        operandB: {
+        }],
+        operandB: [{
           type: 'numberLiteral',
           value: '2'
-        },
-        target: {
+        }],
+        target: [{
           type: 'numberLiteral',
           value: '3'
-        },
-        jump: {
+        }],
+        jump: [{
           type: 'numberLiteral',
           value: '4'
-        }
+        }]
       }
     ]);
   });
@@ -123,22 +123,22 @@ describe('Parser', function() {
       },
       {
         type: 'cpuInstruction',
-        operandA: {
+        operandA: [{
           type: 'numberLiteral',
           value: '1'
-        },
-        operandB: {
+        }],
+        operandB: [{
           type: 'numberLiteral',
           value: '2'
-        },
-        target: {
+        }],
+        target: [{
           type: 'numberLiteral',
           value: '3'
-        },
-        jump: {
+        }],
+        jump: [{
           type: 'numberLiteral',
           value: '4'
-        }
+        }]
       }
     ]);
   });
@@ -156,18 +156,18 @@ describe('Parser', function() {
       {
         type: 'asmInstruction',
         instruction: 'addr',
-        value: {
+        value: [{
           type: 'numberLiteral',
           value: '256'
-        }
+        }]
       },
       {
         type: 'asmInstruction',
         instruction: 'db',
-        value: {
+        value: [{
           type: 'numberLiteral',
           value: '127'
-        }
+        }]
       }
     ]);
   });
@@ -175,8 +175,8 @@ describe('Parser', function() {
   it('should handle left-associativity', function() {
     const code =
     `
-    .db 1+1+1
-    .db 1*1*1
+    .db 1+2+3
+    .db 1*2*3
     `;
     const ast = parser.parse(new parser.StringSource(code));
     ast.forEach(i => parser.stripPositions(i))
@@ -185,70 +185,24 @@ describe('Parser', function() {
       {
         type: 'asmInstruction',
         instruction: 'db',
-        value: {
-          type: 'op',
-          op: 'expr',
-          ops: [
-            {
-              type: 'numberLiteral',
-              value: '1'
-            },
-            {
-              type: 'op',
-              op: '+',
-              ops: [
-                {
-                  type: 'numberLiteral',
-                  value: '1'
-                },
-                {
-                  type: 'op',
-                  op: '+',
-                  ops: [
-                    {
-                      type: 'numberLiteral',
-                      value: '1'
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
+        value: [
+          {type: 'numberLiteral', value: '1'},
+          {type: 'numberLiteral', value: '2'},
+          {type: 'op', op: '+'},
+          {type: 'numberLiteral', value: '3'},
+          {type: 'op', op: '+'}
+        ]
       },
       {
         type: 'asmInstruction',
         instruction: 'db',
-        value: {
-          type: 'op',
-          op: 'expr',
-          ops: [
-            {
-              type: 'numberLiteral',
-              value: '1'
-            },
-            {
-              type: 'op',
-              op: '*',
-              ops: [
-                {
-                  type: 'numberLiteral',
-                  value: '1'
-                },
-                {
-                  type: 'op',
-                  op: '*',
-                  ops: [
-                    {
-                      type: 'numberLiteral',
-                      value: '1'
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
+        value: [
+          {type: 'numberLiteral', value: '1'},
+          {type: 'numberLiteral', value: '2'},
+          {type: 'op', op: '*'},
+          {type: 'numberLiteral', value: '3'},
+          {type: 'op', op: '*'}
+        ]
       }
     ]);
   });
@@ -265,42 +219,13 @@ describe('Parser', function() {
       {
         type: 'asmInstruction',
         instruction: 'db',
-        value: {
-          type: 'op',
-          op: 'expr',
-          ops: [
-            {
-              type: 'numberLiteral',
-              value: '2'
-            },
-            {
-              type: 'op',
-              op: '*',
-              ops: [
-                {
-                  type: 'op',
-                  op: 'expr',
-                  ops: [
-                    {
-                      type: 'symbol',
-                      value: '$'
-                    },
-                    {
-                      type: 'op',
-                      op: '+',
-                      ops: [
-                        {
-                          type: 'numberLiteral',
-                          value: '1'
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
+        value: [
+          {type: 'numberLiteral', value: '2'},
+          {type: 'symbol', value: '$'},
+          {type: 'numberLiteral', value: '1'},
+          {type: 'op', op: '+'},
+          {type: 'op', op: '*'}
+        ]
       }
     ]);
   });
@@ -317,26 +242,11 @@ describe('Parser', function() {
       {
         type: 'asmInstruction',
         instruction: 'db',
-        value: {
-          type: 'op',
-          op: 'expr',
-          ops: [
-            {
-              type: 'symbol',
-              value: 'someLabel'
-            },
-            {
-              type: 'op',
-              op: '+',
-              ops: [
-                {
-                  type: 'numberLiteral',
-                  value: '2'
-                }
-              ]
-            }
-          ]
-        }
+        value: [
+          {type: 'symbol', value: 'someLabel'},
+          {type: 'numberLiteral', value: '2'},
+          {type: 'op', op: '+'}
+        ]
       }
     ]);
   });
@@ -353,36 +263,13 @@ describe('Parser', function() {
       {
         type: 'asmInstruction',
         instruction: 'db',
-        value: {
-          type: 'op',
-          op: 'expr',
-          ops: [
-            {
-              type: 'numberLiteral',
-              value: '0xFF'
-            },
-            {
-              type: 'op',
-              op: '-',
-              ops: [
-                {
-                  type: 'numberLiteral',
-                  value: '0777'
-                },
-                {
-                  type: 'op',
-                  op: '+',
-                  ops: [
-                    {
-                      type: 'numberLiteral',
-                      value: '0b111'
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
+        value: [
+          {type: 'numberLiteral', value: '0xFF'},
+          {type: 'numberLiteral', value: '0777'},
+          {type: 'op', op: '-'},
+          {type: 'numberLiteral', value: '0b111'},
+          {type: 'op', op: '+'}
+        ]
       }
     ]);
   });
@@ -399,10 +286,10 @@ describe('Parser', function() {
       {
         type: 'asmInstruction',
         instruction: 'db',
-        value: {
+        value: [{
           type: 'stringLiteral',
           value: 'Lets try a string'
-        }
+        }]
       }
     ]);
   });
@@ -422,102 +309,28 @@ describe('Parser', function() {
       },
       {
         type: 'cpuInstruction',
-        operandA: {
-          type: 'op',
-          op: 'expr',
-          ops: [
-            {
-              type: 'symbol',
-              value: 'someStringLabel'
-            },
-            {
-              type: 'op',
-              op: '+',
-              ops: [
-                {
-                  type: 'op',
-                  op: 'expr',
-                  ops: [
-                    {
-                      type: 'numberLiteral',
-                      value: '4'
-                    },
-                    {
-                      type: 'op',
-                      op: '*',
-                      ops: [
-                        {
-                          type: 'symbol',
-                          value: 'someCounter'
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        operandB: {
-          type: 'op',
-          op: 'expr',
-          ops: [
-            {
-              type: 'symbol',
-              value: 'someOtherString'
-            },
-            {
-              type: 'op',
-              op: '+',
-              ops: [
-                {
-                  type: 'symbol',
-                  value: 'someCounter'
-                }
-              ]
-            }
-          ]
-        },
-        target: {
-          type: 'symbol',
-          value: 'register0'
-        },
-        jump: {
-          type: 'op',
-          op: 'expr',
-          ops: [
-            {
-              type: 'symbol',
-              value: '$'
-            },
-            {
-              type: 'op',
-              op: '+',
-              ops: [
-                {
-                  type: 'op',
-                  op: 'expr',
-                  ops: [
-                    {
-                      type: 'numberLiteral',
-                      value: '4'
-                    },
-                    {
-                      type: 'op',
-                      op: '*',
-                      ops: [
-                        {
-                          type: 'numberLiteral',
-                          value: '12'
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
+        operandA: [
+          {type: 'symbol', value: 'someStringLabel'},
+          {type: 'numberLiteral', value: '4'},
+          {type: 'symbol', value: 'someCounter'},
+          {type: 'op', op: '*'},
+          {type: 'op', op: '+'}
+        ],
+        operandB: [
+          {type: 'symbol', value: 'someOtherString'},
+          {type: 'symbol', value: 'someCounter'},
+          {type: 'op', op: '+'}
+        ],
+        target: [
+          {type: 'symbol', value: 'register0'}
+        ],
+        jump: [
+          {type: 'symbol', value: '$'},
+          {type: 'numberLiteral', value: '4'},
+          {type: 'numberLiteral', value: '12'},
+          {type: 'op', op: '*'},
+          {type: 'op', op: '+'},
+        ]
       }
     ]);
   });
@@ -627,5 +440,73 @@ describe('ConcatSource', function() {
 
     expect(source.peek()).to.equal('A');
     expect(source.pop()).to.equal('A');
+  });
+});
+
+describe('tokenizeExpression', function() {
+  it('should tokenize expressions with parenthesis', function() {
+    const ast = parser.parseInstruction(new parser.StringSource('.db 2*3*($+1+3)')).value;
+    const tokenized = parser.tokenizeExpression(ast);
+    expect(tokenized).to.deep.equal([
+      '(',
+      {type: 'numberLiteral', value: '2'},
+      {type: 'op', op: '*'},
+      {type: 'numberLiteral', value: '3'},
+      {type: 'op', op: '*'},
+      '(',
+      {type: 'symbol', value: '$'},
+      {type: 'op', op: '+'},
+      {type: 'numberLiteral', value: '1'},
+      {type: 'op', op: '+'},
+      {type: 'numberLiteral', value: '3'},
+      ')',
+      ')'
+    ]);
+  });
+
+  it('should tokenize expressions with different priorities', function() {
+    const ast = parser.parseInstruction(new parser.StringSource('.db 2+3*1')).value;
+    const tokenized = parser.tokenizeExpression(ast);
+    expect(tokenized).to.deep.equal([
+      '(',
+      {type: 'numberLiteral', value: '2'},
+      {type: 'op', op: '+'},
+      '(',
+      {type: 'numberLiteral', value: '3'},
+      {type: 'op', op: '*'},
+      {type: 'numberLiteral', value: '1'},
+      ')',
+      ')'
+    ]);
+  });
+});
+
+describe('buildRPN', function() {
+  it('should convert token arrays to RPN', function() {
+    const ast = parser.parseInstruction(new parser.StringSource('.db 2+3*1')).value;
+    const tokenized = parser.tokenizeExpression(ast);
+    const rpn = parser.buildRPN(tokenized);
+    expect(rpn).to.deep.equal([
+      {
+        type: 'numberLiteral',
+        value: '2'
+      },
+      {
+        type: 'numberLiteral',
+        value: '3'
+      },
+      {
+        type: 'numberLiteral',
+        value: '1'
+      },
+      {
+        type: 'op',
+        op: '*'
+      },
+      {
+        type: 'op',
+        op: '+'
+      }
+    ]);
   });
 });

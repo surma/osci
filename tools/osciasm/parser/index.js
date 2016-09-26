@@ -6,6 +6,16 @@
     const ast = [];
     let instruction;
     while(instruction = parseInstruction(source)) {
+      switch(instruction.type) {
+        case 'cpuInstruction':
+          ['operandA', 'operandB', 'target', 'jump'].forEach(field =>
+            instruction[field] = buildRPN(tokenizeExpression(instruction[field]))
+          );
+        break;
+        case 'asmInstruction':
+            instruction.value = buildRPN(tokenizeExpression(instruction.value))
+        break;
+      }
       ast.push(instruction);
     }
     return ast;
@@ -85,7 +95,7 @@
   function parseExpressionPrime(source) {
     eatWhitespace(source);
     const position = source.position();
-    if (['+', '-'].indexOf(source.peek()) === -1) {
+    if (source.peek() === endOfSource || ['+', '-'].indexOf(source.peek()) === -1) {
       return null;
     }
     const op = source.pop();
@@ -118,7 +128,7 @@
   function parseExpression2Prime(source) {
     eatWhitespace(source);
     const position = source.position();
-    if (['*', '/'].indexOf(source.peek()) === -1) {
+    if (source.peek() === endOfSource || ['*', '/'].indexOf(source.peek()) === -1) {
       return null;
     }
     const op = source.pop();
@@ -194,7 +204,7 @@
   function parseNumber(source) {
     eatWhitespace(source);
     let value = '';
-    while (/[0-9a-fA-Fx]/.test(source.peek())) {
+    while (source.peek() !== endOfSource && /[0-9a-fA-Fx]/.test(source.peek())) {
       value += source.pop();
     }
     return value;
@@ -351,11 +361,70 @@
     }
   }
 
+  function tokenizeExpression(expr) {
+    switch(expr.type) {
+      case 'op':
+        switch(expr.op) {
+          case '+':
+          case '-':
+          case '*':
+          case '/':
+            return expr.ops.map(tokenizeExpression).reduce((prev, cur) => [...prev, ...cur], [{'type': 'op', op: expr.op}]);
+          case 'expr':
+            return ['(', ...tokenizeExpression(expr.ops[0]), ...tokenizeExpression(expr.ops[1]), ')'];
+        }
+      case 'symbol':
+      case 'numberLiteral':
+      case 'stringLiteral':
+        return [{'type': expr.type, value: expr.value}];
+      default:
+        throw new Error(`Invalid token ${expr} in expression at ${expr.position}`);
+    }
+  }
+
+  // Shunting-yard algorithm
+  function buildRPN(tokens) {
+    const priority = {
+      '+': 0,
+      '-': 0,
+      '*': 1,
+      '/': 1
+    };
+    const operators = Object.keys(priority);
+    const opstack = [];
+    // This way opstack[0] ~= opstack.peek()
+    opstack.push = opstack.unshift;
+    opstack.pop = opstack.shift;
+    const output = [];
+
+    for(let token of tokens) {
+      if(token === '(') {
+        opstack.push(token);
+      } else if(token === ')') {
+        while(opstack.length > 0 && opstack[0] !== '(') {
+          output.push(opstack.pop());
+        }
+        opstack.pop();
+      } else if(operators.indexOf(token.op) !== -1) {
+        while(opstack.length > 0 && priority[token.op] <= priority[opstack[0].op]) {
+          output.push(opstack.pop());
+        }
+        opstack.push(token);
+      } else {
+        output.push(token);
+      }
+    }
+    return output;
+  }
+
   module.exports = {
     parse,
+    parseInstruction,
     StringSource,
     ConcatSource,
     endOfSource,
-    stripPositions
+    stripPositions,
+    tokenizeExpression,
+    buildRPN
   };
 })();
