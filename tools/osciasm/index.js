@@ -1,2 +1,2 @@
-const parser = require('./parser');
+const osciasm = require('./osciasm');
 

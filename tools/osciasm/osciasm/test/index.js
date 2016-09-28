@@ -1,11 +1,11 @@
 const chai = require('chai');
 const expect = chai.expect;
 
-const parser = require('../');
+const osciasm = require('../');
 
-describe('Parser', function() {
+describe('osciasm', function() {
   it('should have a parsing function', function() {
-    expect(parser).to.have.property('parse');
+    expect(osciasm).to.have.property('parse');
   });
 
   describe('parse', function() {
@@ -14,7 +14,7 @@ describe('Parser', function() {
       `
       ; This is a comment
       `;
-      expect(parser.parse(new parser.StringSource(code))).to.have.length(0);
+      expect(osciasm.parse(new osciasm.StringSource(code))).to.have.length(0);
     });
 
     it('should parse instructions', function() {
@@ -23,8 +23,8 @@ describe('Parser', function() {
       1 2 3 4
       4 3 2 1
       `;
-      const ast = parser.parse(new parser.StringSource(code));
-      ast.forEach(i => parser.stripPositions(i))
+      const ast = osciasm.parse(new osciasm.StringSource(code));
+      ast.forEach(i => osciasm.stripPositions(i))
 
       expect(ast).to.deep.equal([
         {
@@ -73,8 +73,8 @@ describe('Parser', function() {
       `
       label: 1 2 3 4
       `;
-      const ast = parser.parse(new parser.StringSource(code));
-      ast.forEach(i => parser.stripPositions(i))
+      const ast = osciasm.parse(new osciasm.StringSource(code));
+      ast.forEach(i => osciasm.stripPositions(i))
 
       expect(ast).to.deep.equal([
         {
@@ -110,8 +110,8 @@ describe('Parser', function() {
       label2:
         1 2 3 4
       `;
-      const ast = parser.parse(new parser.StringSource(code));
-      ast.forEach(i => parser.stripPositions(i))
+      const ast = osciasm.parse(new osciasm.StringSource(code));
+      ast.forEach(i => osciasm.stripPositions(i))
 
       expect(ast).to.deep.equal([
         {
@@ -150,8 +150,8 @@ describe('Parser', function() {
       .addr 256
       .db 127
       `;
-      const ast = parser.parse(new parser.StringSource(code));
-      ast.forEach(i => parser.stripPositions(i))
+      const ast = osciasm.parse(new osciasm.StringSource(code));
+      ast.forEach(i => osciasm.stripPositions(i))
 
       expect(ast).to.deep.equal([
         {
@@ -179,8 +179,8 @@ describe('Parser', function() {
       .db 1+2+3
       .db 1*2*3
       `;
-      const ast = parser.parse(new parser.StringSource(code));
-      ast.forEach(i => parser.stripPositions(i))
+      const ast = osciasm.parse(new osciasm.StringSource(code));
+      ast.forEach(i => osciasm.stripPositions(i))
 
       expect(ast).to.deep.equal([
         {
@@ -213,8 +213,8 @@ describe('Parser', function() {
       `
       .db 2*($+1)
       `;
-      const ast = parser.parse(new parser.StringSource(code));
-      ast.forEach(i => parser.stripPositions(i))
+      const ast = osciasm.parse(new osciasm.StringSource(code));
+      ast.forEach(i => osciasm.stripPositions(i))
 
       expect(ast).to.deep.equal([
         {
@@ -236,8 +236,8 @@ describe('Parser', function() {
       `
       .db someLabel+2
       `;
-      const ast = parser.parse(new parser.StringSource(code));
-      ast.forEach(i => parser.stripPositions(i))
+      const ast = osciasm.parse(new osciasm.StringSource(code));
+      ast.forEach(i => osciasm.stripPositions(i))
 
       expect(ast).to.deep.equal([
         {
@@ -257,8 +257,8 @@ describe('Parser', function() {
       `
       .db 0xFF - 0777 + 0b111 ; With spaces!
       `;
-      const ast = parser.parse(new parser.StringSource(code));
-      ast.forEach(i => parser.stripPositions(i))
+      const ast = osciasm.parse(new osciasm.StringSource(code));
+      ast.forEach(i => osciasm.stripPositions(i))
 
       expect(ast).to.deep.equal([
         {
@@ -280,8 +280,8 @@ describe('Parser', function() {
       `
       .db "Lets try a string"
       `;
-      const ast = parser.parse(new parser.StringSource(code));
-      ast.forEach(i => parser.stripPositions(i))
+      const ast = osciasm.parse(new osciasm.StringSource(code));
+      ast.forEach(i => osciasm.stripPositions(i))
 
       expect(ast).to.deep.equal([
         {
@@ -300,8 +300,8 @@ describe('Parser', function() {
       `
       loop: someStringLabel+4*someCounter someOtherString+someCounter register0 $+4*12
       `;
-      const ast = parser.parse(new parser.StringSource(code));
-      ast.forEach(i => parser.stripPositions(i))
+      const ast = osciasm.parse(new osciasm.StringSource(code));
+      ast.forEach(i => osciasm.stripPositions(i))
 
       expect(ast).to.deep.equal([
         {
@@ -339,20 +339,20 @@ describe('Parser', function() {
 
   describe('StringSource', function() {
     it('should return endOfSource on empty string', function() {
-      const source = new parser.StringSource('');
-      expect(source.peek()).to.equal(parser.endOfSource);
-      expect(source.pop()).to.equal(parser.endOfSource);
+      const source = new osciasm.StringSource('');
+      expect(source.peek()).to.equal(osciasm.endOfSource);
+      expect(source.pop()).to.equal(osciasm.endOfSource);
     });
 
     it('should throw when consuming beyond endOfSource', function() {
-      const source = new parser.StringSource('');
+      const source = new osciasm.StringSource('');
       source.pop();
       expect(source.peek).to.throw();
       expect(source.pop).to.throw();
     });
 
     it('should yield characters of a string', function() {
-      const source = new parser.StringSource('1234');
+      const source = new osciasm.StringSource('1234');
       expect(source.peek()).to.equal('1');
       expect(source.pop()).to.equal('1');
       expect(source.peek()).to.equal('2');
@@ -361,15 +361,15 @@ describe('Parser', function() {
       expect(source.pop()).to.equal('3');
       expect(source.peek()).to.equal('4');
       expect(source.pop()).to.equal('4');
-      expect(source.peek()).to.equal(parser.endOfSource);
-      expect(source.pop()).to.equal(parser.endOfSource);
+      expect(source.peek()).to.equal(osciasm.endOfSource);
+      expect(source.pop()).to.equal(osciasm.endOfSource);
       expect(source.peek).to.throw();
       expect(source.pop).to.throw();
     });
 
     it('should give the correct position', function() {
       const source =
-        new parser.StringSource('1234\n1234', {line: 0, character: 0, filename: 'test.txt'});
+        new osciasm.StringSource('1234\n1234', {line: 0, character: 0, filename: 'test.txt'});
       expect(source.position()).to.deep.equal({line: 0, character: 0, filename: 'test.txt'});
       source.pop();
       expect(source.position()).to.deep.equal({line: 0, character: 1, filename: 'test.txt'});
@@ -387,23 +387,23 @@ describe('Parser', function() {
 
   describe('ConcatSource', function() {
     it('should return endOfSource on empty string', function() {
-      const source = new parser.ConcatSource();
-      expect(source.peek()).to.equal(parser.endOfSource);
-      expect(source.pop()).to.equal(parser.endOfSource);
+      const source = new osciasm.ConcatSource();
+      expect(source.peek()).to.equal(osciasm.endOfSource);
+      expect(source.pop()).to.equal(osciasm.endOfSource);
     });
 
     it('should throw when consuming beyond endOfSource', function() {
-      const source = new parser.ConcatSource();
+      const source = new osciasm.ConcatSource();
       source.pop();
       expect(source.peek).to.throw();
       expect(source.pop).to.throw();
     });
 
     it('should yield characters of a string', function() {
-      const source = new parser.ConcatSource(
-        new parser.StringSource('12'),
-        new parser.StringSource('3'),
-        new parser.StringSource('4'));
+      const source = new osciasm.ConcatSource(
+        new osciasm.StringSource('12'),
+        new osciasm.StringSource('3'),
+        new osciasm.StringSource('4'));
       expect(source.peek()).to.equal('1');
       expect(source.pop()).to.equal('1');
       expect(source.peek()).to.equal('2');
@@ -412,17 +412,17 @@ describe('Parser', function() {
       expect(source.pop()).to.equal('3');
       expect(source.peek()).to.equal('4');
       expect(source.pop()).to.equal('4');
-      expect(source.peek()).to.equal(parser.endOfSource);
-      expect(source.pop()).to.equal(parser.endOfSource);
+      expect(source.peek()).to.equal(osciasm.endOfSource);
+      expect(source.pop()).to.equal(osciasm.endOfSource);
       expect(source.peek).to.throw();
       expect(source.pop).to.throw();
     });
 
     it('should give the correct position', function() {
-      const source = new parser.ConcatSource(
-        new parser.StringSource('12', {line: 0, character: 0, filename: 'a.txt'}),
-        new parser.StringSource('3', {line: 0, character: 0, filename: 'b.txt'}),
-        new parser.StringSource('4', {line: 0, character: 0, filename: 'c.txt'})
+      const source = new osciasm.ConcatSource(
+        new osciasm.StringSource('12', {line: 0, character: 0, filename: 'a.txt'}),
+        new osciasm.StringSource('3', {line: 0, character: 0, filename: 'b.txt'}),
+        new osciasm.StringSource('4', {line: 0, character: 0, filename: 'c.txt'})
       );
       expect(source.position()).to.deep.equal({line: 0, character: 0, filename: 'a.txt'});
       source.pop();
@@ -434,9 +434,9 @@ describe('Parser', function() {
     });
 
     it('should handle empty sources at the start', function() {
-      const source = new parser.ConcatSource(
-        new parser.StringSource(''),
-        new parser.StringSource('A')
+      const source = new osciasm.ConcatSource(
+        new osciasm.StringSource(''),
+        new osciasm.StringSource('A')
       );
 
       expect(source.peek()).to.equal('A');
@@ -446,8 +446,8 @@ describe('Parser', function() {
 
   describe('tokenizeExpression', function() {
     it('should tokenize expressions with parenthesis', function() {
-      const ast = parser.parseInstruction(new parser.StringSource('.db 2*3*($+1+3)')).value;
-      const tokenized = parser.tokenizeExpression(ast);
+      const ast = osciasm.parseInstruction(new osciasm.StringSource('.db 2*3*($+1+3)')).value;
+      const tokenized = osciasm.tokenizeExpression(ast);
       expect(tokenized).to.deep.equal([
         '(',
         {type: 'numberLiteral', value: '2'},
@@ -466,8 +466,8 @@ describe('Parser', function() {
     });
 
     it('should tokenize expressions with different priorities', function() {
-      const ast = parser.parseInstruction(new parser.StringSource('.db 2+3*1')).value;
-      const tokenized = parser.tokenizeExpression(ast);
+      const ast = osciasm.parseInstruction(new osciasm.StringSource('.db 2+3*1')).value;
+      const tokenized = osciasm.tokenizeExpression(ast);
       expect(tokenized).to.deep.equal([
         '(',
         {type: 'numberLiteral', value: '2'},
@@ -484,9 +484,9 @@ describe('Parser', function() {
 
   describe('buildRPN', function() {
     it('should convert token arrays to RPN', function() {
-      const ast = parser.parseInstruction(new parser.StringSource('.db 2+3*1')).value;
-      const tokenized = parser.tokenizeExpression(ast);
-      const rpn = parser.buildRPN(tokenized);
+      const ast = osciasm.parseInstruction(new osciasm.StringSource('.db 2+3*1')).value;
+      const tokenized = osciasm.tokenizeExpression(ast);
+      const rpn = osciasm.buildRPN(tokenized);
       expect(rpn).to.deep.equal([
         {
           type: 'numberLiteral',
