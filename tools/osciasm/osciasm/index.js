@@ -417,14 +417,105 @@
     return output;
   }
 
+  /*
+   *
+   * FIXME: Pull in data from emulator.h
+   */
+  function defaultStartState() {
+    return {
+      symbols: {
+        '$': 0,
+        'register0': 0xFFFFFFFF - 1*4,
+        'register1': 0xFFFFFFFF - 2*4,
+        'register2': 0xFFFFFFFF - 3*4,
+        'register3': 0xFFFFFFFF - 4*4
+      }
+    }
+  }
+
+  function evaluateRPN(rpn, symbolTable) {
+    const token = rpn.pop();
+    switch(token.type) {
+      case 'numberLiteral':
+        // FIXME: Handle hexadecimal, octal and binary
+        return parseInt(token.value);
+      case 'symbol':
+        if(token.value in symbolTable)
+          return symbolTable[token.value];
+        throw new Error(`Unknown symbol ${token.value}`);
+      case 'op':
+        const op1 = evaluateRPN(rpn, symbolTable);
+        const op2 = evaluateRPN(rpn, symbolTable);
+        switch(token.op) {
+          case '+':
+            return op1+op2;
+          case '-':
+            return op1-op2;
+          case '*':
+            return op1*op2;
+          case '/':
+            return Math.floor(op1/op2);
+        }
+      default:
+        throw new Error(`Unknown instruction type ${token.type}`);
+    }
+  }
+
+  function intToBytes(i) {
+    return [
+      (i >> 0) & 0xFF,
+      (i >> 8) & 0xFF,
+      (i >> 16) & 0xFF,
+      (i >> 24) & 0xFF
+    ];
+  }
+
+  function assemble(instructions, state) {
+    if(!state) {
+      state = defaultStartState();
+    }
+    return instructions
+            .reduce(
+              (program, instr) => [...program, ...assembleInstruction(instr, state)],
+              []
+            );
+  }
+
+  function assembleInstruction(instruction, state) {
+    switch(instruction.type) {
+      case 'addr':
+        state.symbols['$'] = evaluateRPN(instruction.value, state.symbols);
+        return;
+      case 'db':
+      return;
+      case 'cpuInstruction':
+        const instr = [
+          ...intToBytes(evaluateRPN(instruction.operandA, state.symbols)),
+          ...intToBytes(evaluateRPN(instruction.operandB, state.symbols)),
+          ...intToBytes(evaluateRPN(instruction.target, state.symbols)),
+          ...intToBytes(evaluateRPN(instruction.jump, state.symbols))
+        ];
+        state.symbols['$'] += 4*4;
+        return instr;
+      default:
+        throw new Error(`Unknown instruction type ${instruction.type}`);
+    }
+  }
+
   module.exports = {
     parse,
-    parseInstruction,
+    assemble,
+    defaultStartState,
     StringSource,
+
+    // low-level exports
+    parseInstruction,
+    assembleInstruction,
     ConcatSource,
     endOfSource,
     stripPositions,
     tokenizeExpression,
-    buildRPN
+    buildRPN,
+    evaluateRPN
   };
 })();

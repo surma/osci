@@ -337,6 +337,71 @@ describe('osciasm', function() {
     });
   });
 
+  describe('assemble', function() {
+    it('should increment IP appropriately', function() {
+      const code =
+      `
+      1 2 3 $+4*4
+      1 2 3 $+128
+      `;
+
+      const asm = osciasm.assemble(osciasm.parse(new osciasm.StringSource(code)));
+      expect(asm).to.deep.equal([
+        1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 16,     0, 0, 0,
+        1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 16+128, 0, 0, 0
+      ]);
+    });
+  });
+
+  describe('assembleInstruction', function() {
+    it('should turn instructions into little-endian byte arrays', function() {
+      const instr = {
+        type: 'cpuInstruction',
+        operandA: [{
+          type: 'numberLiteral',
+          value: '1'
+        }],
+        operandB: [{
+          type: 'numberLiteral',
+          value: '2'
+        }],
+        target: [{
+          type: 'numberLiteral',
+          value: '3'
+        }],
+        jump: [{
+          type: 'numberLiteral',
+          value: '4'
+        }]
+      };
+      expect(osciasm.assembleInstruction(instr, osciasm.defaultStartState())).
+        to.deep.equal([1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0]);
+    });
+
+    xit('should turn .db instructions into little-endian byte arrays', function() {
+      const instr = [
+        {
+          type: 'db',
+          value: [{
+            type: 'numberLiteral',
+            value: '1'
+          }]
+        },
+        {
+          type: 'db',
+          value: [{
+            type: 'numberLiteral',
+            value: '257'
+          }]
+        }
+      ];
+
+      expect(osciasm.assemble(instr, osciasm.defaultStartState())).
+        to.deep.equal([1, 1, 1]);
+    });
+  });
+
+
   describe('StringSource', function() {
     it('should return endOfSource on empty string', function() {
       const source = new osciasm.StringSource('');
@@ -511,4 +576,56 @@ describe('osciasm', function() {
       ]);
     });
   });
+
+  describe('evaluateRPN', function() {
+    it('calcuates numbers', function() {
+      const expr = [{
+          type: 'numberLiteral',
+          value: '2'
+        },
+        {
+          type: 'numberLiteral',
+          value: '3'
+        },
+        {
+          type: 'numberLiteral',
+          value: '1'
+        },
+        {
+          type: 'op',
+          op: '*'
+        },
+        {
+          type: 'op',
+          op: '+'
+        }];
+      expect(osciasm.evaluateRPN(expr, {})).to.equal(5);
+    });
+
+    it('evaluates symbols', function() {
+      const expr = [{
+          type: 'numberLiteral',
+          value: '2'
+        },
+        {
+          type: 'numberLiteral',
+          value: '3'
+        },
+        {
+          type: 'symbol',
+          value: 'lol'
+        },
+        {
+          type: 'op',
+          op: '*'
+        },
+        {
+          type: 'op',
+          op: '+'
+        }];
+      expect(osciasm.evaluateRPN(expr, {lol: 4})).to.equal(14);
+    });
+  });
+
+
 });
