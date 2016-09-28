@@ -13,7 +13,7 @@
           );
         break;
         case 'asmInstruction':
-            instruction.value = buildRPN(tokenizeExpression(instruction.value))
+            instruction.ops = instruction.ops.map(expr => buildRPN(tokenizeExpression(expr)));
         break;
       }
       ast.push(instruction);
@@ -68,10 +68,15 @@
       throw new Error(`Assembler instruction didn't start with . at ${position}`);
     }
     const instruction = parseSymbol(source).value;
+    const ops = [];
+    eatWhitespace(source);
+    while(source.peek() !== endOfSource && ['\n', ';'].indexOf(source.peek()) === -1) {
+      ops.push(parseExpression(source));
+    }
     return {
       type: 'asmInstruction',
       instruction,
-      value: parseExpression(source),
+      ops,
       position
     };
   }

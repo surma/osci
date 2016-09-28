@@ -148,7 +148,7 @@ describe('osciasm', function() {
       const code =
       `
       .addr 256
-      .db 127
+      .db 127 1
       `;
       const ast = osciasm.parse(new osciasm.StringSource(code));
       ast.forEach(i => osciasm.stripPositions(i))
@@ -157,18 +157,24 @@ describe('osciasm', function() {
         {
           type: 'asmInstruction',
           instruction: 'addr',
-          value: [{
+          ops: [[{
             type: 'numberLiteral',
             value: '256'
-          }]
+          }]]
         },
         {
           type: 'asmInstruction',
           instruction: 'db',
-          value: [{
-            type: 'numberLiteral',
-            value: '127'
-          }]
+          ops: [
+            [{
+              type: 'numberLiteral',
+              value: '127'
+            }],
+            [{
+              type: 'numberLiteral',
+              value: '1'
+            }]
+          ]
         }
       ]);
     });
@@ -176,8 +182,7 @@ describe('osciasm', function() {
     it('should handle left-associativity', function() {
       const code =
       `
-      .db 1+2+3
-      .db 1*2*3
+      .db 1+2+3 1*2*3
       `;
       const ast = osciasm.parse(new osciasm.StringSource(code));
       ast.forEach(i => osciasm.stripPositions(i))
@@ -186,24 +191,19 @@ describe('osciasm', function() {
         {
           type: 'asmInstruction',
           instruction: 'db',
-          value: [
+          ops: [[
             {type: 'numberLiteral', value: '1'},
             {type: 'numberLiteral', value: '2'},
             {type: 'op', op: '+'},
             {type: 'numberLiteral', value: '3'},
             {type: 'op', op: '+'}
-          ]
-        },
-        {
-          type: 'asmInstruction',
-          instruction: 'db',
-          value: [
+          ],[
             {type: 'numberLiteral', value: '1'},
             {type: 'numberLiteral', value: '2'},
             {type: 'op', op: '*'},
             {type: 'numberLiteral', value: '3'},
             {type: 'op', op: '*'}
-          ]
+          ]]
         }
       ]);
     });
@@ -220,13 +220,13 @@ describe('osciasm', function() {
         {
           type: 'asmInstruction',
           instruction: 'db',
-          value: [
+          ops: [[
             {type: 'numberLiteral', value: '2'},
             {type: 'symbol', value: '$'},
             {type: 'numberLiteral', value: '1'},
             {type: 'op', op: '+'},
             {type: 'op', op: '*'}
-          ]
+          ]]
         }
       ]);
     });
@@ -243,11 +243,11 @@ describe('osciasm', function() {
         {
           type: 'asmInstruction',
           instruction: 'db',
-          value: [
+          ops: [[
             {type: 'symbol', value: 'someLabel'},
             {type: 'numberLiteral', value: '2'},
             {type: 'op', op: '+'}
-          ]
+          ]]
         }
       ]);
     });
@@ -264,13 +264,13 @@ describe('osciasm', function() {
         {
           type: 'asmInstruction',
           instruction: 'db',
-          value: [
+          ops: [[
             {type: 'numberLiteral', value: '0xFF'},
             {type: 'numberLiteral', value: '0777'},
             {type: 'op', op: '-'},
             {type: 'numberLiteral', value: '0b111'},
             {type: 'op', op: '+'}
-          ]
+          ]]
         }
       ]);
     });
@@ -287,10 +287,10 @@ describe('osciasm', function() {
         {
           type: 'asmInstruction',
           instruction: 'db',
-          value: [{
+          ops: [[{
             type: 'stringLiteral',
             value: 'Lets try a string'
-          }]
+          }]]
         }
       ]);
     });
@@ -511,7 +511,7 @@ describe('osciasm', function() {
 
   describe('tokenizeExpression', function() {
     it('should tokenize expressions with parenthesis', function() {
-      const ast = osciasm.parseInstruction(new osciasm.StringSource('.db 2*3*($+1+3)')).value;
+      const ast = osciasm.parseInstruction(new osciasm.StringSource('.db 2*3*($+1+3)')).ops[0];
       const tokenized = osciasm.tokenizeExpression(ast);
       expect(tokenized).to.deep.equal([
         '(',
@@ -531,7 +531,7 @@ describe('osciasm', function() {
     });
 
     it('should tokenize expressions with different priorities', function() {
-      const ast = osciasm.parseInstruction(new osciasm.StringSource('.db 2+3*1')).value;
+      const ast = osciasm.parseInstruction(new osciasm.StringSource('.db 2+3*1')).ops[0];
       const tokenized = osciasm.tokenizeExpression(ast);
       expect(tokenized).to.deep.equal([
         '(',
@@ -549,7 +549,7 @@ describe('osciasm', function() {
 
   describe('buildRPN', function() {
     it('should convert token arrays to RPN', function() {
-      const ast = osciasm.parseInstruction(new osciasm.StringSource('.db 2+3*1')).value;
+      const ast = osciasm.parseInstruction(new osciasm.StringSource('.db 2+3*1')).ops[0];
       const tokenized = osciasm.tokenizeExpression(ast);
       const rpn = osciasm.buildRPN(tokenized);
       expect(rpn).to.deep.equal([
