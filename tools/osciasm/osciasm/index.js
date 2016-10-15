@@ -492,7 +492,7 @@
     let ip = 0;
     for(let instruction of instructions) {
       if(instruction.type === 'asmInstruction' && instruction.instruction === 'addr') {
-        ip = evaluateRPN(instruction.ops[0].slice(), state);
+        ip = evaluateRPN(instruction.ops[0].slice(), state.symbols);
       } else if(instruction.type === 'label') {
         state.symbols[instruction.value] = ip;
       } else {
@@ -534,7 +534,7 @@
       case 'asmInstruction':
         switch(instruction.instruction) {
           case 'db':
-            return [];
+            return instruction.ops.map(op => evaluateRPN(op, state.symbols) % 256);
           case 'dw':
             return [];
           case 'addr':

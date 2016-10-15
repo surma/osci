@@ -407,26 +407,31 @@ describe('osciasm', function() {
         to.deep.equal([1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0]);
     });
 
-    xit('should turn .db instructions into little-endian byte arrays', function() {
+    it('should turn .db instructions into little-endian byte arrays', function() {
       const instr = [
         {
-          type: 'db',
-          value: [{
+          type: 'asmInstruction',
+          instruction: 'db',
+          ops: [[{
             type: 'numberLiteral',
             value: '1'
-          }]
-        },
-        {
-          type: 'db',
-          value: [{
+          }], [{
             type: 'numberLiteral',
             value: '257'
-          }]
+          }]]
+        },
+        {
+          type: 'asmInstruction',
+          instruction: 'db',
+          ops: [[{
+            type: 'numberLiteral',
+            value: '128'
+          }]]
         }
       ];
 
       expect(osciasm.assemble(instr, osciasm.defaultStartState())).
-        to.deep.equal([1, 1, 1]);
+        to.deep.equal([1, 1, 128]);
     });
   });
 
