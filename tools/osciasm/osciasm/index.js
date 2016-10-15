@@ -430,10 +430,12 @@
     return {
       symbols: {
         '$': 0,
+        'instruction_size': 4,
         'register0': 0xFFFFFFFF - 1*4,
         'register1': 0xFFFFFFFF - 2*4,
         'register2': 0xFFFFFFFF - 3*4,
-        'register3': 0xFFFFFFFF - 4*4
+        'register3': 0xFFFFFFFF - 4*4,
+        'flags0': 0xFFFFFFFF - 4*4 - 1*4
       }
     }
   }
@@ -479,6 +481,14 @@
     if(!state) {
       state = defaultStartState();
     }
+    let ip = 0;
+    for(let instruction of instructions) {
+      if(instruction.type === 'label') {
+        state.symbols[instruction.value] = ip;
+      } else {
+        ip += sizeOfInstruction(instruction);
+      }
+    }
     return instructions
             .reduce(
               (program, instr) => [...program, ...assembleInstruction(instr, state)],
@@ -486,13 +496,46 @@
             );
   }
 
+  function sizeOfInstruction(instruction) {
+    switch(instruction.type) {
+      case 'asmInstruction':
+        switch(instruction.instruction) {
+          case 'db':
+            return instruction.ops.length;
+          case 'dw':
+            return instruction.ops.length*4;
+          case 'addr':
+            return 0;
+          default:
+            throw new Error(`Unknown assembler instruction .${instruction.instruction}`);
+        }
+      case 'cpuInstruction':
+        return 4*4;
+      default:
+        throw new Error(`Unknown instruction type ${instruction.type}`);
+    }
+  }
+
   function assembleInstruction(instruction, state) {
     switch(instruction.type) {
-      case 'addr':
-        state.symbols['$'] = evaluateRPN(instruction.value, state.symbols);
-        return;
-      case 'db':
-      return;
+      case 'label':
+        // Already handled
+        return [];
+      case 'asmInstruction':
+        switch(instruction.instruction) {
+          case 'db':
+            return [];
+          case 'dw':
+            return [];
+          case 'addr':
+            if(instruction.ops.length !== 1) {
+              throw new Error(`.addr takes exactly one argument`);
+            }
+            state.symbols['$'] = evaluateRPN(instruction.ops[0], state.symbols);
+            return [];
+          default:
+            throw new Error(`Unknown assembler instruction .${instruction.instruction}`);
+        }
       case 'cpuInstruction':
         const instr = [
           ...intToBytes(evaluateRPN(instruction.operandA, state.symbols)),

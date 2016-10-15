@@ -12,7 +12,7 @@ program
       .then(instructions => osciasm.assemble(instructions))
       .then(binary => console.log(binary))
       .catch(error => {
-        console.error(`Error while parsing: ${error.toString()}`);
+        console.error(`Error while parsing: ${error.toString()}\n${error.stack}`);
       });
   })
   .parse(process.argv);
