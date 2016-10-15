@@ -365,6 +365,21 @@ describe('osciasm', function() {
         1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4,  0, 0, 0
       ]);
     });
+
+    it('should respect .addr for forward references', function() {
+      const code =
+      `
+      1 2 3 target
+      .addr 0x80
+      target: 1 2 3 4
+      `;
+
+      const asm = osciasm.assemble(osciasm.parse(new osciasm.StringSource(code)));
+      expect(asm).to.deep.equal([
+        1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 128, 0, 0, 0,
+        1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4,  0, 0, 0
+      ]);
+    });
   });
 
   describe('assembleInstruction', function() {

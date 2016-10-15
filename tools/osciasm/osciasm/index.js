@@ -491,7 +491,9 @@
     }
     let ip = 0;
     for(let instruction of instructions) {
-      if(instruction.type === 'label') {
+      if(instruction.type === 'asmInstruction' && instruction.instruction === 'addr') {
+        ip = evaluateRPN(instruction.ops[0].slice(), state);
+      } else if(instruction.type === 'label') {
         state.symbols[instruction.value] = ip;
       } else {
         ip += sizeOfInstruction(instruction);
