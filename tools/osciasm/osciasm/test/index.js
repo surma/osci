@@ -595,15 +595,19 @@ describe('osciasm', function() {
     it('calcuates numbers', function() {
       const expr = [{
           type: 'numberLiteral',
-          value: '2'
+          value: '0xf' // 15
         },
         {
           type: 'numberLiteral',
-          value: '3'
+          value: '010' // 8
         },
         {
           type: 'numberLiteral',
-          value: '1'
+          value: '0b101' // 5
+        },
+        {
+          type: 'numberLiteral',
+          value: '10'
         },
         {
           type: 'op',
@@ -612,8 +616,12 @@ describe('osciasm', function() {
         {
           type: 'op',
           op: '+'
+        },
+        {
+          type: 'op',
+          op: '+'
         }];
-      expect(osciasm.evaluateRPN(expr, {})).to.equal(5);
+      expect(osciasm.evaluateRPN(expr, {})).to.equal(73);
     });
 
     it('evaluates symbols', function() {

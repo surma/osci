@@ -444,8 +444,16 @@
     const token = rpn.pop();
     switch(token.type) {
       case 'numberLiteral':
-        // FIXME: Handle hexadecimal, octal and binary
-        return parseInt(token.value);
+        if (token.value.startsWith('0x')) {
+          return parseInt(token.value.substr(2), 16);
+        }
+        else if (token.value.startsWith('0b')) {
+          return parseInt(token.value.substr(2), 2);
+        }
+        else if (token.value.startsWith('0')) {
+          return parseInt(token.value.substr(1), 8);
+        }
+        return parseInt(token.value, 10);
       case 'symbol':
         if(token.value in symbolTable)
           return symbolTable[token.value];
