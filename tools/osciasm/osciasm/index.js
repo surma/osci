@@ -430,12 +430,13 @@
     return {
       symbols: {
         '$': 0,
-        'instruction_size': 4,
-        'register0': 0xFFFFFFFF - 1*4,
-        'register1': 0xFFFFFFFF - 2*4,
-        'register2': 0xFFFFFFFF - 3*4,
-        'register3': 0xFFFFFFFF - 4*4,
-        'flags0': 0xFFFFFFFF - 4*4 - 1*4
+        'instruction_size': 4*4,
+        'register3': 0xFFFFFFFF - 1*4,
+        'register2': 0xFFFFFFFF - 2*4,
+        'register1': 0xFFFFFFFF - 3*4,
+        'register0': 0xFFFFFFFF - 4*4,
+        'ivt0': 0xFFFFFFFF - 4*4 - 1*4,
+        'flags0': 0xFFFFFFFF - 4*4 - 1*4 - 1*4
       }
     }
   }
