@@ -30,7 +30,9 @@ namespace osciemu {
     auto b = ReadIntFromMemory(m, inst.operand_b);
     WriteIntToMemory(m, inst.target, a-b);
     if (a-b <= 0) {
-      ip = inst.jmp;
+      // Round to the next biggest multiple of `Instruction::Size` if its
+      // not multiple already.
+      ip = (inst.jmp + Instruction::Size - 1) & ~(Instruction::Size-1);
     } else {
       ip += Size;
     }

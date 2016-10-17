@@ -16,6 +16,9 @@ namespace osciemu {
    *     GOTO jmp;
    * ```
    *
+   * `jmp` must be a multiple of the word size. If it’s not, it will be rounded
+   * to the next biggest multiple of the word size.
+   *
    * Osci is a 32-bit little endian CPU and instructions must be serialized accordingly.
    */
   class Instruction {
