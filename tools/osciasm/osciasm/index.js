@@ -535,9 +535,10 @@
       case 'asmInstruction':
         switch(instruction.instruction) {
           case 'db':
-            return instruction.ops.map(op => evaluateRPN(op, state.symbols) % 256);
+            return instruction.ops.map(op => evaluateRPN(op, state.symbols) & 0xFF);
           case 'dw':
-            return [];
+            return instruction.ops.map(op => evaluateRPN(op, state.symbols))
+              .reduce((arr, cur) => [...arr, ...intToBytes(cur)], []);
           case 'addr':
             if(instruction.ops.length !== 1) {
               throw new Error(`.addr takes exactly one argument`);

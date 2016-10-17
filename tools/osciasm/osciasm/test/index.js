@@ -433,6 +433,33 @@ describe('osciasm', function() {
       expect(osciasm.assemble(instr, osciasm.defaultStartState())).
         to.deep.equal([1, 1, 0]);
     });
+
+    it('should turn .dw instructions into little-endian byte arrays', function() {
+      const instr = [
+        {
+          type: 'asmInstruction',
+          instruction: 'dw',
+          ops: [[{
+            type: 'numberLiteral',
+            value: '1'
+          }], [{
+            type: 'numberLiteral',
+            value: '0xFFAA0033'
+          }]]
+        },
+        {
+          type: 'asmInstruction',
+          instruction: 'dw',
+          ops: [[{
+            type: 'numberLiteral',
+            value: '0'
+          }]]
+        }
+      ];
+
+      expect(osciasm.assemble(instr, osciasm.defaultStartState())).
+        to.deep.equal([1, 0, 0, 0, 0x33, 0, 0xAA, 0xFF, 0, 0, 0, 0]);
+    });
   });
 
 
