@@ -425,13 +425,13 @@ describe('osciasm', function() {
           instruction: 'db',
           ops: [[{
             type: 'numberLiteral',
-            value: '128'
+            value: '0'
           }]]
         }
       ];
 
       expect(osciasm.assemble(instr, osciasm.defaultStartState())).
-        to.deep.equal([1, 1, 128]);
+        to.deep.equal([1, 1, 0]);
     });
   });
 
