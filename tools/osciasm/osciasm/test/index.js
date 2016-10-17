@@ -352,7 +352,33 @@ describe('osciasm', function() {
       ]);
     });
 
-    it('should handle forward references to labels', function() {
+    it('should make .db and .dw multiples of word size', function() {
+      const code =
+      `
+      .db 1 2 ; just 2 bytes
+      .dw 1 2 ; just 2 words
+      `;
+
+      const asm = osciasm.assemble(osciasm.parse(new osciasm.StringSource(code)));
+      expect(asm).to.deep.equal([
+        1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      ]);
+    });
+
+    it('should make jmp targets a multiple of word size§', function() {
+      const code =
+      `
+      0 0 0 1
+      `;
+
+      const asm = osciasm.assemble(osciasm.parse(new osciasm.StringSource(code)));
+      expect(asm).to.deep.equal([
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0
+      ]);
+    });
+
+    it('should handle references to labels', function() {
       const code =
       `
       1 2 3 target
@@ -420,12 +446,7 @@ describe('osciasm', function() {
           }], [{
             type: 'numberLiteral',
             value: '257'
-          }]]
-        },
-        {
-          type: 'asmInstruction',
-          instruction: 'db',
-          ops: [[{
+          }], [{
             type: 'numberLiteral',
             value: '0'
           }]]
@@ -433,7 +454,7 @@ describe('osciasm', function() {
       ];
 
       expect(osciasm.assemble(instr, osciasm.defaultStartState())).
-        to.deep.equal([1, 1, 0]);
+        to.deep.equal([1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
     });
 
     it('should turn .dw instructions into little-endian byte arrays', function() {
@@ -447,12 +468,7 @@ describe('osciasm', function() {
           }], [{
             type: 'numberLiteral',
             value: '0xFFAA0033'
-          }]]
-        },
-        {
-          type: 'asmInstruction',
-          instruction: 'dw',
-          ops: [[{
+          }], [{
             type: 'numberLiteral',
             value: '0'
           }]]
@@ -460,7 +476,7 @@ describe('osciasm', function() {
       ];
 
       expect(osciasm.assemble(instr, osciasm.defaultStartState())).
-        to.deep.equal([1, 0, 0, 0, 0x33, 0, 0xAA, 0xFF, 0, 0, 0, 0]);
+        to.deep.equal([1, 0, 0, 0, 0x33, 0, 0xAA, 0xFF, 0, 0, 0, 0, 0, 0, 0, 0]);
     });
   });
 
