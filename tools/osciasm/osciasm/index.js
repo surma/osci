@@ -533,12 +533,17 @@
         // Already handled
         return [];
       case 'asmInstruction':
+        let r;
         switch(instruction.instruction) {
           case 'db':
-            return instruction.ops.map(op => evaluateRPN(op, state.symbols) & 0xFF);
+            r = instruction.ops.map(op => evaluateRPN(op, state.symbols) & 0xFF);
+            state.symbols['$'] += sizeOfInstruction(instruction);
+            return r;
           case 'dw':
-            return instruction.ops.map(op => evaluateRPN(op, state.symbols))
+            r = instruction.ops.map(op => evaluateRPN(op, state.symbols))
               .reduce((arr, cur) => [...arr, ...intToBytes(cur)], []);
+            state.symbols['$'] += sizeOfInstruction(instruction);
+            return r;
           case 'addr':
             if(instruction.ops.length !== 1) {
               throw new Error(`.addr takes exactly one argument`);
