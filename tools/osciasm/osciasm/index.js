@@ -512,9 +512,9 @@
       case 'asmInstruction':
         switch(instruction.instruction) {
           case 'db':
-            return instruction.ops.length;
+            return Math.ceil(instruction.ops.length / 16) * 16;
           case 'dw':
-            return instruction.ops.length*4;
+            return Math.ceil(instruction.ops.length*4 / 16) * 16;
           case 'addr':
             return 0;
           default:
@@ -527,23 +527,29 @@
     }
   }
 
+  function emptyArray(n) {
+    return Array.apply(null, Array(n)).map(_ => 0);
+  }
+
   function assembleInstruction(instruction, state) {
     switch(instruction.type) {
       case 'label':
         // Already handled
         return [];
       case 'asmInstruction':
-        let r;
+        let r, size;
         switch(instruction.instruction) {
           case 'db':
             r = instruction.ops.map(op => evaluateRPN(op, state.symbols) & 0xFF);
-            state.symbols['$'] += sizeOfInstruction(instruction);
-            return r;
+            size = sizeOfInstruction(instruction);
+            state.symbols['$'] += size;
+            return [...r, ...emptyArray(size - r.length)];
           case 'dw':
             r = instruction.ops.map(op => evaluateRPN(op, state.symbols))
               .reduce((arr, cur) => [...arr, ...intToBytes(cur)], []);
-            state.symbols['$'] += sizeOfInstruction(instruction);
-            return r;
+            size = sizeOfInstruction(instruction);
+            state.symbols['$'] += size;
+            return [...r, ...emptyArray(size - r.length)];
           case 'addr':
             if(instruction.ops.length !== 1) {
               throw new Error(`.addr takes exactly one argument`);
@@ -558,7 +564,7 @@
           ...intToBytes(evaluateRPN(instruction.operandA, state.symbols)),
           ...intToBytes(evaluateRPN(instruction.operandB, state.symbols)),
           ...intToBytes(evaluateRPN(instruction.target, state.symbols)),
-          ...intToBytes(evaluateRPN(instruction.jump, state.symbols))
+          ...intToBytes(Math.ceil(evaluateRPN(instruction.jump, state.symbols) / 16) * 16)
         ];
         state.symbols['$'] += 4*4;
         return instr;

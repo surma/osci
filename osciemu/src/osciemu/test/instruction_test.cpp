@@ -51,3 +51,13 @@ TEST(InstructionTest, CanExecuteMultipleInstructions) {
 
   ASSERT_EQ(osciemu::ReadIntFromMemory(m, 128), 3);
 }
+
+TEST(InstructionTest, RoundsToTheNearestMultiple) {
+  auto m = osciemu::ArrayMemory(32);
+  uint32_t ip = 0;
+
+  osciemu::Instruction(0, 0, 0, osciemu::Instruction::Size*5+1).WriteToMemory(m, 0);
+  osciemu::Instruction::Execute(m, ip);
+
+  ASSERT_EQ(ip, 6*osciemu::Instruction::Size);
+}
