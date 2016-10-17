@@ -24,6 +24,6 @@ efffffff 14000080 efffffff 50000080
 10000080 14000080 f3ffffff 30000080
 
 # end: (kBiosBoundary + 12) = 0x80000050
-# flags[0] = data[3] - data[0]; set halt bit
+# flags[0] = data[1] - data[0]; set halt bit
 14000080 10000080 e7ffffff 00000000
 
