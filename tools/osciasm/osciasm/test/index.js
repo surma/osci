@@ -356,13 +356,15 @@ describe('osciasm', function() {
       const code =
       `
       1 2 3 target
-      target: 1 2 3 4
+      0 0 0 0
+      target: 1 2 3 16
       `;
 
       const asm = osciasm.assemble(osciasm.parse(new osciasm.StringSource(code)));
       expect(asm).to.deep.equal([
-        1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 16, 0, 0, 0,
-        1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4,  0, 0, 0
+        1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 32, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 16, 0, 0, 0
       ]);
     });
 
@@ -371,13 +373,13 @@ describe('osciasm', function() {
       `
       1 2 3 target
       .addr 0x80
-      target: 1 2 3 4
+      target: 1 2 3 0
       `;
 
       const asm = osciasm.assemble(osciasm.parse(new osciasm.StringSource(code)));
       expect(asm).to.deep.equal([
         1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 128, 0, 0, 0,
-        1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4,  0, 0, 0
+        1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 0,   0, 0, 0
       ]);
     });
   });
@@ -400,11 +402,11 @@ describe('osciasm', function() {
         }],
         jump: [{
           type: 'numberLiteral',
-          value: '4'
+          value: '16'
         }]
       };
       expect(osciasm.assembleInstruction(instr, osciasm.defaultStartState())).
-        to.deep.equal([1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0]);
+        to.deep.equal([1,0,0,0,2,0,0,0,3,0,0,0,16,0,0,0]);
     });
 
     it('should turn .db instructions into little-endian byte arrays', function() {

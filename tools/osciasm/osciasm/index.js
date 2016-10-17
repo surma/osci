@@ -512,9 +512,9 @@
       case 'asmInstruction':
         switch(instruction.instruction) {
           case 'db':
-            return instruction.ops.length;
+            return Math.ceil(instruction.ops.length / 16) * 16;
           case 'dw':
-            return instruction.ops.length*4;
+            return Math.ceil(instruction.ops.length*4 / 16) * 16;
           case 'addr':
             return 0;
           default:
@@ -558,7 +558,7 @@
           ...intToBytes(evaluateRPN(instruction.operandA, state.symbols)),
           ...intToBytes(evaluateRPN(instruction.operandB, state.symbols)),
           ...intToBytes(evaluateRPN(instruction.target, state.symbols)),
-          ...intToBytes(evaluateRPN(instruction.jump, state.symbols))
+          ...intToBytes(Math.ceil(evaluateRPN(instruction.jump, state.symbols) / 16) * 16)
         ];
         state.symbols['$'] += 4*4;
         return instr;
