@@ -251,6 +251,27 @@ describe('osciasm', function() {
         }
       ]);
     });
+    it('should parse negative numbers', function() {
+      const code =
+      `
+      .db -1 + 4
+      `;
+      const ast = osciasm.parse(new osciasm.StringSource(code));
+      ast.forEach(i => osciasm.stripPositions(i))
+
+      expect(ast).to.deep.equal([
+        {
+          type: 'asmInstruction',
+          instruction: 'db',
+          ops: [[
+            {type: 'numberLiteral', value: '1'},
+            {type: 'op', op: 'unary-'},
+            {type: 'numberLiteral', value: '4'},
+            {type: 'op', op: '+'}
+          ]]
+        }
+      ]);
+    });
 
     it('should parse hexadecimal, octal and binary literals', function() {
       const code =
@@ -455,6 +476,36 @@ describe('osciasm', function() {
 
       expect(osciasm.assemble(instr, osciasm.defaultStartState())).
         to.deep.equal([1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    });
+
+    it('should handle negative values for .db, .dw', function() {
+      const instr = [
+        {
+          type: 'asmInstruction',
+          instruction: 'db',
+          ops: [[{
+            type: 'numberLiteral',
+            value: '1'
+          }, {
+            type: 'op',
+            op: 'unary-'
+          }]]
+        }, {
+          type: 'asmInstruction',
+          instruction: 'dw',
+          ops: [[{
+            type: 'numberLiteral',
+            value: '1'
+          }, {
+            type: 'op',
+            op: 'unary-'
+          }]]
+        }
+      ];
+
+      expect(osciasm.assemble(instr, osciasm.defaultStartState())).
+        to.deep.equal([0xFF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                       0xFF, 0xFF, 0xFF, 0xFF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
     });
 
     it('should turn .dw instructions into little-endian byte arrays', function() {

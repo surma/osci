@@ -1,17 +1,25 @@
 .addr 0x80000000
-0 1 2 start_loop ; 0x80000000
+init:
+register2 register2 register2 $+instruction_size
+zero one register1 start_loop
 
-data:
-.dw 0 1 128 0 ; 0x80000010
+zero:
+.dw 0 
+one:
+.dw 1 
+negativeone:
+.dw -1 
+counter:
+.dw 128  
 
 start_loop:
-data+2*4 data+0 register0 $+instruction_size ; 0x80000020
+counter zero register0 $+instruction_size 
 loop:
-register0 data+1*4 register0 end_loop ; 0x80000030
-data+0 data+1*4 register1 loop
+register0 negativeone register0 end_loop 
+zero one register1 loop
 
 end_loop:
-data+1*4 data+0 flags0 0
+one zero flags0 0
 
 
 

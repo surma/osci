@@ -164,7 +164,7 @@
         source.pop();
         return {
           type: 'op',
-          op: '-',
+          op: 'unary-',
           ops: parseExpression2(source),
           position
         };
@@ -374,9 +374,13 @@
           case '-':
           case '*':
           case '/':
-            return expr.ops.map(tokenizeExpression).reduce((prev, cur) => [...prev, ...cur], [{'type': 'op', op: expr.op}]);
+            return expr.ops.map(tokenizeExpression).reduce((prev, cur) => [...prev, ...cur], [{type: 'op', op: expr.op}]);
           case 'expr':
             return ['(', ...tokenizeExpression(expr.ops[0]), ...tokenizeExpression(expr.ops[1]), ')'];
+          case 'unary-':
+            return [expr.ops, {type: 'op', op: 'unary-'}];
+          default:
+            throw new Error(`Unknown operation ${expr.op} at ${expr.position}`);
         }
       case 'symbol':
       case 'numberLiteral':
@@ -393,7 +397,8 @@
       '+': 0,
       '-': 0,
       '*': 1,
-      '/': 1
+      '/': 1,
+      'unary-': 2,
     };
     const operators = Object.keys(priority);
     const opstack = [];
@@ -460,17 +465,17 @@
           return symbolTable[token.value];
         throw new Error(`Unknown symbol ${token.value}`);
       case 'op':
-        const op1 = evaluateRPN(rpn, symbolTable);
-        const op2 = evaluateRPN(rpn, symbolTable);
         switch(token.op) {
           case '+':
-            return op1+op2;
+            return evaluateRPN(rpn, symbolTable)+evaluateRPN(rpn, symbolTable);
           case '-':
-            return op1-op2;
+            return evaluateRPN(rpn, symbolTable)-evaluateRPN(rpn, symbolTable);
           case '*':
-            return op1*op2;
+            return evaluateRPN(rpn, symbolTable)*evaluateRPN(rpn, symbolTable);
           case '/':
-            return Math.floor(op1/op2);
+            return Math.floor(evaluateRPN(rpn, symbolTable)/evaluateRPN(rpn, symbolTable));
+          case 'unary-':
+            return -evaluateRPN(rpn, symbolTable);
         }
       default:
         throw new Error(`Unknown instruction type ${token.type}`);
