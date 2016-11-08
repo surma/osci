@@ -5,6 +5,8 @@
 
 #include "osciemu-cli/config.h"
 #include "osciemu-cli/fileutils.h"
+#include "osciemu-cli/runmode.h"
+#include "osciemu-cli/stepmode.h"
 
 void printHelp() {
   std::cout << "HELP";
@@ -13,9 +15,10 @@ void printHelp() {
 int main(int argc, char *argv[]) {
   int ch;
 
+  bool stepModeFlag;
   std::string biosFilename, imageFilename;
 
-  while ((ch = getopt(argc, argv, "i:b:v")) != -1) {
+  while ((ch = getopt(argc, argv, "i:b:vs")) != -1) {
     switch (ch) {
       case 'v':
         printHelp();
@@ -25,6 +28,9 @@ int main(int argc, char *argv[]) {
         break;
       case 'b':
         biosFilename.assign(optarg);
+        break;
+      case 's':
+        stepModeFlag = true;
         break;
     }
   }
@@ -45,17 +51,9 @@ int main(int argc, char *argv[]) {
   auto bios = LoadFileAsArrayMemory(biosFilename);
   auto emu = osciemu::Emulator(image, bios);
 
-  uint32_t i = 0, regAddr, stepCounter = 0;
-  while(!emu.IsHalted()) {
-    printf("\e[u");
-    printf("\e[s");
-    printf("(%8d) ip: %08x, ", stepCounter, emu.ip_);
-    for(i = 0; i < osciemu::Emulator::kNumRegisters; i++) {
-      regAddr = osciemu::Emulator::kRegisterBoundary + i*osciemu::Instruction::Word;
-      printf("r%d: %08x, ", i, osciemu::ReadIntFromMemory(emu, regAddr));
-    }
-    emu.Step();
-    stepCounter++;
+  if (stepModeFlag) {
+    stepMode(emu);
+  } else {
+    runMode(emu);
   }
-  printf("\n");
 }

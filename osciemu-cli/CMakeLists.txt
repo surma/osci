@@ -22,6 +22,9 @@ include_directories (
 
 set (SRCS
   ${PROJECT_SOURCE_DIR}/src/osciemu-cli/fileutils.cpp
+  ${PROJECT_SOURCE_DIR}/src/osciemu-cli/runmode.cpp
+  ${PROJECT_SOURCE_DIR}/src/osciemu-cli/stepmode.cpp
+  ${PROJECT_SOURCE_DIR}/src/osciemu-cli/utils.cpp
 )
 
 add_executable (${PROJECT_NAME} ${SRCS} ${PROJECT_SOURCE_DIR}/src/osciemu-cli/main.cpp)
