@@ -105,7 +105,7 @@ namespace osciemu {
       static const uint8_t kNumIvts = 1;
       static const uint8_t kNumFlags = 1;
       static const uint32_t kRegisterBoundary = kMaxAddress - kNumRegisters*Instruction::Word;
-      static const uint32_t kIvtBoundary = kRegisterBoundary - kNumIvts*Instruction::Word;
+      static const uint32_t kIvtBoundary = kRegisterBoundary - (kNumIvts+1)*Instruction::Word;
       static const uint32_t kFlagBoundary = kIvtBoundary - CEIL(kNumFlags, Instruction::Word*8)*Instruction::Word;
       static const uint32_t kControlBoundary = kFlagBoundary;
       uint32_t ip_;
