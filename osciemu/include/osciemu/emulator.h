@@ -30,6 +30,8 @@ namespace osciemu {
    * |               IVT Entry 0             |
    * |                   ...                 |
    * |               IVT Entry j             |
+   * +---------------------------------------+
+   * |           IVT Return address          |
    * +---------------------------------------+ kRegisterBoundary
    * |                Register 0             |
    * |                   ...                 |
