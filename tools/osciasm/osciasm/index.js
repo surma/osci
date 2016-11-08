@@ -440,8 +440,9 @@
         'register2': 0xFFFFFFFF - 2*4,
         'register1': 0xFFFFFFFF - 3*4,
         'register0': 0xFFFFFFFF - 4*4,
-        'ivt0': 0xFFFFFFFF - 4*4 - 1*4,
-        'flags0': 0xFFFFFFFF - 4*4 - 1*4 - 1*4
+        'ivt_return': 0xFFFFFFFF - 4*4 - 1*4,
+        'ivt0': 0xFFFFFFFF - 4*4 - 2*4,
+        'flags0': 0xFFFFFFFF - 4*4 - 2*4 - 1*4
       }
     }
   }
