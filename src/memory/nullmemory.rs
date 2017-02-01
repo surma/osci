@@ -35,7 +35,7 @@ impl Memory for NullMemory {
 
     #[inline]
     fn size(&self) -> usize {
-        return std::u32::MAX as usize;
+        std::u32::MAX as usize
     }
 }
 
