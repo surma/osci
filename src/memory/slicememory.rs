@@ -1,33 +1,33 @@
-//! Simple slice-based memory implementation.
-//!
-//! # Examples
-//! ```
-//! use osciemu::memory::Memory;
-//! use osciemu::memory::slicememory::SliceMemory;
-//!
-//! let mut m = SliceMemory::new(16);
-//! assert_eq!(m.get(0), 0);
-//! m.set(8, 123);
-//! assert_eq!(m.get(8), 123);
-//! ```
-//!
-//! # Panics
-//! Just a slice, `SliceMemory` panics when accessed out of bounds.
-//!
-//! ```
-//! # use std::panic;
-//! # use osciemu::memory::Memory;
-//! # use osciemu::memory::slicememory::SliceMemory;
-//! let mut m = SliceMemory::new(16);
-//! let result = panic::catch_unwind(|| {
-//!     m.get(17); // Out-of-bounds!
-//! });
-//! assert!(result.is_err());
-//! ```
 use memory::Memory;
 use std::boxed::Box;
 use std::vec::Vec;
 
+/// Simple slice-based memory implementation.
+///
+/// # Examples
+/// ```
+/// use osciemu::memory::Memory;
+/// use osciemu::memory::SliceMemory;
+///
+/// let mut m = SliceMemory::new(16);
+/// assert_eq!(m.get(0), 0);
+/// m.set(8, 123);
+/// assert_eq!(m.get(8), 123);
+/// ```
+///
+/// # Panics
+/// Just a slice, `SliceMemory` panics when accessed out of bounds.
+///
+/// ```
+/// # use std::panic;
+/// # use osciemu::memory::Memory;
+/// # use osciemu::memory::SliceMemory;
+/// let mut m = SliceMemory::new(16);
+/// let result = panic::catch_unwind(|| {
+///     m.get(17); // Out-of-bounds!
+/// });
+/// assert!(result.is_err());
+/// ```
 pub struct SliceMemory(Box<[u32]>);
 
 impl SliceMemory {

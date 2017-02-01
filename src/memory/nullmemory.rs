@@ -1,21 +1,21 @@
-//! Like `/dev/null`.
-//!
-//! The `NullMemory` is always 2^32 bytes large (osci’s maximum memory size),
-//! reads `0` everywhere and discards all writes.
-//!
-//! # Examples
-//! ```
-//! use osciemu::memory::Memory;
-//! use osciemu::memory::nullmemory::NullMemory;
-//!
-//! let mut m = NullMemory::new();
-//! assert_eq!(m.get(0), 0);
-//! m.set(0, 1);
-//! assert_eq!(m.get(0), 0);
-//! ```
 use memory::Memory;
 use std;
 
+/// Like `/dev/null`.
+///
+/// The `NullMemory` is always 2^32 bytes large (osci’s memory size),
+/// reads `0` everywhere and discards all writes.
+///
+/// # Examples
+/// ```
+/// use osciemu::memory::Memory;
+/// use osciemu::memory::NullMemory;
+///
+/// let mut m = NullMemory::new();
+/// assert_eq!(m.get(0), 0);
+/// m.set(0, 1);
+/// assert_eq!(m.get(0), 0);
+/// ```
 pub struct NullMemory;
 
 impl NullMemory {
