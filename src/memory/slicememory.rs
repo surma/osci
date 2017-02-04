@@ -1,6 +1,7 @@
 use memory::Memory;
 use std::boxed::Box;
 use std::vec::Vec;
+use std::cmp::min;
 
 /// Simple slice-based memory implementation.
 ///
@@ -38,11 +39,11 @@ impl SliceMemory {
         SliceMemory(v.into_boxed_slice())
     }
 
-    // Like `new()` but writes `value` to every cell
-    pub fn with_value(size: usize, value: u32) -> SliceMemory {
+    // Initializes the new memory with the given slice data.
+    pub fn from_slice(size: usize, data: &[u32]) -> SliceMemory {
         let mut sm = SliceMemory::new(size);
-        for i in 0..size {
-            sm.set(i, value);
+        for i in 0..min(size, data.len()) {
+            sm.set(i, data[i])
         }
         sm
     }
@@ -76,11 +77,18 @@ mod test {
     }
 
     #[test]
-    fn with_value() {
-        let m = super::SliceMemory::with_value(16, 9);
-        for i in 0..m.size() {
-            assert_eq!(m.get(i), 9);
+    fn from_slice() {
+        let m1 = super::SliceMemory::from_slice(16, &[0, 1, 2, 3, 4]);
+        for i in 0..m1.size() {
+            if i < 5 {
+                assert_eq!(m1.get(i), i as u32);
+            } else {
+                assert_eq!(m1.get(i), 0);
+            }
         }
+
+        let m2 = super::SliceMemory::from_slice(1, &[1, 2, 3]);
+        assert_eq!(m2.get(0), 1);
     }
 
     #[test]
@@ -88,7 +96,7 @@ mod test {
         let m1 = super::SliceMemory::new(16);
         assert_eq!(m1.size(), 16);
 
-        let m2 = super::SliceMemory::with_value(16, 1);
-        assert_eq!(m2.size(), 16);
+        let m2 = super::SliceMemory::from_slice(1, &[1, 2, 3, 4]);
+        assert_eq!(m2.size(), 1);
     }
 }

@@ -29,10 +29,8 @@ use std::vec::Vec;
 /// ```
 /// use osciemu::memory::{Memory, SliceMemory, MappedMemory};
 ///
-/// // m1 =~ [1]
-/// let mut m1 = SliceMemory::with_value(1, 1);
-/// // m2 =~ [2, 2]
-/// let mut m2 = SliceMemory::with_value(2, 2);
+/// let mut m1 = SliceMemory::from_slice(1, &[1]);
+/// let mut m2 = SliceMemory::from_slice(2, &[2, 2]);
 /// let mut mm = MappedMemory::new();
 /// mm.mount(0, &mut m1);
 /// mm.mount(2, &mut m2);
@@ -109,8 +107,8 @@ mod test {
 
     #[test]
     fn memory_at_addr() {
-        let mut m1 = SliceMemory::with_value(1, 1);
-        let mut m2 = SliceMemory::with_value(2, 2);
+        let mut m1 = SliceMemory::from_slice(1, &[1]);
+        let mut m2 = SliceMemory::from_slice(2, &[2, 2]);
         let mut mm = super::MappedMemory::new();
         mm.mount(0, &mut m1);
         mm.mount(2, &mut m2);
@@ -128,8 +126,8 @@ mod test {
     #[test]
     fn overlapping_mounts() {
         let mut m1 = NullMemory::new();
-        let mut m2 = SliceMemory::with_value(2, 2);
-        let mut m3 = SliceMemory::with_value(1, 3);
+        let mut m2 = SliceMemory::from_slice(2, &[2, 2]);
+        let mut m3 = SliceMemory::from_slice(1, &[3]);
         let mut mm = super::MappedMemory::new();
         mm.mount(0, &mut m1);
         mm.mount(1, &mut m2);
@@ -143,8 +141,8 @@ mod test {
 
     #[test]
     fn get_and_set() {
-        let mut m1 = SliceMemory::with_value(1, 1);
-        let mut m2 = SliceMemory::with_value(2, 2);
+        let mut m1 = SliceMemory::from_slice(1, &[1]);
+        let mut m2 = SliceMemory::from_slice(2, &[2, 2]);
         {
             let mut mm = super::MappedMemory::new();
             mm.mount(0, &mut m1);
@@ -164,8 +162,8 @@ mod test {
 
     #[test]
     fn size() {
-        let mut m1 = SliceMemory::with_value(1, 1);
-        let mut m2 = SliceMemory::with_value(2, 2);
+        let mut m1 = SliceMemory::from_slice(1, &[1]);
+        let mut m2 = SliceMemory::from_slice(2, &[2, 2]);
         let mut mm = super::MappedMemory::new();
         assert_eq!(mm.size(), 0);
 
@@ -178,14 +176,14 @@ mod test {
 
     #[test]
     fn size_with_overlap() {
-        let mut m1 = SliceMemory::with_value(10, 1);
-        let mut m2 = SliceMemory::with_value(2, 2);
-        let mut m3 = SliceMemory::with_value(3, 3);
+        let mut m1 = SliceMemory::from_slice(5, &[1, 1, 1, 1, 1]);
+        let mut m2 = SliceMemory::from_slice(2, &[2, 2]);
+        let mut m3 = SliceMemory::from_slice(3, &[3, 3, 3]);
         let mut mm = super::MappedMemory::new();
 
         mm.mount(0, &mut m1);
         mm.mount(2, &mut m2);
-        assert_eq!(mm.size(), 10);
+        assert_eq!(mm.size(), 5);
 
         mm.mount(9, &mut m3);
         assert_eq!(mm.size(), 12);
