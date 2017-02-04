@@ -42,16 +42,13 @@ impl SliceMemory {
 
 impl Memory for SliceMemory {
     fn get(&self, addr: usize) -> u32 {
-        let &SliceMemory(ref b) = self;
-        b[addr]
+        self.0[addr]
     }
     fn set(&mut self, addr: usize, v: u32) {
-        let &mut SliceMemory(ref mut b) = self;
-        b[addr] = v;
+        self.0[addr] = v;
     }
     fn size(&self) -> usize {
-        let &SliceMemory(ref b) = self;
-        b.len()
+        self.0.len()
     }
 }
 
@@ -60,7 +57,7 @@ mod test {
     use memory::Memory;
 
     #[test]
-    fn slicememory() {
+    fn get_and_set() {
         let mut m = super::SliceMemory::new(16);
         for i in 0..16 {
             m.set(i, i as u32);
