@@ -50,7 +50,7 @@ use std::vec::Vec;
 /// - Handle overlapping mounts in lookup
 /// - Handle if the last mount in the list is not necessarily the one
 /// - responsible for the largest address.
-pub struct MappedMemory<'a> (Vec<Entry<'a>>);
+pub struct MappedMemory<'a>(Vec<Entry<'a>>);
 
 pub struct Entry<'a> {
     memory: &'a mut Memory,
@@ -66,7 +66,6 @@ impl<'a> MappedMemory<'a> {
     /// Mounts a `Memory` at the given address.
     pub fn mount(&mut self, start: usize, memory: &'a mut Memory) {
         let size = memory.size();
-        println!("1>> {}", size);
         let new_entry = Entry {
             memory: memory,
             start_address: start,
@@ -81,28 +80,29 @@ impl<'a> MappedMemory<'a> {
                         insert_idx = idx - 1;
                         break;
                     }
-                } else { break; }
+                } else {
+                    break;
+                }
             }
         }
         self.0.insert(insert_idx, new_entry);
     }
 
     fn memory_at_addr(&self, addr: usize) -> Option<&Entry<'a>> {
-        self.0.iter().find(
-            |entry| entry.start_address <= addr &&
-            entry.start_address + entry.size > addr)
+        self.0
+            .iter()
+            .find(|entry| entry.start_address <= addr && entry.start_address + entry.size > addr)
     }
 
     fn memory_at_addr_mut(&mut self, addr: usize) -> Option<&mut Entry<'a>> {
-        self.0.iter_mut().find(
-            |entry| entry.start_address <= addr &&
-            entry.start_address + entry.size > addr)
+        self.0
+            .iter_mut()
+            .find(|entry| entry.start_address <= addr && entry.start_address + entry.size > addr)
     }
-
 }
 
 impl<'a> Memory for MappedMemory<'a> {
-    fn get (&self, addr: usize) -> u32 {
+    fn get(&self, addr: usize) -> u32 {
         self.memory_at_addr(addr)
             .map(|entry| entry.memory.get(addr - entry.start_address))
             .expect("Out of bounds")
@@ -115,11 +115,9 @@ impl<'a> Memory for MappedMemory<'a> {
     }
 
     fn size(&self) -> usize {
-        self.0.last()
-            .map_or(0, |entry| {
-                println!("2>> {} {}", entry.size, entry.start_address);
-                entry.size + entry.start_address as usize
-            })
+        self.0
+            .last()
+            .map_or(0, |entry| entry.size + entry.start_address as usize)
     }
 }
 
