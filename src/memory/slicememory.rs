@@ -38,6 +38,15 @@ impl SliceMemory {
         }
         SliceMemory(v.into_boxed_slice())
     }
+
+    // Like `new()` but writes `value` to every cell
+    pub fn with_value(size: usize, value: u32) -> SliceMemory {
+        let mut sm = SliceMemory::new(size);
+        for i in 0..size {
+            sm.set(i, value);
+        }
+        sm
+    }
 }
 
 impl Memory for SliceMemory {
@@ -65,5 +74,22 @@ mod test {
         for i in 0..16 {
             assert_eq!(m.get(i), i as u32);
         }
+    }
+
+    #[test]
+    fn with_value() {
+        let m = super::SliceMemory::with_value(16, 9);
+        for i in 0..m.size() {
+            assert_eq!(m.get(i), 9);
+        }
+    }
+
+    #[test]
+    fn size() {
+        let m1 = super::SliceMemory::new(16);
+        assert_eq!(m1.size(), 16);
+
+        let m2 = super::SliceMemory::with_value(16, 1);
+        assert_eq!(m2.size(), 16);
     }
 }
