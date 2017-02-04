@@ -8,8 +8,7 @@ use std;
 ///
 /// # Examples
 /// ```
-/// use osciemu::memory::Memory;
-/// use osciemu::memory::NullMemory;
+/// use osciemu::memory::{Memory, NullMemory};
 ///
 /// let mut m = NullMemory::new();
 /// assert_eq!(m.get(0), 0);
