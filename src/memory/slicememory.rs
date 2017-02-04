@@ -20,8 +20,7 @@ use std::vec::Vec;
 ///
 /// ```
 /// # use std::panic;
-/// # use osciemu::memory::Memory;
-/// # use osciemu::memory::SliceMemory;
+/// # use osciemu::memory::{Memory, SliceMemory};
 /// let mut m = SliceMemory::new(16);
 /// let result = panic::catch_unwind(|| {
 ///     m.get(17); // Out-of-bounds!
