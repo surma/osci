@@ -44,7 +44,7 @@ mod test {
     use memory::Memory;
 
     #[test]
-    fn nullmemory_read() {
+    fn read() {
         let m = super::NullMemory::new();
         assert_eq!(m.get(0), 0);
         assert_eq!(m.get(123), 0);
@@ -52,7 +52,7 @@ mod test {
     }
 
     #[test]
-    fn nullmemory_write() {
+    fn write() {
         let mut m = super::NullMemory::new();
         assert_eq!(m.get(0), 0);
         m.set(0, 4);
