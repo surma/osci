@@ -16,7 +16,7 @@ use std::vec::Vec;
 /// ```
 ///
 /// # Panics
-/// Just a slice, `SliceMemory` panics when accessed out of bounds.
+/// Just like a slice, `SliceMemory` panics when accessed out of bounds.
 ///
 /// ```
 /// # use std::panic;
