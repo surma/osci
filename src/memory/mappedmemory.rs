@@ -12,10 +12,11 @@ use std::vec::Vec;
 ///
 /// ```text
 ///                   Unmapped
-///                <------------>
+///                <-------->
 ///       mem_a                   mem_b
 /// |--------------|            |------|
-///
+///                            NullMemory
+///                         |--------------
 /// |------------- mapped_mem ----------->
 /// |              |            |      |
 /// 0            0x100        0x200  0x280
@@ -23,9 +24,6 @@ use std::vec::Vec;
 ///
 /// For example: `mapped_mem.get(0x208)` would yield the same value as
 /// `mem_b.get(0x008)`.
-///
-/// For now, mounts resulting in overlapping areas don’t panic but yield
-/// undefined behavior.
 ///
 /// # Examples
 /// ```
@@ -45,11 +43,6 @@ use std::vec::Vec;
 ///
 /// # Panics
 /// `MappedMemory` panics when an unmapped address is read or written.
-///
-/// # TODOs
-/// - Handle overlapping mounts in lookup
-/// - Handle if the last mount in the list is not necessarily the one
-/// - responsible for the largest address.
 pub struct MappedMemory<'a>(Vec<Entry<'a>>);
 
 pub struct Entry<'a> {
@@ -71,32 +64,20 @@ impl<'a> MappedMemory<'a> {
             start_address: start,
             size: size,
         };
-        let mut insert_idx = self.0.len();
-        {
-            let mut iter = self.0.iter().enumerate();
-            loop {
-                if let Some((idx, entry)) = iter.next() {
-                    if entry.start_address >= new_entry.start_address {
-                        insert_idx = idx - 1;
-                        break;
-                    }
-                } else {
-                    break;
-                }
-            }
-        }
-        self.0.insert(insert_idx, new_entry);
+        self.0.push(new_entry);
     }
 
     fn memory_at_addr(&self, addr: usize) -> Option<&Entry<'a>> {
         self.0
             .iter()
+            .rev()
             .find(|entry| entry.start_address <= addr && entry.start_address + entry.size > addr)
     }
 
     fn memory_at_addr_mut(&mut self, addr: usize) -> Option<&mut Entry<'a>> {
         self.0
             .iter_mut()
+            .rev()
             .find(|entry| entry.start_address <= addr && entry.start_address + entry.size > addr)
     }
 }
@@ -116,15 +97,15 @@ impl<'a> Memory for MappedMemory<'a> {
 
     fn size(&self) -> usize {
         self.0
-            .last()
-            .map_or(0, |entry| entry.size + entry.start_address as usize)
+            .iter()
+            .map(|entry| entry.start_address + entry.size)
+            .max().unwrap_or(0)
     }
 }
 
 #[cfg(test)]
 mod test {
-    use memory::Memory;
-    use memory::SliceMemory;
+    use memory::{Memory, SliceMemory, NullMemory};
 
     #[test]
     fn memory_at_addr() {
@@ -142,6 +123,22 @@ mod test {
         assert!(mm.memory_at_addr(3)
             .map_or(false, |entry| entry.memory.get(0) == 2));
         assert!(mm.memory_at_addr(4).is_none());
+    }
+
+    #[test]
+    fn overlapping_mounts() {
+        let mut m1 = NullMemory::new();
+        let mut m2 = SliceMemory::with_value(2, 2);
+        let mut m3 = SliceMemory::with_value(1, 3);
+        let mut mm = super::MappedMemory::new();
+        mm.mount(0, &mut m1);
+        mm.mount(1, &mut m2);
+        mm.mount(2, &mut m3);
+
+        assert_eq!(mm.get(0), 0);
+        assert_eq!(mm.get(1), 2);
+        assert_eq!(mm.get(2), 3);
+        assert_eq!(mm.get(3), 0);
     }
 
     #[test]
@@ -177,5 +174,20 @@ mod test {
 
         mm.mount(2, &mut m2);
         assert_eq!(mm.size(), 4);
+    }
+
+    #[test]
+    fn size_with_overlap() {
+        let mut m1 = SliceMemory::with_value(10, 1);
+        let mut m2 = SliceMemory::with_value(2, 2);
+        let mut m3 = SliceMemory::with_value(3, 3);
+        let mut mm = super::MappedMemory::new();
+
+        mm.mount(0, &mut m1);
+        mm.mount(2, &mut m2);
+        assert_eq!(mm.size(), 10);
+
+        mm.mount(9, &mut m3);
+        assert_eq!(mm.size(), 12);
     }
 }
