@@ -62,8 +62,10 @@
 
 mod nullmemory;
 mod slicememory;
+mod mappedmemory;
 pub use self::nullmemory::NullMemory;
 pub use self::slicememory::SliceMemory;
+pub use self::mappedmemory::MappedMemory;
 
 /// Access to individual memory cells.
 pub trait Memory {
