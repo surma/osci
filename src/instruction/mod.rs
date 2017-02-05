@@ -1,39 +1,43 @@
-//! Data object for a single instruction.
-//!
-//! An instruction consists of 4 words á 4 bytes. Each instruction can be
-//! intepreted as 4 address `[op_a, op_b, target, jmp]`. the
-//! execution of an instruction is equivalent to
-//!
-//! ```text
-//!   *target := *op_a - *op_b
-//!   if (*target <= 0)
-//!     GOTO jmp;
-//! ```
-//!
-//! `jmp` must be a multiple of the word size. If it’s not, it will be rounded
-//! to the next biggest multiple of the word size.
-//!
-//! osci is a 32-bit little endian CPU and instructions must be serialized
-//! accordingly.
-//!
-//! # Examples
-//! ```
-//! use osciemu::memory::SliceMemory;
-//! use osciemu::instruction::Instruction;
-//!
-//! let mut ip = 0;
-//! let mut m = SliceMemory::from_slice(16, &[
-//!     0, 4, 8, 128,
-//! ]);
-//! Instruction::execute_at(&mut ip, &mut m);
-//! assert_eq!(ip, 128);
-//! ```
 use memory::Memory;
 
+/// Data object for a single instruction.
+///
+/// An instruction consists of 4 words á 4 bytes. Each instruction can be
+/// intepreted as 4 address `[op_a, op_b, target, jmp]`. the
+/// execution of an instruction is equivalent to
+///
+/// ```text
+///   *target := *op_a - *op_b
+///   if (*target <= 0)
+///     GOTO jmp;
+/// ```
+///
+/// `jmp` must be a multiple of the word size. If it’s not, it will be rounded
+/// to the next biggest multiple of the word size.
+///
+/// osci is a 32-bit little endian CPU and instructions must be serialized
+/// accordingly.
+///
+/// # Examples
+/// ```
+/// use osciemu::memory::SliceMemory;
+/// use osciemu::instruction::Instruction;
+///
+/// let mut ip = 0;
+/// let mut m = SliceMemory::from_slice(16, &[
+///     0, 4, 8, 128,
+/// ]);
+/// Instruction::execute_at(&mut ip, &mut m);
+/// assert_eq!(ip, 128);
+/// ```
 pub struct Instruction {
+    /// Address of operand A
     pub op_a: u32,
+    /// Address of operand B
     pub op_b: u32,
+    /// Address to store result of `*A - *B`
     pub target: u32,
+    /// Address to jump to when `*target <= 0`
     pub jmp: u32,
 }
 
