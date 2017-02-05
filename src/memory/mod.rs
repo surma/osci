@@ -5,8 +5,8 @@
 //! By themselves, they are not necessarily compliant.
 //!
 //! # osci’s memory
-//! osci’s memory is anly addressable at a word boundary and only entire words
-//! can be read or written. A word is 4 byte in little endian. osci always has
+//! osci’s memory is only addressable at a word boundary and only entire words
+//! can be read or written. A word is 4 bytes in little endian. osci always has
 //! 2^32 bytes of virtual memory. Not all the memory addresses are necessarily
 //! backed by physical memory. Reads from unmapped memory yield 0. Writes
 //! to unmapped memory are discarded.
@@ -73,6 +73,6 @@ pub trait Memory {
     fn get(&self, addr: usize) -> u32;
     /// Sets the value of the memory cell at `addr`.
     fn set(&mut self, addr: usize, value: u32);
-    /// Returns the size of this memory.
+    /// Returns the size of this memory in bytes.
     fn size(&self) -> usize;
 }
