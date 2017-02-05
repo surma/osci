@@ -37,8 +37,8 @@ impl SliceMemory {
     /// Panics when `size` is not a multiple of the word size.
     pub fn new(size: usize) -> SliceMemory {
         assert!(size % 4 == 0, "Size needs to be a multiple of word size");
-        let mut v = Vec::with_capacity(size>>2);
-        for _ in 0..size>>2 {
+        let mut v = Vec::with_capacity(size >> 2);
+        for _ in 0..size >> 2 {
             v.push(0)
         }
         SliceMemory(v.into_boxed_slice())
@@ -50,8 +50,8 @@ impl SliceMemory {
     /// Panics when `size` is not a multiple of the word size.
     pub fn from_slice(size: usize, data: &[u32]) -> SliceMemory {
         let mut sm = SliceMemory::new(size);
-        for i in 0..min(size>>2, data.len()) {
-            sm.set(i<<2, data[i])
+        for i in 0..min(size >> 2, data.len()) {
+            sm.set(i << 2, data[i])
         }
         sm
     }
@@ -59,13 +59,13 @@ impl SliceMemory {
 
 impl Memory for SliceMemory {
     fn get(&self, addr: usize) -> u32 {
-        self.0[addr>>2]
+        self.0[addr >> 2]
     }
     fn set(&mut self, addr: usize, v: u32) {
-        self.0[addr>>2] = v;
+        self.0[addr >> 2] = v;
     }
     fn size(&self) -> usize {
-        self.0.len()*4
+        self.0.len() * 4
     }
 }
 
@@ -77,10 +77,10 @@ mod test {
     fn get_and_set() {
         let mut m = super::SliceMemory::new(16);
         for i in 0..4 {
-            m.set(i<<2, i as u32);
+            m.set(i << 2, i as u32);
         }
         for i in 0..4 {
-            assert_eq!(m.get(i<<2), i as u32);
+            assert_eq!(m.get(i << 2), i as u32);
         }
     }
 
@@ -89,9 +89,9 @@ mod test {
         let m1 = super::SliceMemory::from_slice(40, &[0, 1, 2, 3, 4]);
         for i in 0..10 {
             if i < 5 {
-                assert_eq!(m1.get(i<<2), i as u32);
+                assert_eq!(m1.get(i << 2), i as u32);
             } else {
-                assert_eq!(m1.get(i<<2), 0);
+                assert_eq!(m1.get(i << 2), 0);
             }
         }
 

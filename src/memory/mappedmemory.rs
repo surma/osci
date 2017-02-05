@@ -101,7 +101,8 @@ impl<'a> Memory for MappedMemory<'a> {
         self.0
             .iter()
             .map(|entry| entry.start_address + entry.size)
-            .max().unwrap_or(0)
+            .max()
+            .unwrap_or(0)
     }
 }
 
