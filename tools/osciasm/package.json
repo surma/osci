@@ -1,0 +1,17 @@
+{
+  "name": "osciasm",
+  "version": "0.0.0",
+  "main": "index.js",
+  "author": "Surma",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "mocha osciasm/test/index.js"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.0.2"
+  },
+  "dependencies": {
+    "mz": "^2.4.0"
+  }
+}
