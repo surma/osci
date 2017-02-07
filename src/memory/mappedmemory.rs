@@ -1,5 +1,7 @@
 use memory::Memory;
 use std::vec::Vec;
+use std::rc::Rc;
+use std::cell::{Ref, RefMut, RefCell};
 
 /// Maps multiple `Memory`s into a single address space.
 ///
@@ -26,31 +28,65 @@ use std::vec::Vec;
 /// `mem_b.get(0x008)`.
 ///
 /// # Examples
+///
 /// ```
 /// use osciemu::memory::{Memory, SliceMemory, MappedMemory};
 ///
-/// let mut m1 = SliceMemory::from_slice(4, &[1]);
-/// let mut m2 = SliceMemory::from_slice(8, &[2, 2]);
+/// let m1 = SliceMemory::from_slice(4, &[1]);
+/// let m2 = SliceMemory::from_slice(8, &[2, 2]);
 /// let mut mm = MappedMemory::new();
-/// mm.mount(0, &mut m1);
-/// mm.mount(8, &mut m2);
+/// mm.mount(0, m1);
+/// mm.mount(8, m2);
 /// // Now mm =~ [1, _, 2, 2]
 /// assert_eq!(mm.get(0), 1);
 /// assert_eq!(mm.get(12), 2);
 /// ```
 ///
+/// `mount()` returns a `MountToken` that can be used to access the memory
+/// similar to `std::cell::RefCell`.
+///
+/// ```
+/// use osciemu::memory::{Memory, SliceMemory, MappedMemory};
+///
+/// let m1 = SliceMemory::from_slice(4, &[1, 2, 3, 4]);
+/// let mut mm = MappedMemory::new();
+/// let mt1 = mm.mount(0, m1);
+/// mm.set(0, 99);
+/// assert_eq!(mt1.borrow().get(0), 99);
+/// ```
+///
 /// # Panics
 /// `MappedMemory` panics when an unmapped address is read or written.
-pub struct MappedMemory<'a>(Vec<Entry<'a>>);
+pub struct MappedMemory(Vec<Entry>);
 
-pub struct Entry<'a> {
-    memory: &'a mut Memory,
+struct Entry {
     start_address: usize,
     size: usize,
+    memory: Rc<RefCell<Memory>>,
 }
 
-impl<'a> MappedMemory<'a> {
-    pub fn new() -> MappedMemory<'a> {
+/// Represents a mounted `Memory`.
+pub struct MountToken {
+    memory: Rc<RefCell<Memory>>,
+}
+
+impl MountToken {
+    /// Borrows a reference to the mounted memory until the `Ref` is destroyed.
+    /// See `std::cell::RefCell::borrow()`
+    pub fn borrow(&self) -> Ref<Memory> {
+        self.memory.borrow()
+    }
+
+    /// Borrows a mutable reference to the mounted memory until the `RefMut`
+    /// is destroyed.
+    /// See `std::cell::RefCell::borrow_mut()`
+    pub fn borrow_mut(&self) -> RefMut<Memory> {
+        self.memory.borrow_mut()
+    }
+}
+
+impl MappedMemory {
+    pub fn new() -> MappedMemory {
         MappedMemory(Vec::new())
     }
 
@@ -58,42 +94,47 @@ impl<'a> MappedMemory<'a> {
     ///
     /// # Panics
     /// `mount` panics if a mount is not on a word boundary.
-    pub fn mount(&mut self, start: usize, memory: &'a mut Memory) {
+    pub fn mount<T: 'static>(&mut self, start: usize, memory: T) -> MountToken
+            where T : Memory {
         assert!(start % 4 == 0, "Mount needs to be on a word boundary");
         let size = memory.size();
+        let wrapped_mem = Rc::new(RefCell::new(memory));
         let new_entry = Entry {
-            memory: memory,
             start_address: start,
             size: size,
+            memory: wrapped_mem.clone(),
         };
         self.0.push(new_entry);
+        MountToken {
+            memory: wrapped_mem,
+        }
     }
 
-    fn memory_at_addr(&self, addr: usize) -> Option<&Entry<'a>> {
+    // pub fn unmount(&mut self, mount_token: MountToken) {
+    //     self.0
+    //         .iter()
+    //         .find(|entry| entry.memory.eq(mount_token.memory))
+    //         .map(|mem)
+    // }
+
+    fn memory_at_addr(&self, addr: usize) -> Option<&Entry> {
         self.0
             .iter()
             .rev()
             .find(|entry| entry.start_address <= addr && entry.start_address + entry.size > addr)
     }
-
-    fn memory_at_addr_mut(&mut self, addr: usize) -> Option<&mut Entry<'a>> {
-        self.0
-            .iter_mut()
-            .rev()
-            .find(|entry| entry.start_address <= addr && entry.start_address + entry.size > addr)
-    }
 }
 
-impl<'a> Memory for MappedMemory<'a> {
+impl Memory for MappedMemory {
     fn get(&self, addr: usize) -> u32 {
         self.memory_at_addr(addr)
-            .map(|entry| entry.memory.get(addr - entry.start_address))
+            .map(|entry| entry.memory.borrow().get(addr - entry.start_address))
             .expect("Out of bounds")
     }
 
     fn set(&mut self, addr: usize, value: u32) {
-        self.memory_at_addr_mut(addr)
-            .map(|entry| entry.memory.set(addr - entry.start_address, value))
+        self.memory_at_addr(addr)
+            .map(|entry| entry.memory.borrow_mut().set(addr - entry.start_address, value))
             .expect("Out of bounds")
     }
 
@@ -112,32 +153,31 @@ mod test {
 
     #[test]
     fn memory_at_addr() {
-        let mut m1 = SliceMemory::from_slice(4, &[1]);
-        let mut m2 = SliceMemory::from_slice(8, &[2, 2]);
+        let m1 = SliceMemory::from_slice(4, &[1]);
+        let m2 = SliceMemory::from_slice(8, &[2, 2]);
         let mut mm = super::MappedMemory::new();
-        mm.mount(0, &mut m1);
-        mm.mount(8, &mut m2);
+        mm.mount(0, m1);
+        mm.mount(8, m2);
 
         assert!(mm.memory_at_addr(0)
-            .map_or(false, |entry| entry.memory.get(0) == 1));
+            .map_or(false, |entry| entry.memory.borrow().get(0) == 1));
         assert!(mm.memory_at_addr(4).is_none());
         assert!(mm.memory_at_addr(8)
-            .map_or(false, |entry| entry.memory.get(0) == 2));
+            .map_or(false, |entry| entry.memory.borrow().get(0) == 2));
         assert!(mm.memory_at_addr(12)
-            .map_or(false, |entry| entry.memory.get(0) == 2));
+            .map_or(false, |entry| entry.memory.borrow().get(0) == 2));
         assert!(mm.memory_at_addr(16).is_none());
     }
 
     #[test]
     fn overlapping_mounts() {
-        let mut m1 = NullMemory::new();
-        let mut m2 = SliceMemory::from_slice(8, &[2, 2]);
-        let mut m3 = SliceMemory::from_slice(4, &[3]);
+        let m1 = NullMemory::new();
+        let m2 = SliceMemory::from_slice(8, &[2, 2]);
+        let m3 = SliceMemory::from_slice(4, &[3]);
         let mut mm = super::MappedMemory::new();
-        mm.mount(0, &mut m1);
-        mm.mount(4, &mut m2);
-        mm.mount(8, &mut m3);
-
+        mm.mount(0, m1);
+        mm.mount(4, m2);
+        mm.mount(8, m3);
         assert_eq!(mm.get(0), 0);
         assert_eq!(mm.get(4), 2);
         assert_eq!(mm.get(8), 3);
@@ -146,51 +186,67 @@ mod test {
 
     #[test]
     fn get_and_set() {
-        let mut m1 = SliceMemory::from_slice(4, &[1]);
-        let mut m2 = SliceMemory::from_slice(8, &[2, 2]);
-        {
-            let mut mm = super::MappedMemory::new();
-            mm.mount(0, &mut m1);
-            mm.mount(8, &mut m2);
+        let m1 = SliceMemory::from_slice(4, &[1]);
+        let m2 = SliceMemory::from_slice(8, &[2, 2]);
+        let mut mm = super::MappedMemory::new();
 
-            assert_eq!(mm.get(0), 1);
-            assert_eq!(mm.get(8), 2);
+        let mt1 = mm.mount(0, m1);
+        let mt2 = mm.mount(8, m2);
+        assert_eq!(mm.get(0), 1);
+        assert_eq!(mm.get(8), 2);
 
-            mm.set(0, 3);
-            assert_eq!(mm.get(0), 3);
-            mm.set(12, 0);
-            assert_eq!(mm.get(12), 0);
-        }
-        assert_eq!(m1.get(0), 3);
-        assert_eq!(m2.get(4), 0);
+        mm.set(0, 3);
+        assert_eq!(mm.get(0), 3);
+
+        mm.set(12, 0);
+        assert_eq!(mm.get(12), 0);
+        assert_eq!(mt1.borrow().get(0), 3);
+        assert_eq!(mt2.borrow().get(4), 0);
     }
 
     #[test]
     fn size() {
-        let mut m1 = SliceMemory::from_slice(4, &[1]);
-        let mut m2 = SliceMemory::from_slice(8, &[2, 2]);
+        let m1 = SliceMemory::from_slice(4, &[1]);
+        let m2 = SliceMemory::from_slice(8, &[2, 2]);
         let mut mm = super::MappedMemory::new();
         assert_eq!(mm.size(), 0);
 
-        mm.mount(0, &mut m1);
+        mm.mount(0, m1);
         assert_eq!(mm.size(), 4);
 
-        mm.mount(8, &mut m2);
+        mm.mount(8, m2);
         assert_eq!(mm.size(), 16);
     }
 
     #[test]
     fn size_with_overlap() {
-        let mut m1 = SliceMemory::from_slice(20, &[1, 1, 1, 1, 1]);
-        let mut m2 = SliceMemory::from_slice(8, &[2, 2]);
-        let mut m3 = SliceMemory::from_slice(12, &[3, 3, 3]);
+        let m1 = SliceMemory::from_slice(20, &[1, 1, 1, 1, 1]);
+        let m2 = SliceMemory::from_slice(8, &[2, 2]);
+        let m3 = SliceMemory::from_slice(12, &[3, 3, 3]);
         let mut mm = super::MappedMemory::new();
 
-        mm.mount(0, &mut m1);
-        mm.mount(8, &mut m2);
+        mm.mount(0, m1);
+        mm.mount(8, m2);
         assert_eq!(mm.size(), 20);
 
-        mm.mount(24, &mut m3);
+        mm.mount(24, m3);
         assert_eq!(mm.size(), 36);
     }
+
+    // #[test]
+    // fn unmount() {
+    //     let m1 = SliceMemory::from_slice(5, &[1, 1, 1, 1, 1]);
+    //     let m2 = SliceMemory::from_slice(5, &[2, 2, 2, 2, 2]);
+    //     let mut mm = super::MappedMemory::new();
+    //     let mt1 = mm.mount(0, m1);
+    //     let mt2 = mm.mount(0, m2);
+
+    //     for i in 0..5 {
+    //         assert_eq!(mm.get(i), 2);
+    //     }
+    //     mm.unmount(mt2);
+    //     for i in 0..5 {
+    //         assert_eq!(mm.get(i), 1);
+    //     }
+    // }
 }
