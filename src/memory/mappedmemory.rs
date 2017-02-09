@@ -32,26 +32,40 @@ use std::cell::{Ref, RefMut, RefCell};
 /// ```
 /// use osciemu::memory::{Memory, SliceMemory, MappedMemory};
 ///
-/// let m1 = SliceMemory::from_slice(4, &[1]);
-/// let m2 = SliceMemory::from_slice(8, &[2, 2]);
 /// let mut mm = MappedMemory::new();
-/// mm.mount(0, m1);
-/// mm.mount(8, m2);
+/// mm.mount(0, SliceMemory::from_slice(4, &[1]));
+/// mm.mount(8, SliceMemory::from_slice(8, &[2, 2]));
 /// // Now mm =~ [1, _, 2, 2]
 /// assert_eq!(mm.get(0), 1);
 /// assert_eq!(mm.get(12), 2);
 /// ```
 ///
-/// `mount()` returns a `MountToken` that can be used to access the memory
+/// `mount()` returns a `MountToken` that can be used to access the `Memory`
 /// similar to `std::cell::RefCell`.
 ///
 /// ```
-/// use osciemu::memory::{Memory, SliceMemory, MappedMemory};
+/// use osciemu::memory::{Memory, NullMemory, SliceMemory, MappedMemory};
 ///
-/// let m1 = SliceMemory::from_slice(4, &[1, 2, 3, 4]);
 /// let mut mm = MappedMemory::new();
-/// let mt1 = mm.mount(0, m1);
+/// mm.mount(0, NullMemory::new());
+/// let mt1 = mm.mount(0, SliceMemory::from_slice(4, &[1, 2, 3, 4]));
 /// mm.set(0, 99);
+/// assert_eq!(mt1.borrow().get(0), 99);
+/// ```
+///
+/// It is also used to unmount a mounted `Memory`.
+///
+/// ```
+/// # use osciemu::memory::{Memory, NullMemory, SliceMemory, MappedMemory};
+///
+/// # let mut mm = MappedMemory::new();
+/// # mm.mount(0, NullMemory::new());
+/// # let mt1 = mm.mount(0, SliceMemory::from_slice(4, &[1, 2, 3, 4]));
+/// # mm.set(0, 99);
+/// # assert_eq!(mt1.borrow().get(0), 99);
+/// // ...
+/// mm.unmount(&mt1);
+/// assert_eq!(mm.get(0), 0);
 /// assert_eq!(mt1.borrow().get(0), 99);
 /// ```
 ///
@@ -110,12 +124,17 @@ impl MappedMemory {
         }
     }
 
-    // pub fn unmount(&mut self, mount_token: MountToken) {
-    //     self.0
-    //         .iter()
-    //         .find(|entry| entry.memory.eq(mount_token.memory))
-    //         .map(|mem)
-    // }
+    /// Unmounts the `Memory` references by the `MountToken`. After unmounting,
+    /// `MappedMemory` does not hold any references to the `Memory`. If the
+    /// `Memory` has already been unmounted, calling `unmount` is a no-op.
+    pub fn unmount(&mut self, mount_token: &MountToken) {
+        self.0
+            .iter()
+            .enumerate()
+            .find(|&(_, entry)| rc_ptr_eq(&entry.memory, &mount_token.memory))
+            .map(|(idx, _)| idx)
+            .map(|idx| self.0.remove(idx));
+    }
 
     fn memory_at_addr(&self, addr: usize) -> Option<&Entry> {
         self.0
@@ -233,20 +252,39 @@ mod test {
         assert_eq!(mm.size(), 36);
     }
 
-    // #[test]
-    // fn unmount() {
-    //     let m1 = SliceMemory::from_slice(5, &[1, 1, 1, 1, 1]);
-    //     let m2 = SliceMemory::from_slice(5, &[2, 2, 2, 2, 2]);
-    //     let mut mm = super::MappedMemory::new();
-    //     let mt1 = mm.mount(0, m1);
-    //     let mt2 = mm.mount(0, m2);
+    #[test]
+    fn unmount() {
+        let m1 = SliceMemory::from_slice(20, &[1, 1, 1, 1, 1]);
+        let m2 = SliceMemory::from_slice(20, &[2, 2, 2, 2, 2]);
+        let m3 = SliceMemory::from_slice(20, &[3, 3, 3, 3, 3]);
+        let mut mm = super::MappedMemory::new();
+        let mt1 = mm.mount(0, m1);
+        let _ = mm.mount(0, m2);
+        let mt3 = mm.mount(0, m3);
 
-    //     for i in 0..5 {
-    //         assert_eq!(mm.get(i), 2);
-    //     }
-    //     mm.unmount(mt2);
-    //     for i in 0..5 {
-    //         assert_eq!(mm.get(i), 1);
-    //     }
-    // }
+        for i in 0..5 {
+            assert_eq!(mm.get(i<<2), 3);
+        }
+        mm.unmount(&mt3);
+        for i in 0..5 {
+            assert_eq!(mm.get(i<<2), 2);
+        }
+        mm.unmount(&mt3);
+        mm.unmount(&mt3);
+        for i in 0..5 {
+            assert_eq!(mm.get(i<<2), 2);
+        }
+        mm.unmount(&mt1);
+        for i in 0..5 {
+            assert_eq!(mm.get(i<<2), 2);
+        }
+    }
+}
+
+// Helper until feature "ptr_eq" is stabilized.
+// See https://github.com/rust-lang/rust/issues/36497
+fn rc_ptr_eq<T: ?Sized>(this: &Rc<T>, other: &Rc<T>) -> bool {
+    let this_ptr: *const T = &**this;
+    let other_ptr: *const T = &**other;
+    this_ptr == other_ptr
 }
