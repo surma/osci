@@ -70,7 +70,7 @@ impl Memory for SliceMemory {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use memory::Memory;
 
     #[test]

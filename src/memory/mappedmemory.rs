@@ -109,7 +109,8 @@ impl MappedMemory {
     /// # Panics
     /// `mount` panics if a mount is not on a word boundary.
     pub fn mount<T: 'static>(&mut self, start: usize, memory: T) -> MountToken
-            where T : Memory {
+        where T: Memory
+    {
         assert!(start % 4 == 0, "Mount needs to be on a word boundary");
         let size = memory.size();
         let wrapped_mem = Rc::new(RefCell::new(memory));
@@ -119,9 +120,7 @@ impl MappedMemory {
             memory: wrapped_mem.clone(),
         };
         self.0.push(new_entry);
-        MountToken {
-            memory: wrapped_mem,
-        }
+        MountToken { memory: wrapped_mem }
     }
 
     /// Unmounts the `Memory` references by the `MountToken`. After unmounting,
@@ -167,7 +166,7 @@ impl Memory for MappedMemory {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use memory::{Memory, SliceMemory, NullMemory};
 
     #[test]
@@ -263,20 +262,20 @@ mod test {
         let mt3 = mm.mount(0, m3);
 
         for i in 0..5 {
-            assert_eq!(mm.get(i<<2), 3);
+            assert_eq!(mm.get(i << 2), 3);
         }
         mm.unmount(&mt3);
         for i in 0..5 {
-            assert_eq!(mm.get(i<<2), 2);
+            assert_eq!(mm.get(i << 2), 2);
         }
         mm.unmount(&mt3);
         mm.unmount(&mt3);
         for i in 0..5 {
-            assert_eq!(mm.get(i<<2), 2);
+            assert_eq!(mm.get(i << 2), 2);
         }
         mm.unmount(&mt1);
         for i in 0..5 {
-            assert_eq!(mm.get(i<<2), 2);
+            assert_eq!(mm.get(i << 2), 2);
         }
     }
 }

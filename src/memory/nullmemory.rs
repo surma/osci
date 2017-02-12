@@ -39,7 +39,7 @@ impl Memory for NullMemory {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use memory::Memory;
 
     #[test]
