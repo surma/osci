@@ -33,8 +33,8 @@ use std::cell::{Ref, RefMut, RefCell};
 /// use osciemu::memory::{Memory, SliceMemory, MappedMemory};
 ///
 /// let mut mm = MappedMemory::new();
-/// mm.mount(0, SliceMemory::from_slice(4, &[1]));
-/// mm.mount(8, SliceMemory::from_slice(8, &[2, 2]));
+/// mm.mount(0, SliceMemory::from_slice_u32(4, &[1]));
+/// mm.mount(8, SliceMemory::from_slice_u32(8, &[2, 2]));
 /// // Now mm =~ [1, _, 2, 2]
 /// assert_eq!(mm.get(0), 1);
 /// assert_eq!(mm.get(12), 2);
@@ -171,8 +171,8 @@ mod tests {
 
     #[test]
     fn memory_at_addr() {
-        let m1 = SliceMemory::from_slice(4, &[1]);
-        let m2 = SliceMemory::from_slice(8, &[2, 2]);
+        let m1 = SliceMemory::from_slice_u32(4, &[1]);
+        let m2 = SliceMemory::from_slice_u32(8, &[2, 2]);
         let mut mm = super::MappedMemory::new();
         mm.mount(0, m1);
         mm.mount(8, m2);
@@ -190,8 +190,8 @@ mod tests {
     #[test]
     fn overlapping_mounts() {
         let m1 = NullMemory::new();
-        let m2 = SliceMemory::from_slice(8, &[2, 2]);
-        let m3 = SliceMemory::from_slice(4, &[3]);
+        let m2 = SliceMemory::from_slice_u32(8, &[2, 2]);
+        let m3 = SliceMemory::from_slice_u32(4, &[3]);
         let mut mm = super::MappedMemory::new();
         mm.mount(0, m1);
         mm.mount(4, m2);
@@ -204,8 +204,8 @@ mod tests {
 
     #[test]
     fn get_and_set() {
-        let m1 = SliceMemory::from_slice(4, &[1]);
-        let m2 = SliceMemory::from_slice(8, &[2, 2]);
+        let m1 = SliceMemory::from_slice_u32(4, &[1]);
+        let m2 = SliceMemory::from_slice_u32(8, &[2, 2]);
         let mut mm = super::MappedMemory::new();
 
         let mt1 = mm.mount(0, m1);
@@ -224,8 +224,8 @@ mod tests {
 
     #[test]
     fn size() {
-        let m1 = SliceMemory::from_slice(4, &[1]);
-        let m2 = SliceMemory::from_slice(8, &[2, 2]);
+        let m1 = SliceMemory::from_slice_u32(4, &[1]);
+        let m2 = SliceMemory::from_slice_u32(8, &[2, 2]);
         let mut mm = super::MappedMemory::new();
         assert_eq!(mm.size(), 0);
 
@@ -238,9 +238,9 @@ mod tests {
 
     #[test]
     fn size_with_overlap() {
-        let m1 = SliceMemory::from_slice(20, &[1, 1, 1, 1, 1]);
-        let m2 = SliceMemory::from_slice(8, &[2, 2]);
-        let m3 = SliceMemory::from_slice(12, &[3, 3, 3]);
+        let m1 = SliceMemory::from_slice_u32(20, &[1, 1, 1, 1, 1]);
+        let m2 = SliceMemory::from_slice_u32(8, &[2, 2]);
+        let m3 = SliceMemory::from_slice_u32(12, &[3, 3, 3]);
         let mut mm = super::MappedMemory::new();
 
         mm.mount(0, m1);
@@ -253,9 +253,9 @@ mod tests {
 
     #[test]
     fn unmount() {
-        let m1 = SliceMemory::from_slice(20, &[1, 1, 1, 1, 1]);
-        let m2 = SliceMemory::from_slice(20, &[2, 2, 2, 2, 2]);
-        let m3 = SliceMemory::from_slice(20, &[3, 3, 3, 3, 3]);
+        let m1 = SliceMemory::from_slice_u32(20, &[1, 1, 1, 1, 1]);
+        let m2 = SliceMemory::from_slice_u32(20, &[2, 2, 2, 2, 2]);
+        let m3 = SliceMemory::from_slice_u32(20, &[3, 3, 3, 3, 3]);
         let mut mm = super::MappedMemory::new();
         let mt1 = mm.mount(0, m1);
         let _ = mm.mount(0, m2);

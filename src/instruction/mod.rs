@@ -24,7 +24,7 @@ use memory::Memory;
 /// use osciemu::instruction::Instruction;
 ///
 /// let mut ip = 0;
-/// let mut m = SliceMemory::from_slice(16, &[
+/// let mut m = SliceMemory::from_slice_u32(16, &[
 ///     0, 4, 8, 128,
 /// ]);
 /// Instruction::execute_at(&mut ip, &mut m);
@@ -85,7 +85,7 @@ mod tests {
     #[test]
     fn execute() {
         let mut ip = 0;
-        let mut m = SliceMemory::from_slice(16, &[1, 2, 0, 0]);
+        let mut m = SliceMemory::from_slice_u32(16, &[1, 2, 0, 0]);
         let i1 = super::Instruction {
             op_a: 0,
             op_b: 4,
@@ -111,9 +111,9 @@ mod tests {
     #[test]
     fn execute_at() {
         let mut ip = 0;
-        let mut m = SliceMemory::from_slice(64,
-                                            &[48, 52, 56, 60, 48, 48, 56, 60, 0, 0, 0, 0, 2, 1,
-                                              0, 0]);
+        let mut m = SliceMemory::from_slice_u32(64,
+                                                &[48, 52, 56, 60, 48, 48, 56, 60, 0, 0, 0, 0, 2,
+                                                  1, 0, 0]);
         super::Instruction::execute_at(&mut ip, &mut m);
         assert_eq!(m.get(56), 1);
         assert_eq!(ip, 16);
