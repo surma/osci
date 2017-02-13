@@ -7,3 +7,4 @@ authors = ["Surma <surma@surma.link>"]
 name = "osci-cli"
 
 [dependencies]
+clap = "2.20.3"
