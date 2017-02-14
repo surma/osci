@@ -23,21 +23,21 @@
 //! |                 Word 0                |
 //! |                 Word 1                |
 //! |                   ...                 |
-//! +---------------------------------------+ kFlagBoundary
+//! +---------------------------------------+ FLAGS_START_ADDRESS
 //! |              Flags Word 0             |
 //! |                   ...                 |
 //! |              Flags Word i             |
-//! +---------------------------------------+ kIvtBoundary
+//! +---------------------------------------+ IVT_START_ADDRESS
 //! |               IVT Entry 0             |
 //! |                   ...                 |
 //! |               IVT Entry j             |
 //! +---------------------------------------+
-//! |           IVT Return address          |
-//! +---------------------------------------+ kRegisterBoundary
+//! |           IVT Return address          | IVT_RETURN_ADDRESS
+//! +---------------------------------------+ REGISTER_START_ADDRESS
 //! |                Register 0             |
 //! |                   ...                 |
 //! |                Register k             |
-//! +---------------------------------------+ kMaxAddress = 2^32-1
+//! +---------------------------------------+ MAX_ADDRESS = 2^32-1
 //! ```
 //!
 //! Flags Word 0:
@@ -63,6 +63,7 @@
 mod nullmemory;
 mod slicememory;
 pub mod mappedmemory;
+pub mod addresses;
 pub use self::nullmemory::NullMemory;
 pub use self::slicememory::SliceMemory;
 pub use self::mappedmemory::MappedMemory;

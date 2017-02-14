@@ -1,4 +1,5 @@
 use memory::Memory;
+use std::fmt;
 
 /// Data object for a single instruction.
 ///
@@ -75,6 +76,17 @@ impl Instruction {
     pub fn execute_at(ip: &mut usize, mem: &mut Memory) {
         let instr = Instruction::from_memory(*ip, mem);
         instr.execute(ip, mem);
+    }
+}
+
+impl fmt::Debug for Instruction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f,
+               "Instruction {{ op_a: 0x{:08X}, op_b: 0x{:08X}, target: 0x{:08X}, jmp: 0x{:08X} }}",
+               self.op_a,
+               self.op_b,
+               self.target,
+               self.jmp)
     }
 }
 
