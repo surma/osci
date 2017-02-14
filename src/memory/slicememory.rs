@@ -6,6 +6,7 @@ use std::cmp::min;
 /// Simple slice-based memory implementation.
 ///
 /// # Examples
+///
 /// ```
 /// use osciemu::memory::Memory;
 /// use osciemu::memory::SliceMemory;
@@ -14,6 +15,16 @@ use std::cmp::min;
 /// assert_eq!(m.get(0), 0);
 /// m.set(8, 123);
 /// assert_eq!(m.get(8), 123);
+/// ```
+///
+/// To construct a `SliceMemory` from a `Vec`, use `into_boxed_slice()`.
+///
+/// ```
+/// # use osciemu::memory::{Memory, SliceMemory};
+///
+/// let v : Vec<u8> = vec![1, 2, 3, 4];
+/// let m = SliceMemory(v.into_boxed_slice());
+/// assert_eq!(m.get(0), 0x04030201);
 /// ```
 ///
 /// # Panics
@@ -28,7 +39,7 @@ use std::cmp::min;
 /// });
 /// assert!(result.is_err());
 /// ```
-pub struct SliceMemory(Box<[u8]>);
+pub struct SliceMemory(pub Box<[u8]>);
 
 impl SliceMemory {
     /// Creates a new `SliceMemory`.
