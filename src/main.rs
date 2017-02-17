@@ -46,18 +46,18 @@ fn main() {
             break;
         }
         let instr = Instruction::from_memory(ip, &memory);
-        println!("count: {}, ip: 0x{:08X}, r0: 0x{:08X}, r1: 0x{:08X}, r2: 0x{:08X}, r3: 0x{:08X}",
+        println!("count: {:4}, ip: 0x{:08X}, r0: 0x{:08X}, r1: 0x{:08X}, r2: 0x{:08X}, r3: \
+                  0x{:08X}",
                  count,
                  ip,
                  memory.get(addresses::REGISTERS_START_ADDRESS + 0),
                  memory.get(addresses::REGISTERS_START_ADDRESS + 4),
                  memory.get(addresses::REGISTERS_START_ADDRESS + 8),
                  memory.get(addresses::REGISTERS_START_ADDRESS + 12));
-        println!("{:?}", instr);
         instr.execute(&mut ip, &mut memory);
         if step_mode {
             let mut buffer = String::new();
-            io::stdin().read_to_string(&mut buffer);
+            io::stdin().read_line(&mut buffer);
         }
     }
 }
