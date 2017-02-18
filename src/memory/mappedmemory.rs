@@ -85,6 +85,12 @@ pub struct MountToken {
 }
 
 impl MountToken {
+    pub fn new<T>(memory: T) -> MountToken
+        where T: 'static + Memory
+    {
+        MountToken { memory: Rc::new(RefCell::new(memory)) }
+    }
+
     /// Borrows a reference to the mounted memory until the `Ref` is destroyed.
     /// See `std::cell::RefCell::borrow()`
     pub fn borrow(&self) -> Ref<Memory> {

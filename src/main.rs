@@ -6,8 +6,8 @@ use std::vec::Vec;
 use std::fs::File;
 use std::io;
 use std::io::Read;
-use osciemu::memory::{addresses, Memory, SliceMemory, MappedMemory, NullMemory};
-use osciemu::instruction::Instruction;
+use osciemu::memory::{addresses, Memory, SliceMemory};
+use osciemu::emulator::Emulator;
 
 fn main() {
     let matches = clap_app!(myapp =>
@@ -33,28 +33,23 @@ fn main() {
         .expect("Can’t open bios file")
         .read_to_end(&mut bios_vec);
 
-    let mut memory = MappedMemory::new();
-    let _ = memory.mount(0, NullMemory::new());
-    let _ = memory.mount(0, SliceMemory(image_vec.into_boxed_slice()));
-    let _ = memory.mount(0x80000000, SliceMemory(bios_vec.into_boxed_slice()));
-    let controls = SliceMemory::new(addresses::MAX_ADDRESS - addresses::FLAGS_START_ADDRESS + 1);
-    let _ = memory.mount(addresses::FLAGS_START_ADDRESS, controls);
-    let mut ip = 0x80000000;
+    let mut emulator = Emulator::new();
+    let _ = emulator.memory.mount(0, SliceMemory(image_vec.into_boxed_slice()));
+    let _ = emulator.memory.mount(0x80000000, SliceMemory(bios_vec.into_boxed_slice()));
 
     for count in 1.. {
-        if memory.get(addresses::FLAGS_START_ADDRESS) & 1 != 0 {
+        if emulator.memory.get(addresses::FLAGS_START_ADDRESS) & (1 << addresses::FLAG0_HALT) != 0 {
             break;
         }
-        let instr = Instruction::from_memory(ip, &memory);
         println!("count: {:4}, ip: 0x{:08X}, r0: 0x{:08X}, r1: 0x{:08X}, r2: 0x{:08X}, r3: \
                   0x{:08X}",
                  count,
-                 ip,
-                 memory.get(addresses::REGISTERS_START_ADDRESS + 0),
-                 memory.get(addresses::REGISTERS_START_ADDRESS + 4),
-                 memory.get(addresses::REGISTERS_START_ADDRESS + 8),
-                 memory.get(addresses::REGISTERS_START_ADDRESS + 12));
-        instr.execute(&mut ip, &mut memory);
+                 emulator.ip,
+                 emulator.memory.get(addresses::REGISTERS_START_ADDRESS + 0),
+                 emulator.memory.get(addresses::REGISTERS_START_ADDRESS + 4),
+                 emulator.memory.get(addresses::REGISTERS_START_ADDRESS + 8),
+                 emulator.memory.get(addresses::REGISTERS_START_ADDRESS + 12));
+        emulator.step();
         if step_mode {
             let mut buffer = String::new();
             io::stdin().read_line(&mut buffer);
