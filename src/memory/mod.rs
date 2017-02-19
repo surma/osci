@@ -64,6 +64,7 @@ mod nullmemory;
 mod slicememory;
 pub mod mappedmemory;
 pub mod addresses;
+pub mod hookmemory;
 pub use self::nullmemory::NullMemory;
 pub use self::slicememory::SliceMemory;
 pub use self::mappedmemory::MappedMemory;
