@@ -7,6 +7,7 @@ use std::fs::File;
 use std::io;
 use std::io::Read;
 use osciemu::memory::{addresses, Memory, SliceMemory};
+use osciemu::memory::mappedmemory::MemoryToken;
 use osciemu::emulator::Emulator;
 
 fn main() {
@@ -34,8 +35,12 @@ fn main() {
         .read_to_end(&mut bios_vec);
 
     let mut emulator = Emulator::new();
-    let _ = emulator.memory.mount(0, SliceMemory(image_vec.into_boxed_slice()));
-    let _ = emulator.memory.mount(0x80000000, SliceMemory(bios_vec.into_boxed_slice()));
+    {
+        let img_mem = MemoryToken::new(SliceMemory(image_vec.into_boxed_slice()));
+        let bios_mem = MemoryToken::new(SliceMemory(bios_vec.into_boxed_slice()));
+        emulator.memory.mount(0, &img_mem);
+        emulator.memory.mount(0x80000000, &bios_mem);
+    }
 
     for count in 1.. {
         if emulator.memory.get(addresses::FLAGS_START_ADDRESS) & (1 << addresses::FLAG0_HALT) != 0 {

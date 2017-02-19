@@ -31,42 +31,52 @@ use std::cell::{Ref, RefMut, RefCell};
 ///
 /// ```
 /// use osciemu::memory::{Memory, SliceMemory, MappedMemory};
+/// use osciemu::memory::mappedmemory::MemoryToken;
 ///
 /// let mut mm = MappedMemory::new();
-/// mm.mount(0, SliceMemory::from_slice_u32(4, &[1]));
-/// mm.mount(8, SliceMemory::from_slice_u32(8, &[2, 2]));
+/// let m1 = MemoryToken::new(SliceMemory::from_slice_u32(4, &[1]));
+/// let m2 = MemoryToken::new(SliceMemory::from_slice_u32(8, &[2, 2]));
+/// mm.mount(0, &m1);
+/// mm.mount(8, &m2);
 /// // Now mm =~ [1, _, 2, 2]
 /// assert_eq!(mm.get(0), 1);
 /// assert_eq!(mm.get(12), 2);
 /// ```
 ///
-/// `mount()` returns a `MountToken` that can be used to access the `Memory`
-/// similar to `std::cell::RefCell`.
+/// The `MemoryToken`s can be used to access the `Memory` even if it has been
+/// mounted. They work like `std::cell::RefCell`.
 ///
 /// ```
 /// use osciemu::memory::{Memory, NullMemory, SliceMemory, MappedMemory};
+/// use osciemu::memory::mappedmemory::MemoryToken;
 ///
 /// let mut mm = MappedMemory::new();
-/// mm.mount(0, NullMemory::new());
-/// let mt1 = mm.mount(0, SliceMemory::from_slice(4, &[1, 2, 3, 4]));
+/// let m1 = MemoryToken::new(NullMemory::new());
+/// mm.mount(0, &m1);
+/// let m2 = MemoryToken::new(SliceMemory::from_slice(4, &[1, 2, 3, 4]));
+/// mm.mount(0, &m2);
 /// mm.set(0, 99);
-/// assert_eq!(mt1.borrow().get(0), 99);
+/// assert_eq!(mm.get(0), 99);
+/// assert_eq!(m2.borrow().get(0), 99);
 /// ```
 ///
-/// It is also used to unmount a mounted `Memory`.
+/// The `MemoryToken`s are also used to unmount a mounted `Memory`.
 ///
 /// ```
 /// # use osciemu::memory::{Memory, NullMemory, SliceMemory, MappedMemory};
-///
+/// # use osciemu::memory::mappedmemory::MemoryToken;
 /// # let mut mm = MappedMemory::new();
-/// # mm.mount(0, NullMemory::new());
-/// # let mt1 = mm.mount(0, SliceMemory::from_slice(4, &[1, 2, 3, 4]));
+/// # let m1 = MemoryToken::new(NullMemory::new());
+/// # mm.mount(0, &m1);
+/// # let m2 = MemoryToken::new(SliceMemory::from_slice(4, &[1, 2, 3, 4]));
+/// # mm.mount(0, &m2);
 /// # mm.set(0, 99);
-/// # assert_eq!(mt1.borrow().get(0), 99);
+/// # assert_eq!(mm.get(0), 99);
+/// # assert_eq!(m2.borrow().get(0), 99);
 /// // ...
-/// mm.unmount(&mt1);
+/// mm.unmount(&m2);
 /// assert_eq!(mm.get(0), 0);
-/// assert_eq!(mt1.borrow().get(0), 99);
+/// assert_eq!(m2.borrow().get(0), 99);
 /// ```
 ///
 /// # Panics
@@ -79,16 +89,17 @@ struct Entry {
     memory: Rc<RefCell<Memory>>,
 }
 
-/// Represents a mounted `Memory`.
-pub struct MountToken {
+/// Represents a mountable, shared `Memory`.
+#[derive(Clone)]
+pub struct MemoryToken {
     memory: Rc<RefCell<Memory>>,
 }
 
-impl MountToken {
-    pub fn new<T>(memory: T) -> MountToken
+impl MemoryToken {
+    pub fn new<T>(memory: T) -> MemoryToken
         where T: 'static + Memory
     {
-        MountToken { memory: Rc::new(RefCell::new(memory)) }
+        MemoryToken { memory: Rc::new(RefCell::new(memory)) }
     }
 
     /// Borrows a reference to the mounted memory until the `Ref` is destroyed.
@@ -114,25 +125,21 @@ impl MappedMemory {
     ///
     /// # Panics
     /// `mount` panics if a mount is not on a word boundary.
-    pub fn mount<T: 'static>(&mut self, start: usize, memory: T) -> MountToken
-        where T: Memory
-    {
+    pub fn mount(&mut self, start: usize, memory: &MemoryToken) {
         assert!(start % 4 == 0, "Mount needs to be on a word boundary");
-        let size = memory.size();
-        let wrapped_mem = Rc::new(RefCell::new(memory));
+        let size = memory.borrow().size();
         let new_entry = Entry {
             start_address: start,
             size: size,
-            memory: wrapped_mem.clone(),
+            memory: memory.clone().memory,
         };
         self.0.push(new_entry);
-        MountToken { memory: wrapped_mem }
     }
 
-    /// Unmounts the `Memory` references by the `MountToken`. After unmounting,
+    /// Unmounts the `Memory` references by the `MemoryToken`. After unmounting,
     /// `MappedMemory` does not hold any references to the `Memory`. If the
     /// `Memory` has already been unmounted, calling `unmount` is a no-op.
-    pub fn unmount(&mut self, mount_token: &MountToken) {
+    pub fn unmount(&mut self, mount_token: &MemoryToken) {
         self.0
             .iter()
             .enumerate()
@@ -177,11 +184,11 @@ mod tests {
 
     #[test]
     fn memory_at_addr() {
-        let m1 = SliceMemory::from_slice_u32(4, &[1]);
-        let m2 = SliceMemory::from_slice_u32(8, &[2, 2]);
+        let m1 = super::MemoryToken::new(SliceMemory::from_slice_u32(4, &[1]));
+        let m2 = super::MemoryToken::new(SliceMemory::from_slice_u32(8, &[2, 2]));
         let mut mm = super::MappedMemory::new();
-        mm.mount(0, m1);
-        mm.mount(8, m2);
+        mm.mount(0, &m1);
+        mm.mount(8, &m2);
 
         assert!(mm.memory_at_addr(0)
             .map_or(false, |entry| entry.memory.borrow().get(0) == 1));
@@ -195,13 +202,13 @@ mod tests {
 
     #[test]
     fn overlapping_mounts() {
-        let m1 = NullMemory::new();
-        let m2 = SliceMemory::from_slice_u32(8, &[2, 2]);
-        let m3 = SliceMemory::from_slice_u32(4, &[3]);
+        let m1 = super::MemoryToken::new(NullMemory::new());
+        let m2 = super::MemoryToken::new(SliceMemory::from_slice_u32(8, &[2, 2]));
+        let m3 = super::MemoryToken::new(SliceMemory::from_slice_u32(4, &[3]));
         let mut mm = super::MappedMemory::new();
-        mm.mount(0, m1);
-        mm.mount(4, m2);
-        mm.mount(8, m3);
+        mm.mount(0, &m1);
+        mm.mount(4, &m2);
+        mm.mount(8, &m3);
         assert_eq!(mm.get(0), 0);
         assert_eq!(mm.get(4), 2);
         assert_eq!(mm.get(8), 3);
@@ -210,12 +217,12 @@ mod tests {
 
     #[test]
     fn get_and_set() {
-        let m1 = SliceMemory::from_slice_u32(4, &[1]);
-        let m2 = SliceMemory::from_slice_u32(8, &[2, 2]);
+        let m1 = super::MemoryToken::new(SliceMemory::from_slice_u32(4, &[1]));
+        let m2 = super::MemoryToken::new(SliceMemory::from_slice_u32(8, &[2, 2]));
         let mut mm = super::MappedMemory::new();
 
-        let mt1 = mm.mount(0, m1);
-        let mt2 = mm.mount(8, m2);
+        mm.mount(0, &m1);
+        mm.mount(8, &m2);
         assert_eq!(mm.get(0), 1);
         assert_eq!(mm.get(8), 2);
 
@@ -224,62 +231,62 @@ mod tests {
 
         mm.set(12, 0);
         assert_eq!(mm.get(12), 0);
-        assert_eq!(mt1.borrow().get(0), 3);
-        assert_eq!(mt2.borrow().get(4), 0);
+        assert_eq!(m1.borrow().get(0), 3);
+        assert_eq!(m2.borrow().get(4), 0);
     }
 
     #[test]
     fn size() {
-        let m1 = SliceMemory::from_slice_u32(4, &[1]);
-        let m2 = SliceMemory::from_slice_u32(8, &[2, 2]);
+        let m1 = super::MemoryToken::new(SliceMemory::from_slice_u32(4, &[1]));
+        let m2 = super::MemoryToken::new(SliceMemory::from_slice_u32(8, &[2, 2]));
         let mut mm = super::MappedMemory::new();
         assert_eq!(mm.size(), 0);
 
-        mm.mount(0, m1);
+        mm.mount(0, &m1);
         assert_eq!(mm.size(), 4);
 
-        mm.mount(8, m2);
+        mm.mount(8, &m2);
         assert_eq!(mm.size(), 16);
     }
 
     #[test]
     fn size_with_overlap() {
-        let m1 = SliceMemory::from_slice_u32(20, &[1, 1, 1, 1, 1]);
-        let m2 = SliceMemory::from_slice_u32(8, &[2, 2]);
-        let m3 = SliceMemory::from_slice_u32(12, &[3, 3, 3]);
+        let m1 = super::MemoryToken::new(SliceMemory::from_slice_u32(20, &[1, 1, 1, 1, 1]));
+        let m2 = super::MemoryToken::new(SliceMemory::from_slice_u32(8, &[2, 2]));
+        let m3 = super::MemoryToken::new(SliceMemory::from_slice_u32(12, &[3, 3, 3]));
         let mut mm = super::MappedMemory::new();
 
-        mm.mount(0, m1);
-        mm.mount(8, m2);
+        mm.mount(0, &m1);
+        mm.mount(8, &m2);
         assert_eq!(mm.size(), 20);
 
-        mm.mount(24, m3);
+        mm.mount(24, &m3);
         assert_eq!(mm.size(), 36);
     }
 
     #[test]
     fn unmount() {
-        let m1 = SliceMemory::from_slice_u32(20, &[1, 1, 1, 1, 1]);
-        let m2 = SliceMemory::from_slice_u32(20, &[2, 2, 2, 2, 2]);
-        let m3 = SliceMemory::from_slice_u32(20, &[3, 3, 3, 3, 3]);
+        let m1 = super::MemoryToken::new(SliceMemory::from_slice_u32(20, &[1, 1, 1, 1, 1]));
+        let m2 = super::MemoryToken::new(SliceMemory::from_slice_u32(20, &[2, 2, 2, 2, 2]));
+        let m3 = super::MemoryToken::new(SliceMemory::from_slice_u32(20, &[3, 3, 3, 3, 3]));
         let mut mm = super::MappedMemory::new();
-        let mt1 = mm.mount(0, m1);
-        let _ = mm.mount(0, m2);
-        let mt3 = mm.mount(0, m3);
+        mm.mount(0, &m1);
+        mm.mount(0, &m2);
+        mm.mount(0, &m3);
 
         for i in 0..5 {
             assert_eq!(mm.get(i << 2), 3);
         }
-        mm.unmount(&mt3);
+        mm.unmount(&m3);
         for i in 0..5 {
             assert_eq!(mm.get(i << 2), 2);
         }
-        mm.unmount(&mt3);
-        mm.unmount(&mt3);
+        mm.unmount(&m3);
+        mm.unmount(&m3);
         for i in 0..5 {
             assert_eq!(mm.get(i << 2), 2);
         }
-        mm.unmount(&mt1);
+        mm.unmount(&m1);
         for i in 0..5 {
             assert_eq!(mm.get(i << 2), 2);
         }
