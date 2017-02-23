@@ -20,8 +20,7 @@ type SizeHook = Fn(&mut usize);
 /// # Examples
 ///
 /// ```
-/// use osciemu::memory::{Memory, SliceMemory};
-/// use osciemu::memory::hookmemory::HookMemory;
+/// use osciemu::memory::{Memory, HookMemory, SliceMemory};
 ///
 /// let mut hook_mem =
 ///     HookMemory::new(
