@@ -1,4 +1,4 @@
-use super::memory::{self, addresses, Memory};
+use super::memory::{self, address, Memory};
 use super::memory::mappedmemory::MemoryToken;
 use super::instruction::Instruction;
 
@@ -26,19 +26,19 @@ impl<T, U> Emulator<T, U>
         let bios_memory = memory::mappedmemory::MemoryToken::new(bios);
         let image_memory = memory::mappedmemory::MemoryToken::new(img);
         memory.mount(0, &image_memory);
-        memory.mount(addresses::BIOS_START_ADDRESS, &bios_memory);
+        memory.mount(address::BIOS_START_ADDRESS, &bios_memory);
 
         let controls_memory =
-            MemoryToken::new(memory::SliceMemory::new(addresses::MAX_ADDRESS -
-                                                      addresses::FLAGS_START_ADDRESS +
+            MemoryToken::new(memory::SliceMemory::new(address::MAX_ADDRESS -
+                                                      address::FLAGS_START_ADDRESS +
                                                       1));
-        memory.mount(addresses::FLAGS_START_ADDRESS, &controls_memory);
+        memory.mount(address::FLAGS_START_ADDRESS, &controls_memory);
 
         Emulator {
             memory: memory,
             image_memory: image_memory,
             bios_memory: bios_memory,
-            ip: addresses::BIOS_START_ADDRESS,
+            ip: address::BIOS_START_ADDRESS,
             controls_memory: controls_memory,
             bios_mounted: true,
         }
@@ -46,11 +46,11 @@ impl<T, U> Emulator<T, U>
 
     pub fn flag_is_set(&self, flag_idx: usize) -> bool {
         let bit = flag_idx % 32;
-        self.memory.get(addresses::FLAGS_START_ADDRESS + flag_idx / 32) & (1 << bit) != 0
+        self.memory.get(address::FLAGS_START_ADDRESS + flag_idx / 32) & (1 << bit) != 0
     }
 
     pub fn get_register(&self, reg_idx: usize) -> u32 {
-        self.memory.get(addresses::REGISTERS_START_ADDRESS + reg_idx * 4)
+        self.memory.get(address::REGISTERS_START_ADDRESS + reg_idx * 4)
     }
 
     pub fn step(&mut self) {
@@ -61,30 +61,30 @@ impl<T, U> Emulator<T, U>
     }
 
     fn check_bios_mount(&mut self) {
-        if self.flag_is_set(addresses::FLAG0_BIOS_DONE) && self.bios_mounted {
+        if self.flag_is_set(address::FLAG0_BIOS_DONE) && self.bios_mounted {
             self.memory.unmount(&self.bios_memory);
             self.bios_mounted = false;
-        } else if !self.flag_is_set(addresses::FLAG0_BIOS_DONE) && !self.bios_mounted {
-            self.memory.mount(addresses::BIOS_START_ADDRESS, &self.bios_memory);
+        } else if !self.flag_is_set(address::FLAG0_BIOS_DONE) && !self.bios_mounted {
+            self.memory.mount(address::BIOS_START_ADDRESS, &self.bios_memory);
             self.bios_mounted = true;
         }
     }
 
     pub fn is_halted(&self) -> bool {
-        self.flag_is_set(addresses::FLAG0_HALTED)
+        self.flag_is_set(address::FLAG0_HALTED)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use memory::{SliceMemory, NullMemory, addresses, Memory};
+    use memory::{SliceMemory, NullMemory, address, Memory};
 
     #[test]
     fn unmounts_bios() {
         let bios = SliceMemory::from_slice_u32(32,
-                                               &[addresses::BIOS_START_ADDRESS as u32 + 16,
-                                                 addresses::BIOS_START_ADDRESS as u32 + 20,
-                                                 addresses::FLAGS_START_ADDRESS as u32,
+                                               &[address::BIOS_START_ADDRESS as u32 + 16,
+                                                 address::BIOS_START_ADDRESS as u32 + 20,
+                                                 address::FLAGS_START_ADDRESS as u32,
                                                  0,
 
                                                  2,
@@ -93,19 +93,19 @@ mod tests {
                                                  0]);
         let mut emu = super::Emulator::new(NullMemory::new(), bios);
 
-        assert!(!emu.flag_is_set(addresses::FLAG0_BIOS_DONE));
-        assert_eq!(emu.memory.get(addresses::BIOS_START_ADDRESS + 16), 2);
+        assert!(!emu.flag_is_set(address::FLAG0_BIOS_DONE));
+        assert_eq!(emu.memory.get(address::BIOS_START_ADDRESS + 16), 2);
         emu.step();
-        assert!(emu.flag_is_set(addresses::FLAG0_BIOS_DONE));
-        assert_eq!(emu.memory.get(addresses::BIOS_START_ADDRESS + 16), 0);
+        assert!(emu.flag_is_set(address::FLAG0_BIOS_DONE));
+        assert_eq!(emu.memory.get(address::BIOS_START_ADDRESS + 16), 0);
     }
 
     #[test]
     fn is_halted() {
         let bios = SliceMemory::from_slice_u32(32,
-                                               &[addresses::BIOS_START_ADDRESS as u32 + 16,
-                                                 addresses::BIOS_START_ADDRESS as u32 + 20,
-                                                 addresses::FLAGS_START_ADDRESS as u32,
+                                               &[address::BIOS_START_ADDRESS as u32 + 16,
+                                                 address::BIOS_START_ADDRESS as u32 + 20,
+                                                 address::FLAGS_START_ADDRESS as u32,
                                                  0,
 
                                                  1,

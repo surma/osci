@@ -6,7 +6,7 @@ use std::vec::Vec;
 use std::fs::File;
 use std::io;
 use std::io::Read;
-use osciemu::memory::{addresses, Memory, SliceMemory};
+use osciemu::memory::{address, Memory, SliceMemory};
 use osciemu::memory::mappedmemory::MemoryToken;
 use osciemu::emulator::Emulator;
 
