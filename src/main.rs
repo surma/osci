@@ -34,26 +34,22 @@ fn main() {
         .expect("Can’t open bios file")
         .read_to_end(&mut bios_vec);
 
-    let mut emulator = Emulator::new();
-    {
-        let img_mem = MemoryToken::new(SliceMemory(image_vec.into_boxed_slice()));
-        let bios_mem = MemoryToken::new(SliceMemory(bios_vec.into_boxed_slice()));
-        emulator.memory.mount(0, &img_mem);
-        emulator.memory.mount(0x80000000, &bios_mem);
-    }
+    let img_mem = SliceMemory(image_vec.into_boxed_slice());
+    let bios_mem = SliceMemory(bios_vec.into_boxed_slice());
+    let mut emulator = Emulator::new(img_mem, bios_mem);
 
     for count in 1.. {
-        if emulator.memory.get(addresses::FLAGS_START_ADDRESS) & (1 << addresses::FLAG0_HALT) != 0 {
+        if emulator.is_halted() {
             break;
         }
         println!("count: {:4}, ip: 0x{:08X}, r0: 0x{:08X}, r1: 0x{:08X}, r2: 0x{:08X}, r3: \
                   0x{:08X}",
                  count,
                  emulator.ip,
-                 emulator.memory.get(addresses::REGISTERS_START_ADDRESS + 0),
-                 emulator.memory.get(addresses::REGISTERS_START_ADDRESS + 4),
-                 emulator.memory.get(addresses::REGISTERS_START_ADDRESS + 8),
-                 emulator.memory.get(addresses::REGISTERS_START_ADDRESS + 12));
+                 emulator.get_register(0),
+                 emulator.get_register(1),
+                 emulator.get_register(2),
+                 emulator.get_register(3));
         emulator.step();
         if step_mode {
             let mut buffer = String::new();

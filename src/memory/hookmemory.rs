@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::boxed::Box;
 use memory::Memory;
 
