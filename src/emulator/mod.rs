@@ -2,23 +2,23 @@ use super::memory::{self, address, Memory};
 use super::memory::mappedmemory::MemoryToken;
 use super::instruction::Instruction;
 
-pub struct Emulator<T, U>
+pub struct Emulator<'a, T, U>
     where T: Memory,
           U: Memory
 {
     image_memory: MemoryToken<T>,
     bios_memory: MemoryToken<U>,
     controls_memory: memory::mappedmemory::MemoryToken<memory::SliceMemory>,
-    pub memory: memory::MappedMemory,
+    pub memory: memory::MappedMemory<'a>,
     pub ip: usize,
     bios_mounted: bool,
 }
 
-impl<T, U> Emulator<T, U>
-    where T: 'static + Memory,
-          U: 'static + Memory
+impl<'a, T, U> Emulator<'a, T, U>
+    where T: 'a + Memory,
+          U: 'a + Memory
 {
-    pub fn new(img: T, bios: U) -> Emulator<T, U> {
+    pub fn new(img: T, bios: U) -> Emulator<'a, T, U> {
         let mut memory = memory::MappedMemory::new();
         let nm = MemoryToken::new(memory::NullMemory::new());
         memory.mount(0, &nm);

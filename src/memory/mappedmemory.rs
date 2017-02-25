@@ -82,12 +82,12 @@ use std::cell::{Ref, RefMut, RefCell};
 ///
 /// # Panics
 /// `MappedMemory` panics when an unmapped address is read or written.
-pub struct MappedMemory(Vec<Entry>);
+pub struct MappedMemory<'a>(Vec<Entry<'a>>);
 
-struct Entry {
+struct Entry<'a> {
     start_address: usize,
     size: usize,
-    memory: Rc<RefCell<Memory>>,
+    memory: Rc<RefCell<Memory + 'a>>,
 }
 
 /// Represents a mountable, shared `Memory`.
@@ -115,8 +115,8 @@ impl<T: Memory> MemoryToken<T> {
     }
 }
 
-impl MappedMemory {
-    pub fn new() -> MappedMemory {
+impl<'a> MappedMemory<'a> {
+    pub fn new() -> MappedMemory<'a> {
         MappedMemory(Vec::new())
     }
 
@@ -125,7 +125,7 @@ impl MappedMemory {
     /// # Panics
     /// `mount` panics if a mount is not on a word boundary.
     pub fn mount<T>(&mut self, start: usize, memory: &MemoryToken<T>)
-        where T: 'static + Memory
+        where T: Memory + 'a
     {
         assert!(start % 4 == 0, "Mount needs to be on a word boundary");
         let size = memory.borrow().size();
@@ -141,7 +141,7 @@ impl MappedMemory {
     /// `MappedMemory` does not hold any references to the `Memory`. If the
     /// `Memory` has already been unmounted, calling `unmount` is a no-op.
     pub fn unmount<T>(&mut self, mount_token: &MemoryToken<T>)
-        where T: 'static + Memory
+        where T: Memory + 'a
     {
         self.0
             .iter()
@@ -151,7 +151,7 @@ impl MappedMemory {
             .map(|idx| self.0.remove(idx));
     }
 
-    fn memory_at_addr(&self, addr: usize) -> Option<&Entry> {
+    fn memory_at_addr(&self, addr: usize) -> Option<&Entry<'a>> {
         self.0
             .iter()
             .rev()
@@ -159,7 +159,7 @@ impl MappedMemory {
     }
 }
 
-impl Memory for MappedMemory {
+impl<'a> Memory for MappedMemory<'a> {
     fn get(&self, addr: usize) -> u32 {
         self.memory_at_addr(addr)
             .map(|entry| entry.memory.borrow().get(addr - entry.start_address))
