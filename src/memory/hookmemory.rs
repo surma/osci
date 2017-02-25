@@ -105,7 +105,7 @@ mod tests {
     fn read_posthook() {
         let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice_u32(12, &[0, 2, 4]));
         assert_eq!(hook_mem.get(0), 0);
-        hook_mem.read_posthook(Box::new(|addr, val| *val += 1));
+        hook_mem.read_posthook(Box::new(|_, val| *val += 1));
         assert_eq!(hook_mem.get(0), 1);
         assert_eq!(hook_mem.get(4), 3);
         assert_eq!(hook_mem.get(8), 5);

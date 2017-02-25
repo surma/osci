@@ -6,8 +6,7 @@ use std::vec::Vec;
 use std::fs::File;
 use std::io;
 use std::io::Read;
-use osciemu::memory::{address, Memory, SliceMemory};
-use osciemu::memory::mappedmemory::MemoryToken;
+use osciemu::memory::SliceMemory;
 use osciemu::emulator::Emulator;
 
 fn main() {
@@ -53,7 +52,7 @@ fn main() {
         emulator.step();
         if step_mode {
             let mut buffer = String::new();
-            io::stdin().read_line(&mut buffer);
+            let _ = io::stdin().read_line(&mut buffer);
         }
     }
 }
