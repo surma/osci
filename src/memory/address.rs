@@ -8,5 +8,5 @@ pub const IVT_RETURN_ADDRESS: usize = REGISTERS_START_ADDRESS - 4;
 pub const IVT_START_ADDRESS: usize = IVT_RETURN_ADDRESS - 4 * NUM_IVT_ENTRIES;
 pub const FLAGS_START_ADDRESS: usize = IVT_START_ADDRESS - 4 * NUM_FLAGS;
 
-pub const FLAG0_HALT: usize = 0;
+pub const FLAG0_HALTED: usize = 0;
 pub const FLAG0_BIOS_DONE: usize = 1;

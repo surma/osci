@@ -7,7 +7,7 @@
 //! # osci’s memory
 //! osci’s memory is only addressable at a word boundary and only entire words
 //! can be read or written. A word is 4 bytes in little endian. osci always has
-//! 2^32 bytes of virtual memory. Not all the memory addresses are necessarily
+//! 2^32 bytes of virtual memory. Not all the memory address are necessarily
 //! backed by physical memory. Reads from unmapped memory yield 0. Writes
 //! to unmapped memory are discarded.
 //!
@@ -63,8 +63,9 @@
 mod nullmemory;
 mod slicememory;
 pub mod mappedmemory;
-pub mod addresses;
+pub mod address;
 pub mod hookmemory;
+pub use self::hookmemory::HookMemory;
 pub use self::nullmemory::NullMemory;
 pub use self::slicememory::SliceMemory;
 pub use self::mappedmemory::MappedMemory;

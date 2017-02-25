@@ -1,6 +1,7 @@
 use memory::Memory;
 use std::vec::Vec;
 use std::rc::Rc;
+use std::ops::Deref;
 use std::cell::{Ref, RefMut, RefCell};
 
 /// Maps multiple `Memory`s into a single address space.
@@ -81,43 +82,41 @@ use std::cell::{Ref, RefMut, RefCell};
 ///
 /// # Panics
 /// `MappedMemory` panics when an unmapped address is read or written.
-pub struct MappedMemory(Vec<Entry>);
+pub struct MappedMemory<'a>(Vec<Entry<'a>>);
 
-struct Entry {
+struct Entry<'a> {
     start_address: usize,
     size: usize,
-    memory: Rc<RefCell<Memory>>,
+    memory: Rc<RefCell<Memory + 'a>>,
 }
 
 /// Represents a mountable, shared `Memory`.
 #[derive(Clone)]
-pub struct MemoryToken {
-    memory: Rc<RefCell<Memory>>,
+pub struct MemoryToken<T: Memory> {
+    memory: Rc<RefCell<T>>,
 }
 
-impl MemoryToken {
-    pub fn new<T>(memory: T) -> MemoryToken
-        where T: 'static + Memory
-    {
+impl<T: Memory> MemoryToken<T> {
+    pub fn new(memory: T) -> MemoryToken<T> {
         MemoryToken { memory: Rc::new(RefCell::new(memory)) }
     }
 
     /// Borrows a reference to the mounted memory until the `Ref` is destroyed.
     /// See `std::cell::RefCell::borrow()`
-    pub fn borrow(&self) -> Ref<Memory> {
+    pub fn borrow(&self) -> Ref<T> {
         self.memory.borrow()
     }
 
     /// Borrows a mutable reference to the mounted memory until the `RefMut`
     /// is destroyed.
     /// See `std::cell::RefCell::borrow_mut()`
-    pub fn borrow_mut(&self) -> RefMut<Memory> {
+    pub fn borrow_mut(&self) -> RefMut<T> {
         self.memory.borrow_mut()
     }
 }
 
-impl MappedMemory {
-    pub fn new() -> MappedMemory {
+impl<'a> MappedMemory<'a> {
+    pub fn new() -> MappedMemory<'a> {
         MappedMemory(Vec::new())
     }
 
@@ -125,13 +124,15 @@ impl MappedMemory {
     ///
     /// # Panics
     /// `mount` panics if a mount is not on a word boundary.
-    pub fn mount(&mut self, start: usize, memory: &MemoryToken) {
+    pub fn mount<T>(&mut self, start: usize, memory: &MemoryToken<T>)
+        where T: Memory + 'a
+    {
         assert!(start % 4 == 0, "Mount needs to be on a word boundary");
         let size = memory.borrow().size();
         let new_entry = Entry {
             start_address: start,
             size: size,
-            memory: memory.clone().memory,
+            memory: memory.memory.clone(),
         };
         self.0.push(new_entry);
     }
@@ -139,16 +140,18 @@ impl MappedMemory {
     /// Unmounts the `Memory` references by the `MemoryToken`. After unmounting,
     /// `MappedMemory` does not hold any references to the `Memory`. If the
     /// `Memory` has already been unmounted, calling `unmount` is a no-op.
-    pub fn unmount(&mut self, mount_token: &MemoryToken) {
+    pub fn unmount<T>(&mut self, mount_token: &MemoryToken<T>)
+        where T: Memory + 'a
+    {
         self.0
             .iter()
             .enumerate()
-            .find(|&(_, entry)| rc_ptr_eq(&entry.memory, &mount_token.memory))
+            .find(|&(_, entry)| rc_ptr_eq(&mount_token.memory, &entry.memory))
             .map(|(idx, _)| idx)
             .map(|idx| self.0.remove(idx));
     }
 
-    fn memory_at_addr(&self, addr: usize) -> Option<&Entry> {
+    fn memory_at_addr(&self, addr: usize) -> Option<&Entry<'a>> {
         self.0
             .iter()
             .rev()
@@ -156,7 +159,7 @@ impl MappedMemory {
     }
 }
 
-impl Memory for MappedMemory {
+impl<'a> Memory for MappedMemory<'a> {
     fn get(&self, addr: usize) -> u32 {
         self.memory_at_addr(addr)
             .map(|entry| entry.memory.borrow().get(addr - entry.start_address))
@@ -176,6 +179,14 @@ impl Memory for MappedMemory {
             .max()
             .unwrap_or(0)
     }
+}
+
+// Helper until feature "ptr_eq" is stabilized.
+// See https://github.com/rust-lang/rust/issues/36497
+fn rc_ptr_eq<T: ?Sized, U: ?Sized>(this: &Rc<T>, other: &Rc<U>) -> bool {
+    let this_ptr = this.deref() as *const T as *const () as usize;
+    let other_ptr = other.deref() as *const U as *const () as usize;
+    this_ptr == other_ptr
 }
 
 #[cfg(test)]
@@ -291,12 +302,4 @@ mod tests {
             assert_eq!(mm.get(i << 2), 2);
         }
     }
-}
-
-// Helper until feature "ptr_eq" is stabilized.
-// See https://github.com/rust-lang/rust/issues/36497
-fn rc_ptr_eq<T: ?Sized>(this: &Rc<T>, other: &Rc<T>) -> bool {
-    let this_ptr: *const T = &**this;
-    let other_ptr: *const T = &**other;
-    this_ptr == other_ptr
 }
