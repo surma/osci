@@ -1,0 +1,1 @@
+const LOL* = 4

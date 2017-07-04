@@ -1,4 +1,9 @@
+*
+!*.*
+!*/
+### Above combination will ignore all files without extension ###
+
 nimcache
-osci
 node_modules
+/build
 *.img

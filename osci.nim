@@ -1,1 +1,3 @@
-echo "Totes an emulator"
+import osci/memory
+
+export memory
