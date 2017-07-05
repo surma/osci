@@ -24,3 +24,19 @@ suite "ArrayMemory":
     check(am.get(0) == 0)
     am.set(0, 4)
     check(am.get(0) == 4)
+
+suite "ZeroMemory":
+  test "size":
+    var zm = newZeroMemory(128)
+    check(zm.size == 128)
+
+  test "get":
+    var zm = newZeroMemory(4)
+    check(zm.get(0) == 0)
+
+  test "set":
+    var zm = newZeroMemory(4)
+    check(zm.get(0) == 0)
+    zm.set(0, 4)
+    check(zm.get(0) == 0)
+

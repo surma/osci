@@ -5,7 +5,7 @@ type ArrayMemory* = object of Memory
   ]##
   data: seq[uint8]
 
-proc newArrayMemory*(size: uint32): ArrayMemory =
+proc newArrayMemory*(size: int): ArrayMemory =
   ## Creates a new ``ArrayMemory`` with an empty sequence of given size.
   ArrayMemory(data: newSeq[uint8](size))
 
