@@ -61,4 +61,5 @@ Flags:
 * ``halt`` (``H``): Halts the CPU
 ]##
 
-const LOL* = 4
+include memory/memory
+include memory/array_memory

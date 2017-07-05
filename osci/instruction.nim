@@ -3,8 +3,8 @@
 CPU instructions
 =================
 
-An instruction consists of 4 words á 4 bytes. Each instruction can be intepreted as 4 addresses
-``[op_a, op_b, target, jmp]``. The execution of an instruction is equivalent to
+An instruction consists of 4 words á 4 bytes. Each instruction is a set of 4 addresses ``op_a``,
+``op_b``, ``target`` and ``jmp``. The execution of an instruction is equivalent to
 
 ::
   *target := *op_a - *op_b
