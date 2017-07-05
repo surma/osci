@@ -25,18 +25,18 @@ suite "ArrayMemory":
     am.set(0, 4)
     check(am.get(0) == 4)
 
-suite "ZeroMemory":
+suite "NullMemory":
   test "size":
-    var zm = newZeroMemory(128)
-    check(zm.size == 128)
+    var nm = newNullMemory(128)
+    check(nm.size == 128)
 
   test "get":
-    var zm = newZeroMemory(4)
-    check(zm.get(0) == 0)
+    var nm = newNullMemory(4)
+    check(nm.get(0) == 0)
 
   test "set":
-    var zm = newZeroMemory(4)
-    check(zm.get(0) == 0)
-    zm.set(0, 4)
-    check(zm.get(0) == 0)
+    var nm = newNullMemory(4)
+    check(nm.get(0) == 0)
+    nm.set(0, 4)
+    check(nm.get(0) == 0)
 

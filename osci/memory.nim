@@ -63,4 +63,4 @@ Flags:
 
 include memory/memory
 include memory/array_memory
-include memory/zero_memory
+include memory/null_memory
