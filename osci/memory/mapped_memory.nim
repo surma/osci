@@ -11,7 +11,7 @@ type
 
   MappedMemory* = ref object of Memory
     ##[
-      ``MappedMemory`` maps multiple ``Memory``s into a single address space.
+      ``MappedMemory`` maps multiple ``Memory`` into a single address space.
 
       A ``Memory`` is mounted at a certain address and is from now on responsible for all reads and
       writes between that address (the “mount point”) and where the mounted memory ends. The read and
@@ -19,15 +19,15 @@ type
       point.
 
       ::
-                          Unmapped
-                        <-------->
-              mem_a                   mem_b
-        |--------------|            |------|
-                                      NullMemory
-                                  |-------------->
-        |------------- mapped_mem --------------->
-        |              |            |      |
-        0            0x100        0x200  0x280
+        |                   Unmapped
+        |                  <-------->
+        |        mem_a                  mem_b
+        |  |--------------|            |------|
+        |                               null_mem
+        |                            |-------------->
+        |  |------------- mapped_mem --------------->
+        |  |              |            |      |
+        |  0            0x100        0x200  0x280
 
       For example: ``mapped_mem.get(0x208)`` would yield the same value as ``mem_b.get(0x008)``.
     ]##
@@ -40,7 +40,7 @@ proc newMappedMemory*(): MappedMemory =
   mm.mounts.append((memory: Sentinel(), mountPoint: high(uint32), size: 0))
   return mm
 
-proc mount(mm: MappedMemory, m: Memory, mountPoint: uint32) =
+proc mount*(mm: MappedMemory, m: Memory, mountPoint: uint32) =
   ## Mount a given memory at the given address
   let
     mount: Mount =
@@ -59,7 +59,7 @@ proc mount(mm: MappedMemory, m: Memory, mountPoint: uint32) =
     node.prev = newNode
     return
 
-proc numMounts(mm: MappedMemory): int =
+proc numMounts*(mm: MappedMemory): int =
   var
     i = 0
     node = mm.mounts.head
