@@ -1,4 +1,5 @@
 from lists import DoublyLinkedList,DoublyLinkedNode,nodes
+from options import Option, some, none, get
 
 type
   Mount = tuple
@@ -57,14 +58,14 @@ proc mount(mm: var MappedMemory, m: var Memory, mountPoint: uint32) =
     node.prev.next = newNode
     node.prev = newNode
 
-proc isAddressBacked(mm: var MappedMemory, address: uint32): bool =
+proc memoryAtAddress(mm: var MappedMemory, address: uint32): Option[Mount] =
   var node = mm.mounts.tail
   while node != nil:
-    if node.value.mountPoint < address and
+    if node.value.mountPoint <= address and
         node.value.mountPoint + uint32(node.value.size) > address:
-      return true
+      return some(node.value)
     node = node.prev
-  return false
+  return none(Mount)
 
 method size(mm: var MappedMemory): int =
   int(high(uint32))

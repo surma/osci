@@ -1,5 +1,6 @@
 include ../osci/memory
 import unittest
+from options import isNone, get
 
 suite "Memory":
   setup:
@@ -60,3 +61,13 @@ suite "MappedMemory":
     var nm = newNullMemory(1)
     mm.mount(nm, 0)
     check(numItems(mm.mounts) == 1)
+
+  test "memoryAtAddress":
+    var mm = newMappedMemory()
+    check(mm.memoryAtAddress(0).isNone())
+    var nm = newNullMemory(16)
+    mm.mount(nm, 0)
+    check(mm.memoryAtAddress(0).get().memory == nm)
+    check(mm.memoryAtAddress(8).get().memory == nm)
+    check(mm.memoryAtAddress(15).get().memory == nm)
+    check(mm.memoryAtAddress(16).isNone())
