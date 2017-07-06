@@ -9,8 +9,8 @@ proc newNullMemory*(size: int): NullMemory =
 method size(nm: NullMemory): int =
   nm.size
 
-method get(nm: NullMemory, address: uint32): uint32 =
+method get(nm: NullMemory, address: uint32): uint8 =
   0
 
-method set(nm: NullMemory, address: uint32, value: uint32) =
+method set(nm: NullMemory, address: uint32, value: uint8) =
   discard

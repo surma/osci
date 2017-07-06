@@ -9,7 +9,7 @@ suite "ArrayMemory":
 
   test "get":
     var am = newArrayMemory(@[0'u8, 1'u8, 2'u8, 3'u8])
-    check(am.get(0) == 0x03020100)
+    check(am.get(0) == 0)
 
   test "set":
     var am = newArrayMemory(newSeq[uint8](9))
