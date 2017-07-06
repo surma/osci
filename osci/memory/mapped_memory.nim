@@ -7,9 +7,9 @@ type
     mountPoint: uint32
     size: int
 
-  Sentinel = object of Memory
+  Sentinel = ref object of Memory
 
-  MappedMemory* = object of Memory
+  MappedMemory* = ref object of Memory
     ##[
       ``MappedMemory`` maps multiple ``Memory``s into a single address space.
 
@@ -40,7 +40,7 @@ proc newMappedMemory*(): MappedMemory =
   mm.mounts.append((memory: Sentinel(), mountPoint: high(uint32), size: 0))
   return mm
 
-proc mount(mm: var MappedMemory, m: var Memory, mountPoint: uint32) =
+proc mount(mm: MappedMemory, m: Memory, mountPoint: uint32) =
   ## Mount a given memory at the given address
   let
     mount: Mount =
@@ -59,7 +59,7 @@ proc mount(mm: var MappedMemory, m: var Memory, mountPoint: uint32) =
     node.prev = newNode
     return
 
-proc numMounts(mm: var MappedMemory): int =
+proc numMounts(mm: MappedMemory): int =
   var
     i = 0
     node = mm.mounts.head
@@ -68,7 +68,7 @@ proc numMounts(mm: var MappedMemory): int =
     node = node.next
   return i
 
-proc memoryAtAddress(mm: var MappedMemory, address: uint32): Option[Mount] =
+proc memoryAtAddress(mm: MappedMemory, address: uint32): Option[Mount] =
   var node = mm.mounts.tail
   while node != nil:
     if node.value.mountPoint <= address and
@@ -77,11 +77,11 @@ proc memoryAtAddress(mm: var MappedMemory, address: uint32): Option[Mount] =
     node = node.prev
   return none(Mount)
 
-method size(mm: var MappedMemory): int =
+method size(mm: MappedMemory): int =
   int(high(uint32))
 
-method get(mm: var MappedMemory, address: uint32): uint32 =
+method get(mm: MappedMemory, address: uint32): uint32 =
   0
 
-method set(mm: var MappedMemory, address: uint32, value: uint32) =
+method set(mm: MappedMemory, address: uint32, value: uint32) =
   discard
