@@ -8,13 +8,11 @@ suite "ArrayMemory":
     check(am.size == 128)
 
   test "get":
-    let data: seq[uint8] = @[0'u8, 1'u8, 2'u8, 3'u8]
-    var am = newArrayMemory(data)
+    var am = newArrayMemory(@[0'u8, 1'u8, 2'u8, 3'u8])
     check(am.get(0) == 0x03020100)
 
   test "set":
-    let data: seq[uint8] = newSeq[uint8](9)
-    var am = newArrayMemory(data)
+    var am = newArrayMemory(newSeq[uint8](9))
     check(am.get(0) == 0)
     am.set(0, 4)
     check(am.get(0) == 4)
@@ -42,10 +40,9 @@ suite "MappedMemory":
   test "numMounts":
     var mm = newMappedMemory()
     check(mm.numMounts == 0)
-    var nm = newNullMemory(1)
-    mm.mount(nm, 0)
+    mm.mount(newNullMemory(1), 0)
     check(mm.numMounts == 1)
-    mm.mount(nm, 1)
+    mm.mount(newNullMemory(1), 1)
     check(mm.numMounts == 2)
 
   test "memoryAtAddress":
