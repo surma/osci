@@ -80,8 +80,10 @@ proc memoryAtAddress(mm: MappedMemory, address: uint32): Option[Mount] =
 method size(mm: MappedMemory): int =
   int(high(uint32))
 
-method get(mm: MappedMemory, address: uint32): uint32 =
-  0
+method get(mm: MappedMemory, address: uint32): uint8 =
+  let mount = mm.memoryAtAddress(address).get()
+  mount.memory.get(address - mount.mountPoint)
 
-method set(mm: MappedMemory, address: uint32, value: uint32) =
-  discard
+method set(mm: MappedMemory, address: uint32, value: uint8) =
+  let mount = mm.memoryAtAddress(address).get()
+  mount.memory.set(address - mount.mountPoint, value)
