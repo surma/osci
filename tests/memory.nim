@@ -2,13 +2,6 @@ include ../osci/memory
 import unittest
 from options import isNone, get
 
-suite "Memory":
-  setup:
-    discard
-
-  teardown:
-    discard
-
 suite "ArrayMemory":
   test "size":
     var am = newArrayMemory(128)

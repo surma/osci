@@ -1,4 +1,4 @@
-from lists import DoublyLinkedList,DoublyLinkedNode,nodes
+from lists import DoublyLinkedList,DoublyLinkedNode,nodes,append
 from options import Option, some, none, get
 
 type
@@ -6,6 +6,8 @@ type
     memory: Memory
     mountPoint: uint32
     size: int
+
+  Sentinel = object of Memory
 
   MappedMemory* = object of Memory
     ##[
@@ -33,9 +35,13 @@ type
 
 proc newMappedMemory*(): MappedMemory =
   ## Creates a new ``MappedMemory`` with no mappings
-  MappedMemory(mounts: lists.initDoublyLinkedList[Mount]())
+  var mm = MappedMemory(mounts: lists.initDoublyLinkedList[Mount]())
+  mm.mounts.append((memory: Sentinel(), mountPoint: 0'u32, size: 0))
+  mm.mounts.append((memory: Sentinel(), mountPoint: high(uint32), size: 0))
+  return mm
 
 proc mount(mm: var MappedMemory, m: var Memory, mountPoint: uint32) =
+  ## Mount a given memory at the given address
   let
     mount: Mount =
       (
@@ -43,20 +49,15 @@ proc mount(mm: var MappedMemory, m: var Memory, mountPoint: uint32) =
         mountPoint: mountPoint,
         size: m.size
       )
-  if mm.mounts.head == nil:
-    lists.append(mm.mounts, mount)
-    return
-
   for node in mm.mounts.nodes():
-    if node.value.mountPoint < mountPoint:
+    if node.value.mountPoint <= mountPoint:
       continue
-    var
-      newNode: DoublyLinkedNode[Mount] =
-        lists.newDoublyLinkedNode[Mount](mount)
+    var newNode: DoublyLinkedNode[Mount] = lists.newDoublyLinkedNode[Mount](mount)
     newNode.prev = node.prev
-    newNode.next = node.next
+    newNode.next = node
     node.prev.next = newNode
     node.prev = newNode
+    return
 
 proc memoryAtAddress(mm: var MappedMemory, address: uint32): Option[Mount] =
   var node = mm.mounts.tail
