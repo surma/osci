@@ -59,6 +59,15 @@ proc mount(mm: var MappedMemory, m: var Memory, mountPoint: uint32) =
     node.prev = newNode
     return
 
+proc numMounts(mm: var MappedMemory): int =
+  var
+    i = 0
+    node = mm.mounts.head
+  while node.next != mm.mounts.tail:
+    inc i
+    node = node.next
+  return i
+
 proc memoryAtAddress(mm: var MappedMemory, address: uint32): Option[Mount] =
   var node = mm.mounts.tail
   while node != nil:

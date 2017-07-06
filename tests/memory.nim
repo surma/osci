@@ -35,25 +35,18 @@ suite "NullMemory":
     check(nm.get(0) == 0)
 
 suite "MappedMemory":
-  proc numItems(dll: DoublyLinkedList[Mount]): int =
-    var
-      i = 0
-      node = dll.head
-    while node != nil:
-      inc i
-      node = node.next
-    return i
-
   test "size":
     var mm = newMappedMemory()
     check(mm.size == 0xFFFFFFFF)
 
-  test "mount":
+  test "numMounts":
     var mm = newMappedMemory()
-    check(numItems(mm.mounts) == 0)
+    check(mm.numMounts == 0)
     var nm = newNullMemory(1)
     mm.mount(nm, 0)
-    check(numItems(mm.mounts) == 1)
+    check(mm.numMounts == 1)
+    mm.mount(nm, 1)
+    check(mm.numMounts == 2)
 
   test "memoryAtAddress":
     var mm = newMappedMemory()
