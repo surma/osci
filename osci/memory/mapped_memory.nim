@@ -1,6 +1,6 @@
 from lists import DoublyLinkedList,DoublyLinkedNode,nodes,append
 from options import Option, some, none, get
-from ../helpers import length
+from ../helpers import length, mitemsReverse
 
 type
   Mount = tuple
@@ -64,12 +64,10 @@ proc numMounts*(mm: MappedMemory): int =
   mm.mounts.length - 2
 
 proc memoryAtAddress(mm: MappedMemory, address: uint32): Option[Mount] =
-  var node = mm.mounts.tail
-  while node != nil:
-    if node.value.mountPoint <= address and
-        int(node.value.mountPoint) + node.value.size > int(address):
-      return some(node.value)
-    node = node.prev
+  for mount in mm.mounts.mitemsReverse():
+    if mount.mountPoint <= address and
+        int(mount.mountPoint) + mount.size > int(address):
+      return some(mount)
   return none(Mount)
 
 method size*(mm: MappedMemory): int =
