@@ -29,8 +29,14 @@ proc findWithPredicate*[T](dll: var DoublyLinkedList[T], pred: (T) -> bool): Opt
     node = node.next
   none(T)
 
-iterator itemsReverse*[T](dll: var DoublyLinkedList[T]): T =
+template listItems() =
   var it = dll.tail
   while it != nil:
     yield it.value
     it = it.prev
+
+iterator itemsReverse*[T](dll: DoublyLinkedList[T]): T =
+  listItems()
+
+iterator mitemsReverse*[T](dll: var DoublyLinkedList[T]): T =
+  listItems()
