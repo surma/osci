@@ -1,4 +1,4 @@
-from memory import Memory
+from memory import Memory, writeUint32, readUint32
 
 ##[
 =================
@@ -27,8 +27,14 @@ type
     jmp: uint32
   Instruction* = ref InstructionObj
 
-proc serialize*(m: Memory, address: uint32) =
-  discard
+proc serialize*(instr: Instruction, m: Memory, address: uint32) =
+  m.writeUint32(address + 00, instr.op_a)
+  m.writeUint32(address + 04, instr.op_b)
+  m.writeUint32(address + 08, instr.target)
+  m.writeUint32(address + 12, instr.jmp)
 
-proc deserialize*(m: Memory, address: uint32) =
-  discard
+proc deserialize*(instr: Instruction, m: Memory, address: uint32) =
+  instr.op_a = m.readUint32(address + 00)
+  instr.op_b = m.readUint32(address + 04)
+  instr.target = m.readUint32(address + 08)
+  instr.jmp = m.readUint32(address + 12)
