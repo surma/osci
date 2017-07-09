@@ -1,4 +1,6 @@
 from lists import DoublyLinkedList
+import options
+from future import `->`
 
 ##[
   =======
@@ -17,3 +19,12 @@ proc length*(dll: DoublyLinkedList): int =
     inc i
     node = node.next
   return i
+
+proc findWithPredicate*[T](dll: var DoublyLinkedList[T], pred: (T) -> bool): Option[T] =
+  var
+    node = dll.head
+  while node != nil:
+    if pred(node.value):
+      return some[T](node.value)
+    node = node.next
+  none(T)
