@@ -24,6 +24,21 @@ suite "MappedMemory":
     check(mm.memoryAtAddress(15).get().memory == am)
     check(mm.memoryAtAddress(16).isNone())
 
+  test "isMounted":
+    var
+      mm = newMappedMemory()
+      am1 = newArrayMemory(16)
+      am2 = newArrayMemory(16)
+
+    check(not mm.isMounted(am1))
+    check(not mm.isMounted(am2))
+    mm.mount(am1, 0)
+    check(mm.isMounted(am1))
+    check(not mm.isMounted(am2))
+    mm.mount(am2, 0)
+    check(mm.isMounted(am1))
+    check(mm.isMounted(am2))
+
   test "get":
     var mm = newMappedMemory()
     mm.mount(newNullMemory(), 0)

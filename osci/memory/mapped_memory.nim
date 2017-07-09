@@ -1,6 +1,7 @@
 from lists import DoublyLinkedList,DoublyLinkedNode,nodes,append
-from options import Option, some, none, get
-from ../helpers import length, mitemsReverse
+import options
+from ../helpers import length, mitemsReverse, findWithPredicate
+from future import `=>`
 
 type
   Mount = tuple
@@ -69,6 +70,9 @@ proc memoryAtAddress(mm: MappedMemory, address: uint32): Option[Mount] =
         int(mount.mountPoint) + mount.size > int(address):
       return some(mount)
   return none(Mount)
+
+proc isMounted*(mm: MappedMemory, m: Memory): bool =
+  mm.mounts.findWithPredicate(mount => mount.memory == m).isSome()
 
 method size*(mm: MappedMemory): int =
   MAX_SIZE
