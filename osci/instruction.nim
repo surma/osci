@@ -1,3 +1,5 @@
+from memory import Memory
+
 ##[
 =================
 CPU instructions
@@ -25,4 +27,8 @@ type
     jmp: uint32
   Instruction* = ref InstructionObj
 
-const LOL2* = 9
+proc serialize(m: Memory, address: uint32) =
+  discard
+
+proc deserialize(m: Memory, address: uint32) =
+  discard

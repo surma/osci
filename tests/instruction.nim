@@ -7,6 +7,3 @@ suite "instruction":
 
   teardown:
     discard
-
-  test "constants":
-    check(LOL2 == 9)
