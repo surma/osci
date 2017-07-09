@@ -71,7 +71,7 @@ proc memoryAtAddress(mm: MappedMemory, address: uint32): Option[Mount] =
   return none(Mount)
 
 method size*(mm: MappedMemory): int =
-  int(high(uint32))
+  MAX_SIZE
 
 method get*(mm: MappedMemory, address: uint32): uint8 =
   let mount = mm.memoryAtAddress(address).get()

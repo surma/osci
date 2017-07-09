@@ -54,7 +54,7 @@ suite "NullMemory":
 suite "MappedMemory":
   test "size":
     var mm = newMappedMemory()
-    check(mm.size == 0xFFFFFFFF)
+    check(mm.size == MAX_SIZE)
 
   test "numMounts":
     var mm = newMappedMemory()
