@@ -1,13 +1,12 @@
 type NullMemory* = ref object of Memory
   ##``NullMemory`` is a memory that always reads zero and discards writes.
-  size: int
 
-proc newNullMemory*(size: int): NullMemory =
+proc newNullMemory*(): NullMemory =
   ## Creates a new ``NullMemory`` with given size.
-  NullMemory(size: size)
+  NullMemory()
 
 method size*(nm: NullMemory): int =
-  nm.size
+  MAX_SIZE
 
 method get*(nm: NullMemory, address: uint32): uint8 =
   0

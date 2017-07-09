@@ -72,7 +72,7 @@ proc memoryAtAddress(mm: MappedMemory, address: uint32): Option[Mount] =
   var node = mm.mounts.tail
   while node != nil:
     if node.value.mountPoint <= address and
-        node.value.mountPoint + uint32(node.value.size) > address:
+        int(node.value.mountPoint) + node.value.size > int(address):
       return some(node.value)
     node = node.prev
   return none(Mount)

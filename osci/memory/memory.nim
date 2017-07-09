@@ -1,3 +1,6 @@
+const MAX_ADDRESS*: uint32 = 0xFFFFFFFF'u32
+const MAX_SIZE*: int = int(MAX_ADDRESS) + 1
+
 type Memory* = ref object of RootObj
   ##[
     ``Memory`` is the base object for all memory implementations. By enforcing this “interface”,
