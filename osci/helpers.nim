@@ -28,3 +28,9 @@ proc findWithPredicate*[T](dll: var DoublyLinkedList[T], pred: (T) -> bool): Opt
       return some[T](node.value)
     node = node.next
   none(T)
+
+iterator itemsReverse*[T](dll: var DoublyLinkedList[T]): T =
+  var it = dll.tail
+  while it != nil:
+    yield it.value
+    it = it.prev

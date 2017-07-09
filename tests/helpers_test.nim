@@ -34,3 +34,14 @@ suite "helpers":
     item = dll.findWithPredicate((entry: Entry) => entry.enabled)
     check(item.isSome())
     check(item.get().value == 6)
+
+  test "DoublyLinkedList.items":
+    var
+      dll: DoublyLinkedList[int] = lists.initDoublyLinkedList[int]()
+      max: int = 5
+    for i in 0..max:
+      dll.append(i)
+
+    for i in dll.itemsReverse():
+      check(i == max)
+      max -= 1
