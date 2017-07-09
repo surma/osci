@@ -77,13 +77,13 @@ proc memoryAtAddress(mm: MappedMemory, address: uint32): Option[Mount] =
     node = node.prev
   return none(Mount)
 
-method size(mm: MappedMemory): int =
+method size*(mm: MappedMemory): int =
   int(high(uint32))
 
-method get(mm: MappedMemory, address: uint32): uint8 =
+method get*(mm: MappedMemory, address: uint32): uint8 =
   let mount = mm.memoryAtAddress(address).get()
   mount.memory.get(address - mount.mountPoint)
 
-method set(mm: MappedMemory, address: uint32, value: uint8) =
+method set*(mm: MappedMemory, address: uint32, value: uint8) =
   let mount = mm.memoryAtAddress(address).get()
   mount.memory.set(address - mount.mountPoint, value)

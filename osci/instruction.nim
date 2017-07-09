@@ -27,8 +27,8 @@ type
     jmp: uint32
   Instruction* = ref InstructionObj
 
-proc serialize(m: Memory, address: uint32) =
+proc serialize*(m: Memory, address: uint32) =
   discard
 
-proc deserialize(m: Memory, address: uint32) =
+proc deserialize*(m: Memory, address: uint32) =
   discard

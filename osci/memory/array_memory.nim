@@ -13,11 +13,11 @@ proc newArrayMemory*(data: seq[uint8]): ArrayMemory =
   ## Creates a new ``ArrayMemory`` with the given sequence as the initial value.
   ArrayMemory(data: data)
 
-method size(am: ArrayMemory): int =
+method size*(am: ArrayMemory): int =
   am.data.len
 
-method get(am: ArrayMemory, address: uint32): uint8 =
+method get*(am: ArrayMemory, address: uint32): uint8 =
   am.data[int(address)]
 
-method set(am: ArrayMemory, address: uint32, value: uint8) =
+method set*(am: ArrayMemory, address: uint32, value: uint8) =
   am.data[int(address + 0)] = value
