@@ -1,5 +1,6 @@
 from lists import DoublyLinkedList,DoublyLinkedNode,nodes,append
 from options import Option, some, none, get
+from ../helpers import length
 
 type
   Mount = tuple
@@ -60,13 +61,7 @@ proc mount*(mm: MappedMemory, m: Memory, mountPoint: uint32) =
     return
 
 proc numMounts*(mm: MappedMemory): int =
-  var
-    i = 0
-    node = mm.mounts.head
-  while node.next != mm.mounts.tail:
-    inc i
-    node = node.next
-  return i
+  mm.mounts.length - 2
 
 proc memoryAtAddress(mm: MappedMemory, address: uint32): Option[Mount] =
   var node = mm.mounts.tail
