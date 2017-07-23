@@ -18,6 +18,26 @@ suite "instruction":
     check(a.target == b.target)
     check(a.jmp == b.jmp)
 
+  test "fromMemory":
+    var
+      am = newArrayMemory(@[
+        1'u8, 0'u8, 0'u8, 0'u8,
+        2'u8, 0'u8, 0'u8, 0'u8,
+        3'u8, 0'u8, 0'u8, 0'u8,
+        4'u8, 0'u8, 0'u8, 0'u8,
+      ])
+      inst = fromMemory(am, 0)
+    check(inst.op_a == 1)
+    check(inst.op_b == 2)
+    check(inst.target == 3)
+    check(inst.jmp == 4)
+
+  test "equality":
+    var
+      inst_a = newInstruction(1, 2, 3, 4)
+      inst_b = newInstruction(1, 2, 3, 4)
+    check(inst_a == inst_b)
+
   test "execute - no jmp":
     var
       am = newArrayMemory(@[

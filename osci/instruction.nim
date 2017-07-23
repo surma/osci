@@ -32,6 +32,13 @@ type
 proc newInstruction*(op_a, op_b, target, jmp: uint32 = 0): Instruction =
   Instruction(op_a: op_a, op_b: op_b, target: target, jmp: jmp)
 
+proc `==`*(instr1, instr2: Instruction): bool =
+  true and
+    instr1.op_a == instr2.op_a and
+    instr1.op_b == instr2.op_b and
+    instr1.target == instr2.target and
+    instr1.jmp == instr2.jmp
+
 proc serialize*(instr: Instruction, m: Memory, address: uint32) =
   m.writeUint32(address + 00, instr.op_a)
   m.writeUint32(address + 04, instr.op_b)
@@ -43,6 +50,10 @@ proc deserialize*(instr: Instruction, m: Memory, address: uint32) =
   instr.op_b = m.readUint32(address + 04)
   instr.target = m.readUint32(address + 08)
   instr.jmp = m.readUint32(address + 12)
+
+proc fromMemory*(m: Memory, address: uint32): Instruction =
+  result = newInstruction()
+  result.deserialize(m, address)
 
 proc execute*(instr: Instruction, m: Memory, ip: var uint32) =
   let
