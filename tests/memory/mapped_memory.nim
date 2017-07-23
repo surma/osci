@@ -24,6 +24,18 @@ suite "MappedMemory":
     check(mm.memoryAtAddress(15).get().memory == am)
     check(mm.memoryAtAddress(16).isNone())
 
+  test "remount":
+    var mm = newMappedMemory()
+    mm.mount(newNullMemory(), 0)
+    var oldM = newArrayMemory(@[1'u8, 1'u8])
+    mm.mount(oldM, 1)
+    check(mm.get(1) == 1)
+    check(mm.get(2) == 1)
+    mm.remount(oldM, newArrayMemory(@[2'u8]))
+    check(mm.isMounted(oldM) == false)
+    check(mm.get(1) == 2)
+    check(mm.get(2) == 0)
+
   test "isMounted":
     var
       mm = newMappedMemory()

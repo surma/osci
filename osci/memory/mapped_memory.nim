@@ -21,15 +21,15 @@ type
       point.
 
       ::
-        |                   Unmapped
-        |                  <-------->
-        |        mem_a                  mem_b
-        |  |--------------|            |------|
-        |                               null_mem
-        |                            |-------------->
-        |  |------------- mapped_mem --------------->
-        |  |              |            |      |
-        |  0            0x100        0x200  0x280
+        |                Unmapped
+        |               <-------->
+        |     mem_a                  mem_b
+        |--------------|            |------|
+        |                            null_mem
+        |                         |-------------->
+        |------------- mapped_mem --------------->
+        |              |            |      |
+        0            0x100        0x200  0x280
 
       For example: ``mapped_mem.get(0x208)`` would yield the same value as ``mem_b.get(0x008)``.
     ]##
@@ -60,6 +60,14 @@ proc mount*(mm: MappedMemory, m: Memory, mountPoint: uint32) =
     node.prev.next = newNode
     node.prev = newNode
     return
+
+proc remount*(mm: MappedMemory, oldM, newM: Memory) =
+  ## Replace a mounted memory with another
+  for node in mm.mounts.nodes():
+    if node.value.memory == oldM:
+      node.value.memory = newM
+      node.value.size = newM.size
+      return
 
 proc numMounts*(mm: MappedMemory): int =
   mm.mounts.length - 2
