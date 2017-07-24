@@ -1,5 +1,6 @@
 const MAX_ADDRESS*: uint32 = 0xFFFFFFFF'u32
 const MAX_SIZE*: int = int(MAX_ADDRESS) + 1
+const BIOS_ADDRESS*: uint32 = 0x80000000'u32
 
 type Memory* = ref object of RootObj
   ##[

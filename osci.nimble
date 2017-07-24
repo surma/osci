@@ -18,3 +18,4 @@ task test, "Runs the test suite":
   exec "nim c -r tests/helpers_test.nim"
   exec "nim c -r tests/memory_test.nim"
   exec "nim c -r tests/instruction_test.nim"
+  exec "nim c -r tests/emulator_test.nim"
