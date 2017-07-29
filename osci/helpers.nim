@@ -1,6 +1,7 @@
 from lists import DoublyLinkedList
 import options
 from future import `->`
+import macros
 
 ##[
   =======
@@ -40,3 +41,16 @@ iterator itemsReverse*[T](dll: DoublyLinkedList[T]): T =
 
 iterator mitemsReverse*[T](dll: var DoublyLinkedList[T]): T =
   listItems()
+
+proc replaceInTree(root: NimNode, key, value: string) =
+  case root.kind
+  of nnkIdent:
+    if $root == key:
+      root.ident = `!`($value)
+  else:
+    for child in root.children:
+      replaceInTree(child, key, value)
+
+macro replaceIdent*(key, val: string, body: untyped): untyped =
+  replaceInTree(body, $key, $val)
+  body

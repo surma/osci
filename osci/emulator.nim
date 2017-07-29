@@ -1,7 +1,7 @@
 from memory import Memory, MappedMemory, isMounted, mount, remount
 import instruction
 from future import `=>`
-import macros
+from helpers import replaceIdent
 
 ##[
   ========
@@ -19,19 +19,6 @@ type
     FmainMemory, FbiosMemory: Memory
     ip*: uint32
   Emulator* = ref EmulatorObj
-
-proc replaceInTree(root: NimNode, key, value: string) =
-  case root.kind
-  of nnkIdent:
-    if $root == key:
-      root.ident = `!`($value)
-  else:
-    for child in root.children:
-      replaceInTree(child, key, value)
-
-macro replaceIdent(key, val: string, body: untyped): untyped =
-  replaceInTree(body, $key, $val)
-  body
 
 template memorySetter(name: string) =
   replaceIdent "%", name:
