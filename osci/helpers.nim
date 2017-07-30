@@ -54,3 +54,8 @@ proc replaceInTree(root: NimNode, key, value: string) =
 macro replaceIdent*(key, val: string, body: untyped): untyped =
   replaceInTree(body, $key, $val)
   body
+
+proc or_else*[T](self: Option[T], def: T): T =
+  result = def
+  if(self.isSome()):
+    result = self.get()

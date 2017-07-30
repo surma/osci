@@ -45,3 +45,11 @@ suite "helpers":
     for i in dll.itemsReverse():
       check(i == max)
       max -= 1
+
+  test "Option.or_else - some":
+    var x = some[int](4)
+    check(x.or_else(9) == 4)
+
+  test "Option.or_else - none":
+    var x = none(int)
+    check(x.or_else(9) == 9)
