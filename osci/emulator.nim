@@ -1,6 +1,5 @@
 from memory import Memory, MappedMemory, isMounted, mount, remount
 import instruction
-from future import `=>`
 from helpers import replaceIdent
 
 ##[
