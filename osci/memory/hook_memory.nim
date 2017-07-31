@@ -32,10 +32,10 @@ method set*(pm: HookMemory, address: uint32, value: uint8) =
   discard pm.Fset.map(cb => valueHack(cb, address, value))
 
 proc `size=`*(pm: HookMemory, h: SizeHook) =
-  pm.Fsize = some[SizeHook](h)
+  pm.Fsize = some[SizeHook](h).filter(h => h != nil)
 
 proc `get=`*(pm: HookMemory, h: GetHook) =
-  pm.Fget = some[GetHook](h)
+  pm.Fget = some[GetHook](h).filter(h => h != nil)
 
 proc `set=`*(pm: HookMemory, h: SetHook) =
-  pm.Fset = some[SetHook](h)
+  pm.Fset = some[SetHook](h).filter(h => h != nil)

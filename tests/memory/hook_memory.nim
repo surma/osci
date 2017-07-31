@@ -8,6 +8,8 @@ suite "HookMemory":
     check(pm.size == 0)
     pm.size = () => 4
     check(pm.size == 4)
+    pm.size = nil
+    check(pm.size == 0)
 
   test "get":
     var pm = newHookMemory()
@@ -16,6 +18,9 @@ suite "HookMemory":
     pm.get = (address: uint32) => uint8(address) + 1
     check(pm.get(0) == 1)
     check(pm.get(123) == 124)
+    pm.get = nil
+    check(pm.get(0) ==  0)
+    check(pm.get(123) == 0)
 
   test "set":
     var
@@ -25,3 +30,7 @@ suite "HookMemory":
       called = true
     pm.set(0, 0)
     check(called == true)
+    called = false
+    pm.set = nil
+    pm.set(0, 0)
+    check(called == false)
