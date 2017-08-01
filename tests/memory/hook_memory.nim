@@ -26,8 +26,7 @@ suite "HookMemory":
     var
       pm = newHookMemory()
       called = false
-    pm.set = proc (address: uint32, value: uint8) =
-      called = true
+    pm.set = (address: uint32, value: uint8) => (called = true)
     pm.set(0, 0)
     check(called == true)
     called = false

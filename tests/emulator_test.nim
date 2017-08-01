@@ -52,6 +52,21 @@ suite "emulator":
     check(emu.ip == 0)
     check(emu.memory.readInt32(0) == 16)
 
+  test "halted bit":
+    var
+      emu = newEmulator()
+
+    check(emu.halted == false)
+    check(((emu.memory.get(FLAGS0_ADDRESS) shr FLAG_HALT) and 1) == 0)
+
+    emu.memory.set(FLAGS0_ADDRESS, 1 shl FLAG_HALT)
+    check(((emu.memory.get(FLAGS0_ADDRESS) shr FLAG_HALT) and 1) == 1)
+    check(emu.halted == true)
+
+    emu.memory.set(FLAGS0_ADDRESS, 0 shl FLAG_HALT)
+    check(((emu.memory.get(FLAGS0_ADDRESS) shr FLAG_HALT) and 1) == 0)
+    check(emu.halted == false)
+
   test "biosDone behavior":
     var
       emu = newEmulator(biosMemory = newArrayMemory(@[0xFF'u8]))
@@ -59,3 +74,18 @@ suite "emulator":
     check(emu.memory.get(BIOS_ADDRESS) == 0xFF)
     emu.biosDone = true
     check(emu.memory.get(BIOS_ADDRESS) == 0x00)
+
+  test "biosDone bit":
+    var
+      emu = newEmulator()
+
+    check(((emu.memory.get(FLAGS0_ADDRESS) shr FLAG_BIOS_DONE) and 1) == 0)
+    check(emu.biosDone == false)
+
+    emu.memory.set(FLAGS0_ADDRESS, 1 shl FLAG_BIOS_DONE)
+    check(emu.biosDone == true)
+    check(((emu.memory.get(FLAGS0_ADDRESS) shr FLAG_BIOS_DONE) and 1) == 1)
+
+    emu.memory.set(FLAGS0_ADDRESS, 0 shl FLAG_BIOS_DONE)
+    check(emu.biosDone == false)
+    check(((emu.memory.get(FLAGS0_ADDRESS) shr FLAG_BIOS_DONE) and 1) == 0)
