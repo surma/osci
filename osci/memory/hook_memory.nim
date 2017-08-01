@@ -4,13 +4,12 @@ import options
 from future import `->`, `=>`
 
 type
-  SetHook* = proc (a: uint32, b: uint8)
+  SetHook* = (a: uint32, b: uint8) -> void
   GetHook* = (uint32) -> uint8
   SizeHook* = () -> int
   HookMemory* = ref object of Memory
-    ##[
-      ``HookMemory``
-    ]##
+    ## Externalizes the interface as callbacks (or “hooks”). ``get`` and ``size`` will default to
+    ## ``0`` if no hook has been set.
     Fget: Option[GetHook]
     Fset: Option[SetHook]
     Fsize: Option[SizeHook]

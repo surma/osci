@@ -1,5 +1,5 @@
 type NullMemory* = ref object of Memory
-  ##``NullMemory`` is a memory that always reads zero and discards writes.
+  ## A memory implementation that always reads zero and discards writes.
 
 proc newNullMemory*(): NullMemory =
   ## Creates a new ``NullMemory`` with given size.

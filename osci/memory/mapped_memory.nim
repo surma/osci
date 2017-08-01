@@ -12,38 +12,37 @@ type
   Sentinel = ref object of Memory
 
   MappedMemory* = ref object of Memory
-    ##[
-      ``MappedMemory`` maps multiple ``Memory`` into a single address space.
-
-      A ``Memory`` is mounted at a certain address and is from now on responsible for all reads and
-      writes between that address (the “mount point”) and where the mounted memory ends. The read and
-      write calls for the responsible ``Memory`` will be given an address *relative* to the mount
-      point.
-
-      ::
-        |                Unmapped
-        |               <-------->
-        |     mem_a                  mem_b
-        |--------------|            |------|
-        |                            null_mem
-        |                         |-------------->
-        |------------- mapped_mem --------------->
-        |              |            |      |
-        0            0x100        0x200  0x280
-
-      For example: ``mapped_mem.get(0x208)`` would yield the same value as ``mem_b.get(0x008)``.
-    ]##
+    ## Maps multiple ``Memory`` into a single address space.
+    ##
+    ## A ``Memory`` is mounted at a certain address and is from now on responsible for all reads and
+    ## writes between that address (the “mount point”) and where the mounted memory ends. The read
+    ## and write calls for the responsible ``Memory`` will be given an address *relative* to the
+    ## mount point. If two memories overlap in their area or responsibility, the memory mounted last
+    ## will used.
+    ##
+    ## ::
+    ##   |                Unmapped
+    ##   |               <-------->
+    ##   |     mem_a                  mem_b
+    ##   |--------------|            |------|
+    ##   |                            null_mem
+    ##   |                         |-------------->
+    ##   |------------- mapped_mem --------------->
+    ##   |              |            |      |
+    ##   0            0x100        0x200  0x280
+    ##
+    ## For example: ``mapped_mem.get(0x208)`` would yield the same value as ``mem_b.get(0x008)``.
     mounts: DoublyLinkedList[Mount]
 
 proc newMappedMemory*(): MappedMemory =
-  ## Creates a new ``MappedMemory`` with no mappings
+  ## Creates a new ``MappedMemory`` with no mappings.
   var mm = MappedMemory(mounts: lists.initDoublyLinkedList[Mount]())
   mm.mounts.append((memory: Sentinel(), mountPoint: 0'u32, size: 0))
   mm.mounts.append((memory: Sentinel(), mountPoint: high(uint32), size: 0))
   return mm
 
 proc mount*(mm: MappedMemory, m: Memory, mountPoint: uint32) =
-  ## Mount a given memory at the given address
+  ## Mounts a given memory at the given address.
   let
     mount: Mount =
       (
@@ -62,7 +61,7 @@ proc mount*(mm: MappedMemory, m: Memory, mountPoint: uint32) =
     return
 
 proc remount*(mm: MappedMemory, oldM, newM: Memory) =
-  ## Replace a mounted memory with another
+  ## Replaces a mounted memory with another, preserving shadowing order.
   for node in mm.mounts.nodes():
     if node.value.memory == oldM:
       node.value.memory = newM
@@ -70,11 +69,13 @@ proc remount*(mm: MappedMemory, oldM, newM: Memory) =
       return
 
 proc unmount*(mm: MappedMemory, m: Memory) =
+  ## Unmounts a memory. If a memory is mounted multiple times, one instance will be unmounted.
   discard mm.mounts
     .findNodeWithPredicate(mount => mount.memory == m)
     .map(node => (mm.mounts.remove(node); true))
 
 proc numMounts*(mm: MappedMemory): int =
+  ## Returns the number of mounted memories (counting duplicates).
   mm.mounts.length - 2
 
 proc memoryAtAddress(mm: MappedMemory, address: uint32): Option[Mount] =
@@ -85,6 +86,7 @@ proc memoryAtAddress(mm: MappedMemory, address: uint32): Option[Mount] =
   return none(Mount)
 
 proc isMounted*(mm: MappedMemory, m: Memory): bool =
+  ## Checks if the given memory is mounted somewhere.
   mm.mounts.findWithPredicate(mount => mount.memory == m).isSome()
 
 method size*(mm: MappedMemory): int =

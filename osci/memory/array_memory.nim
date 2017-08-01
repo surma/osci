@@ -1,8 +1,5 @@
 type ArrayMemory* = ref object of Memory
-  ##[
-    ``ArrayMemory`` is a straight-up memory implementation backed by a chunk of memory (a
-    ``seq[uint8]``).
-  ]##
+  ## A straight-up memory implementation backed by a chunk of memory (a ``seq[uint8]``).
   data: seq[uint8]
 
 proc newArrayMemory*(size: int): ArrayMemory =

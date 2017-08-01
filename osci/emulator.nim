@@ -3,20 +3,19 @@ import instruction
 from helpers import replaceIdent
 from future import `=>`
 
-##[
-  ========
-  Emulator
-  ========
-
-  The ``Emulator`` module ties together ``Memory``, ``Instruction`` et al to form an osci machine.
-  Things like instruction pointer, mount points and BIOS memory – basically all state – is
-  encapsulated in an ``Emulator`` instance.
-]##
+## ========
+## Emulator
+## ========
+##
+## The ``Emulator`` module ties together ``Memory``, ``Instruction`` et al to form an osci machine.
+## Things like instruction pointer, mount points and BIOS memory – basically all state – is
+## encapsulated in an ``Emulator`` instance.
 
 let emptyBiosMemory = newArrayMemory(@[])
 
 type
   EmulatorObj = object of RootObj
+    ## Represents an osci emulator.
     Fmemory: MappedMemory
     FflagMemory: HookMemory
     FmainMemory, FbiosMemory: Memory
@@ -85,9 +84,7 @@ proc memory*(emu: Emulator): Memory =
   return emu.Fmemory
 
 proc step*(emu: Emulator) =
+  ## Executes the current instruction.
   if emu.halted: return
   var instr = instruction.fromMemory(emu.memory, emu.ip)
   instr.execute(emu.memory, emu.ip)
-
-proc isHalted*(emu: Emulator): bool =
-  emu.halted
