@@ -1,3 +1,5 @@
+from sequtils import toSeq
+
 type ArrayMemory* = ref object of Memory
   ## A straight-up memory implementation backed by a chunk of memory (a ``seq[uint8]``).
   data: seq[uint8]
@@ -6,9 +8,9 @@ proc newArrayMemory*(size: int): ArrayMemory =
   ## Creates a new ``ArrayMemory`` with an empty sequence of given size.
   ArrayMemory(data: newSeq[uint8](size))
 
-proc newArrayMemory*(data: seq[uint8]): ArrayMemory =
+proc newArrayMemory*(data: openArray[uint8]): ArrayMemory =
   ## Creates a new ``ArrayMemory`` with the given sequence as the initial value.
-  ArrayMemory(data: data)
+  ArrayMemory(data: toSeq(data.items))
 
 method size*(am: ArrayMemory): int =
   am.data.len
