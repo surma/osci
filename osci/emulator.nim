@@ -17,6 +17,7 @@ type
     Fmemory: MappedMemory
     FmainMemory, FbiosMemory: Memory
     ip*: uint32
+    halted: bool
   Emulator* = ref EmulatorObj
 
 template memorySetter(name: string) =
@@ -31,15 +32,26 @@ template memorySetter(name: string) =
 memorySetter("main")
 memorySetter("bios")
 
-proc newEmulator*(mainMemory: Memory = memory.newNullMemory(), biosMemory: Memory = memory.newNullMemory()): Emulator =
-  result = Emulator(Fmemory: memory.newMappedMemory(), FmainMemory: mainMemory, FbiosMemory: biosMemory)
-  result.Fmemory.mount(memory.newNullMemory(), 0)
-  result.Fmemory.mount(result.FmainMemory, 0)
-  result.Fmemory.mount(result.FbiosMemory, memory.BIOS_ADDRESS)
+proc newEmulator*(mainMemory: Memory = newNullMemory(), biosMemory: Memory = newNullMemory()): Emulator =
+  var r: Emulator = Emulator(
+    Fmemory: newMappedMemory(),
+    FmainMemory: mainMemory,
+    FbiosMemory: biosMemory,
+  )
+
+  r.Fmemory.mount(newNullMemory(), 0)
+  r.Fmemory.mount(r.FmainMemory, 0)
+  r.Fmemory.mount(r.FbiosMemory, BIOS_ADDRESS)
+  r.halted = false
+  r
 
 proc memory*(emu: Emulator): Memory =
   return emu.Fmemory
 
 proc step*(emu: Emulator) =
+  if emu.halted: return
   var instr = instruction.fromMemory(emu.memory, emu.ip)
   instr.execute(emu.memory, emu.ip)
+
+proc isHalted*(emu: Emulator): bool =
+  emu.halted

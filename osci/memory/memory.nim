@@ -10,9 +10,11 @@ const IVT_RETURN_ADDRESS*: uint32 = REGISTER0_ADDRESS - 1 * WORD_SIZE
 const NUM_IVTS*: int = 0
 const IVT0_ADDRESS*: uint32 = IVT_RETURN_ADDRESS - NUM_IVTS * WORD_SIZE
 const NUM_FLAGS: int = 2
-const NUM_FLAG_BYTES: int = int(math.ceil(NUM_FLAGS/8))
-const NUM_FLAG_WORDS: int = int(math.ceil(NUM_FLAG_BYTES / 4))
+const NUM_FLAG_BYTES*: int = int(math.ceil(NUM_FLAGS/8))
+const NUM_FLAG_WORDS*: int = int(math.ceil(NUM_FLAG_BYTES / 4))
 const FLAGS0_ADDRESS*: uint32 = IVT0_ADDRESS - uint32(NUM_FLAG_WORDS)
+const FLAG_HALT*: int = 0
+const FLAG_BIOS_DONE*: int = 1
 
 type Memory* = ref object of RootObj
   ##[
