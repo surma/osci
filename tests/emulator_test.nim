@@ -51,3 +51,11 @@ suite "emulator":
     emu.step()
     check(emu.ip == 0)
     check(emu.memory.readInt32(0) == 16)
+
+  test "biosDone behavior":
+    var
+      emu = newEmulator(biosMemory = newArrayMemory(@[0xFF'u8]))
+
+    check(emu.memory.get(BIOS_ADDRESS) == 0xFF)
+    emu.biosDone = true
+    check(emu.memory.get(BIOS_ADDRESS) == 0x00)

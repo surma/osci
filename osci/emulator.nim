@@ -18,6 +18,7 @@ type
     FmainMemory, FbiosMemory: Memory
     ip*: uint32
     halted: bool
+    FbiosDone: bool
   Emulator* = ref EmulatorObj
 
 template memorySetter(name: string) =
@@ -32,6 +33,16 @@ template memorySetter(name: string) =
 memorySetter("main")
 memorySetter("bios")
 
+proc biosDone*(emu: Emulator): bool =
+  emu.FbiosDone
+
+proc `biosDone=`*(emu: Emulator, done: bool) =
+  if done != emu.FbiosDone and not done:
+    emu.Fmemory.mount(emu.biosMemory, BIOS_ADDRESS)
+  if done != emu.FbiosDone and done:
+    emu.Fmemory.unmount(emu.biosMemory)
+  emu.FbiosDone = done
+
 proc newEmulator*(mainMemory: Memory = newNullMemory(), biosMemory: Memory = newNullMemory()): Emulator =
   var r: Emulator = Emulator(
     Fmemory: newMappedMemory(),
@@ -43,6 +54,7 @@ proc newEmulator*(mainMemory: Memory = newNullMemory(), biosMemory: Memory = new
   r.Fmemory.mount(r.FmainMemory, 0)
   r.Fmemory.mount(r.FbiosMemory, BIOS_ADDRESS)
   r.halted = false
+  r.biosDone = false
   r
 
 proc memory*(emu: Emulator): Memory =
