@@ -67,6 +67,7 @@ proc newEmulator*(mainMemory: Memory = newNullMemory(), biosMemory: Memory = new
     FmainMemory: mainMemory,
     FbiosMemory: biosMemory,
     FflagMemory: newHookMemory(),
+    ip: BIOS_ADDRESS
   )
 
   r.Fmemory.mount(newNullMemory(), 0)

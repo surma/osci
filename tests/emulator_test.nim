@@ -23,34 +23,42 @@ suite "emulator":
 
   test "step":
     var
-      emu = newEmulator(mainMemory = newArrayMemory(@[
-        16'u8, 0'u8, 0'u8, 0'u8,
-        20'u8, 0'u8, 0'u8, 0'u8,
-        0'u8, 0'u8, 0'u8, 0'u8,
-        100'u8, 0'u8, 0'u8, 0'u8,
-        4'u8, 0'u8, 0'u8, 0'u8,
-        5'u8, 0'u8, 0'u8, 0'u8,
-      ]))
+      emu = newEmulator(
+        mainMemory = newArrayMemory(@[
+          4'u8, 0'u8, 0'u8, 0'u8,
+          5'u8, 0'u8, 0'u8, 0'u8,
+        ]),
+        biosMemory = newArrayMemory(@[
+          0'u8, 0'u8, 0'u8, 0'u8,
+          4'u8, 0'u8, 0'u8, 0'u8,
+          0'u8, 0'u8, 0'u8, 0'u8,
+          100'u8, 0'u8, 0'u8, 0'u8,
+        ])
+      )
     emu.step()
     check(emu.memory.readInt32(0) == -1)
     check(emu.ip == 100)
 
   test "halted behavior":
     var
-      emu = newEmulator(mainMemory = newArrayMemory(@[
-        16'u8, 0'u8, 0'u8, 0'u8,
-        20'u8, 0'u8, 0'u8, 0'u8,
-        0'u8, 0'u8, 0'u8, 0'u8,
-        100'u8, 0'u8, 0'u8, 0'u8,
-        4'u8, 0'u8, 0'u8, 0'u8,
-        5'u8, 0'u8, 0'u8, 0'u8,
-      ]))
-    check(emu.ip == 0)
-    check(emu.memory.readInt32(0) == 16)
+      emu = newEmulator(
+        mainMemory = newArrayMemory(@[
+          4'u8, 0'u8, 0'u8, 0'u8,
+          5'u8, 0'u8, 0'u8, 0'u8,
+        ]),
+        biosMemory = newArrayMemory(@[
+          0'u8, 0'u8, 0'u8, 0'u8,
+          4'u8, 0'u8, 0'u8, 0'u8,
+          0'u8, 0'u8, 0'u8, 0'u8,
+          100'u8, 0'u8, 0'u8, 0'u8,
+        ])
+      )
+    check(emu.ip == BIOS_ADDRESS)
+    check(emu.memory.readInt32(0) == 4)
     emu.halted = true
     emu.step()
-    check(emu.ip == 0)
-    check(emu.memory.readInt32(0) == 16)
+    check(emu.ip == BIOS_ADDRESS)
+    check(emu.memory.readInt32(0) == 4)
 
   test "halted bit":
     var
