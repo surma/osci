@@ -74,6 +74,8 @@ suite "emulator":
     check(emu.memory.get(BIOS_ADDRESS) == 0xFF)
     emu.biosDone = true
     check(emu.memory.get(BIOS_ADDRESS) == 0x00)
+    emu.biosDone = false
+    check(emu.memory.get(BIOS_ADDRESS) == 0xFF)
 
   test "biosDone bit":
     var

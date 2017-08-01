@@ -13,6 +13,8 @@ from future import `=>`
   encapsulated in an ``Emulator`` instance.
 ]##
 
+let emptyBiosMemory = newArrayMemory(@[])
+
 type
   EmulatorObj = object of RootObj
     Fmemory: MappedMemory
@@ -40,9 +42,9 @@ proc biosDone*(emu: Emulator): bool =
 
 proc `biosDone=`*(emu: Emulator, done: bool) =
   if done != emu.FbiosDone and not done:
-    emu.Fmemory.mount(emu.biosMemory, BIOS_ADDRESS)
+    emu.Fmemory.remount(emptyBiosMemory, emu.biosMemory)
   if done != emu.FbiosDone and done:
-    emu.Fmemory.unmount(emu.biosMemory)
+    emu.Fmemory.remount(emu.biosMemory, emptyBiosMemory)
   emu.FbiosDone = done
 
 proc flagSet(emu: Emulator, address: uint32, value: uint8) =
