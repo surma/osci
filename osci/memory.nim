@@ -25,17 +25,17 @@ interrupts::
   |                 Word 0                |
   |                 Word 1                |
   |                   ...                 |
-  +---------------------------------------+ FLAGS_START_ADDRESS
+  +---------------------------------------+ FLAGS0_ADDRESS
   |              Flags Word 0             |
   |                   ...                 |
   |              Flags Word i             |
-  +---------------------------------------+ IVT_START_ADDRESS
+  +---------------------------------------+ IVT0_ADDRESS
   |               IVT Entry 0             |
   |                   ...                 |
   |               IVT Entry j             |
   +---------------------------------------+
   |           IVT Return address          | IVT_RETURN_ADDRESS
-  +---------------------------------------+ REGISTER_START_ADDRESS
+  +---------------------------------------+ REGISTER0_ADDRESS
   |                Register 0             |
   |                   ...                 |
   |                Register k             |
