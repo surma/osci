@@ -24,12 +24,8 @@ method size*(pm: HookMemory): int =
 method get*(pm: HookMemory, address: uint32): uint8 =
   pm.Fget.map(cb => cb(address)).get(0)
 
-proc valueHack(h: SetHook, address: uint32, value: uint8): bool =
-  h(address, value)
-  true
-
 method set*(pm: HookMemory, address: uint32, value: uint8) =
-  discard pm.Fset.map(cb => valueHack(cb, address, value))
+  discard pm.Fset.map(cb => (cb(address, value); true))
 
 proc `size=`*(pm: HookMemory, h: SizeHook) =
   pm.Fsize = some[SizeHook](h).filter(h => h != nil)
