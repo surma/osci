@@ -1,6 +1,6 @@
-from lists import DoublyLinkedList
+from lists import DoublyLinkedList, DoublyLinkedNode
 import options
-from future import `->`
+from future import `->`, `=>`
 import macros
 
 ##[
@@ -21,14 +21,18 @@ proc length*(dll: DoublyLinkedList): int =
     node = node.next
   return i
 
-proc findWithPredicate*[T](dll: var DoublyLinkedList[T], pred: (T) -> bool): Option[T] =
+
+proc findNodeWithPredicate*[T](dll: var DoublyLinkedList[T], pred: (T) -> bool): Option[DoublyLinkedNode[T]] =
   var
     node = dll.head
   while node != nil:
     if pred(node.value):
-      return some[T](node.value)
+      return some(node)
     node = node.next
-  none(T)
+  none(DoublyLinkedNode[T])
+
+proc findWithPredicate*[T](dll: var DoublyLinkedList[T], pred: (T) -> bool): Option[T] =
+  dll.findNodeWithPredicate(pred).map(node => node.value)
 
 template listItems() =
   var it = dll.tail

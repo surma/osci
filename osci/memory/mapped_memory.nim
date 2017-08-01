@@ -1,6 +1,6 @@
-from lists import DoublyLinkedList,DoublyLinkedNode,nodes,append
+import lists
 import options
-from ../helpers import length, mitemsReverse, findWithPredicate
+import ../helpers
 from future import `=>`
 
 type
@@ -68,6 +68,11 @@ proc remount*(mm: MappedMemory, oldM, newM: Memory) =
       node.value.memory = newM
       node.value.size = newM.size
       return
+
+proc unmount*(mm: MappedMemory, m: Memory) =
+  discard mm.mounts
+    .findNodeWithPredicate(mount => mount.memory == m)
+    .map(node => (mm.mounts.remove(node); true))
 
 proc numMounts*(mm: MappedMemory): int =
   mm.mounts.length - 2

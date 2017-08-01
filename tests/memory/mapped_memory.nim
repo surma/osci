@@ -51,6 +51,18 @@ suite "MappedMemory":
     check(mm.isMounted(am1))
     check(mm.isMounted(am2))
 
+  test "unmount":
+    var
+      mm = newMappedMemory()
+      am1 = newArrayMemory(@[1'u8])
+      am2 = newArrayMemory(@[2'u8])
+    mm.mount(newNullMemory(), 0)
+    mm.mount(am1, 0)
+    mm.mount(am2, 0)
+    check(mm.get(0) == 2)
+    mm.unmount(am2)
+    check(mm.get(0) == 1)
+
   test "get":
     var mm = newMappedMemory()
     mm.mount(newNullMemory(), 0)
