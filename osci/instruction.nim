@@ -1,4 +1,4 @@
-from memory import Memory, writeUint32, readUint32, readInt32, writeInt32
+import memory
 
 ## =================
 ## CPU instructions
@@ -76,6 +76,7 @@ proc execute*(instr: Instruction, m: Memory, ip: var int32) =
   let result = m.readInt32(op_a) - m.readInt32(op_b)
   m.writeInt32(target, result)
   if result < 0:
-    ip = jmp
+    # Round up to the next word boundary
+    ip = int32(int((jmp + WORD_SIZE - 1) / WORD_SIZE) * WORD_SIZE)
   else:
     ip += INSTRUCTION_SIZE

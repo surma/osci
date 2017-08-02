@@ -165,3 +165,15 @@ suite "instruction":
     instr.execute(am, ip)
     check(am.readInt32(8) == -1)
     check(ip == 0x100)
+
+  test "execute - non-word boundary":
+    var
+      am = newArrayMemory(@[
+        4'u8, 0'u8, 0'u8, 0'u8,
+        5'u8, 0'u8, 0'u8, 0'u8,
+        0'u8, 0'u8, 0'u8, 0'u8,
+      ])
+      ip: int32 = 0
+      instr: Instruction = newInstruction(0, 4, 8, 31)
+    instr.execute(am, ip)
+    check(ip == 32)
