@@ -77,7 +77,9 @@ suite "emulator":
 
   test "biosDone behavior":
     var
-      emu = newEmulator(biosMemory = newArrayMemory(@[0xFF'u8]))
+      emu = newEmulator(
+        biosMemory = newArrayMemory(@[0xFF'u8])
+      )
 
     check(emu.memory.get(BIOS_ADDRESS) == 0xFF)
     emu.biosDone = true
@@ -116,3 +118,20 @@ suite "emulator":
     emu.biosMemory.writeInt32(8, REGISTER0_ADDRESS)
     emu.step();
     check(emu.register(0) == 5)
+
+  test "bios memory is readonly":
+    var
+      emu = newEmulator(
+        biosMemory = newArrayMemory(@[
+          0'u8, 0, 0, 0,
+          4, 0, 0, 0,
+          0, 0, 0, 0,
+        ]),
+        mainMemory = newArrayMemory(@[
+          8'u8, 0'u8, 0'u8, 0'u8,
+          3'u8, 0'u8, 0'u8, 0'u8,
+        ])
+      )
+    emu.biosMemory.writeInt32(8, BIOS_ADDRESS)
+    emu.step();
+    check(emu.memory.get(BIOS_ADDRESS) == 0)

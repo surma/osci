@@ -18,33 +18,40 @@ type
     ## Represents an osci emulator.
     Fmemory: MappedMemory
     FflagMemory: HookMemory
-    FmainMemory, FbiosMemory: Memory
+    FmainMemory: Memory
+    FbiosMemory: Memory
+    FreadonlyBiosMemory: ReadonlyMemory
     FregisterMemory: ArrayMemory
     ip*: int32
     halted*: bool
     FbiosDone: bool
   Emulator* = ref EmulatorObj
 
-template memorySetter(name: string) =
-  replaceIdent "%", name:
-    proc `%Memory=`*(emu: Emulator, newVal: Memory) =
-      emu.Fmemory.remount(emu.`F%Memory`, newVal)
-      emu.`F%Memory` = newVal
+proc `mainMemory=`*(emu: Emulator, newVal: Memory) =
+  emu.Fmemory.remount(emu.FmainMemory, newVal)
+  emu.FmainMemory = newVal
 
-    proc `%Memory`*(emu: Emulator): Memory =
-      emu.`F%Memory`
+proc mainMemory*(emu: Emulator): Memory =
+  emu.FmainMemory
 
-memorySetter("main")
-memorySetter("bios")
+proc `biosMemory=`*(emu: Emulator, newVal: Memory) =
+  emu.FbiosMemory = newVal
+  let n = newReadonlyMemory(emu.FbiosMemory)
+  emu.Fmemory.remount(emu.FreadonlyBiosMemory, n)
+  emu.FreadonlyBiosMemory = n
+
+
+proc biosMemory*(emu: Emulator): Memory =
+  emu.FbiosMemory
 
 proc biosDone*(emu: Emulator): bool =
   emu.FbiosDone
 
 proc `biosDone=`*(emu: Emulator, done: bool) =
   if done != emu.FbiosDone and not done:
-    emu.Fmemory.remount(emptyBiosMemory, emu.biosMemory)
+    emu.Fmemory.remount(emptyBiosMemory, emu.FreadonlyBiosMemory)
   if done != emu.FbiosDone and done:
-    emu.Fmemory.remount(emu.biosMemory, emptyBiosMemory)
+    emu.Fmemory.remount(emu.FreadonlyBiosMemory, emptyBiosMemory)
   emu.FbiosDone = done
 
 proc flagSet(emu: Emulator, address: int32, value: uint8) =
@@ -67,6 +74,7 @@ proc newEmulator*(mainMemory: Memory = newNullMemory(), biosMemory: Memory = new
     Fmemory: newMappedMemory(),
     FmainMemory: mainMemory,
     FbiosMemory: biosMemory,
+    FreadonlyBiosMemory: newReadonlyMemory(biosMemory),
     FregisterMemory: newArrayMemory(NUM_REGISTERS * WORD_SIZE),
     FflagMemory: newHookMemory(),
     ip: BIOS_ADDRESS
@@ -74,7 +82,7 @@ proc newEmulator*(mainMemory: Memory = newNullMemory(), biosMemory: Memory = new
 
   r.Fmemory.mount(newNullMemory(), 0)
   r.Fmemory.mount(r.FmainMemory, 0)
-  r.Fmemory.mount(r.FbiosMemory, BIOS_ADDRESS)
+  r.Fmemory.mount(r.FreadonlyBiosMemory, BIOS_ADDRESS)
   r.halted = false
   r.biosDone = false
   r.FflagMemory.get = (address: int32) => r.flagGet(address)
