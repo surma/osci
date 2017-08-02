@@ -99,3 +99,19 @@ suite "emulator":
     emu.memory.set(FLAGS0_ADDRESS, 0 shl FLAG_BIOS_DONE)
     check(emu.biosDone == false)
     check(((emu.memory.get(FLAGS0_ADDRESS) shr FLAG_BIOS_DONE) and 1) == 0)
+
+  test "register":
+    var
+      emu = newEmulator(
+        biosMemory = newArrayMemory(@[
+          0'u8, 0, 0, 0,
+          4, 0, 0, 0,
+          0'u8 - WORD_SIZE * NUM_REGISTERS, 0xFF, 0xFF, 0xFF
+        ]),
+        mainMemory = newArrayMemory(@[
+          8'u8, 0'u8, 0'u8, 0'u8,
+          3'u8, 0'u8, 0'u8, 0'u8,
+        ])
+      )
+    emu.step();
+    check(emu.register(0) == 5)

@@ -19,6 +19,7 @@ type
     Fmemory: MappedMemory
     FflagMemory: HookMemory
     FmainMemory, FbiosMemory: Memory
+    FregisterMemory: ArrayMemory
     ip*: uint32
     halted: bool
     FbiosDone: bool
@@ -66,6 +67,7 @@ proc newEmulator*(mainMemory: Memory = newNullMemory(), biosMemory: Memory = new
     Fmemory: newMappedMemory(),
     FmainMemory: mainMemory,
     FbiosMemory: biosMemory,
+    FregisterMemory: newArrayMemory(NUM_REGISTERS * WORD_SIZE),
     FflagMemory: newHookMemory(),
     ip: BIOS_ADDRESS
   )
@@ -79,7 +81,11 @@ proc newEmulator*(mainMemory: Memory = newNullMemory(), biosMemory: Memory = new
   r.FflagMemory.set = (address: uint32, value: uint8) => r.flagSet(address, value)
   r.FflagMemory.size = () => NUM_FLAG_WORDS
   r.Fmemory.mount(r.FflagMemory, FLAGS0_ADDRESS)
+  r.Fmemory.mount(r.FregisterMemory, REGISTER0_ADDRESS)
   r
+
+proc register*(emu: Emulator, idx: int): int32 =
+  emu.FregisterMemory.readInt32(uint32(idx * WORD_SIZE))
 
 proc memory*(emu: Emulator): Memory =
   return emu.Fmemory

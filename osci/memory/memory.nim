@@ -1,18 +1,18 @@
 from math import nil
 
-const WORD_SIZE: int = 4
+const WORD_SIZE*: int = 4
 const MAX_ADDRESS*: uint32 = 0xFFFFFFFF'u32
 const MAX_SIZE*: int = int(MAX_ADDRESS) + 1
 const BIOS_ADDRESS*: uint32 = 0x80000000'u32
 const NUM_REGISTERS*: int = 4
 const REGISTER0_ADDRESS*: uint32 = MAX_SIZE - NUM_REGISTERS * WORD_SIZE
 const IVT_RETURN_ADDRESS*: uint32 = REGISTER0_ADDRESS - 1 * WORD_SIZE
-const NUM_IVTS*: int = 0
+const NUM_IVTS*: int = 1
 const IVT0_ADDRESS*: uint32 = IVT_RETURN_ADDRESS - NUM_IVTS * WORD_SIZE
 const NUM_FLAGS: int = 2
 const NUM_FLAG_BYTES*: int = int(math.ceil(NUM_FLAGS/8))
 const NUM_FLAG_WORDS*: int = int(math.ceil(NUM_FLAG_BYTES / 4))
-const FLAGS0_ADDRESS*: uint32 = IVT0_ADDRESS - uint32(NUM_FLAG_WORDS)
+const FLAGS0_ADDRESS*: uint32 = IVT0_ADDRESS - uint32(NUM_FLAG_WORDS * WORD_SIZE)
 const FLAG_HALT*: int = 0
 const FLAG_BIOS_DONE*: int = 1
 
