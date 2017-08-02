@@ -24,16 +24,8 @@ suite "emulator":
   test "step":
     var
       emu = newEmulator(
-        mainMemory = newArrayMemory(@[
-          4'u8, 0'u8, 0'u8, 0'u8,
-          5'u8, 0'u8, 0'u8, 0'u8,
-        ]),
-        biosMemory = newArrayMemory(@[
-          0'u8, 0'u8, 0'u8, 0'u8,
-          4'u8, 0'u8, 0'u8, 0'u8,
-          0'u8, 0'u8, 0'u8, 0'u8,
-          100'u8, 0'u8, 0'u8, 0'u8,
-        ])
+        mainMemory = newArrayMemory(@[4'i32, 5]),
+        biosMemory = newArrayMemory(@[0'i32, 4, 0, 100]),
       )
     emu.step()
     check(emu.memory.readInt32(0) == -1)
@@ -42,16 +34,8 @@ suite "emulator":
   test "halted behavior":
     var
       emu = newEmulator(
-        mainMemory = newArrayMemory(@[
-          4'u8, 0'u8, 0'u8, 0'u8,
-          5'u8, 0'u8, 0'u8, 0'u8,
-        ]),
-        biosMemory = newArrayMemory(@[
-          0'u8, 0'u8, 0'u8, 0'u8,
-          4'u8, 0'u8, 0'u8, 0'u8,
-          0'u8, 0'u8, 0'u8, 0'u8,
-          100'u8, 0'u8, 0'u8, 0'u8,
-        ])
+        mainMemory = newArrayMemory(@[4'i32, 5]),
+        biosMemory = newArrayMemory(@[0'i32, 4, 0, 100]),
       )
     check(emu.ip == BIOS_ADDRESS)
     check(emu.memory.readInt32(0) == 4)
@@ -105,15 +89,8 @@ suite "emulator":
   test "register":
     var
       emu = newEmulator(
-        biosMemory = newArrayMemory(@[
-          0'u8, 0, 0, 0,
-          4, 0, 0, 0,
-          0, 0, 0, 0,
-        ]),
-        mainMemory = newArrayMemory(@[
-          8'u8, 0'u8, 0'u8, 0'u8,
-          3'u8, 0'u8, 0'u8, 0'u8,
-        ])
+        biosMemory = newArrayMemory(@[0'i32, 4, 0, 0]),
+        mainMemory = newArrayMemory(@[8'i32, 3, 0, 0]),
       )
     emu.biosMemory.writeInt32(8, REGISTER0_ADDRESS)
     emu.step();
@@ -122,15 +99,8 @@ suite "emulator":
   test "bios memory is readonly":
     var
       emu = newEmulator(
-        biosMemory = newArrayMemory(@[
-          0'u8, 0, 0, 0,
-          4, 0, 0, 0,
-          0, 0, 0, 0,
-        ]),
-        mainMemory = newArrayMemory(@[
-          8'u8, 0'u8, 0'u8, 0'u8,
-          3'u8, 0'u8, 0'u8, 0'u8,
-        ])
+        biosMemory = newArrayMemory(@[0'i32, 4, 0, 0]),
+        mainMemory = newArrayMemory(@[8'i32, 3, 0, 0]),
       )
     emu.biosMemory.writeInt32(8, BIOS_ADDRESS)
     emu.step();

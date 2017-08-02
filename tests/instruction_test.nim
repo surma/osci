@@ -20,12 +20,7 @@ suite "instruction":
 
   test "fromMemory":
     var
-      am = newArrayMemory(@[
-        1'u8, 0'u8, 0'u8, 0'u8,
-        2'u8, 0'u8, 0'u8, 0'u8,
-        3'u8, 0'u8, 0'u8, 0'u8,
-        4'u8, 0'u8, 0'u8, 0'u8,
-      ])
+      am = newArrayMemory(@[1'i32, 2, 3, 4])
       inst = fromMemory(am, 0)
     check(inst.op_a == 1)
     check(inst.op_b == 2)
@@ -40,11 +35,7 @@ suite "instruction":
 
   test "execute - no jmp":
     var
-      am = newArrayMemory(@[
-        5'u8, 0'u8, 0'u8, 0'u8,
-        4'u8, 0'u8, 0'u8, 0'u8,
-        0'u8, 0'u8, 0'u8, 0'u8,
-      ])
+      am = newArrayMemory(@[5'i32, 4, 0])
       ip: int32 = 0
       instr: Instruction = newInstruction(0, 4, 8, 0x100)
     instr.execute(am, ip)
@@ -55,11 +46,7 @@ suite "instruction":
 
   test "execute - jmp on zero":
     var
-      am = newArrayMemory(@[
-        4'u8, 0'u8, 0'u8, 0'u8,
-        4'u8, 0'u8, 0'u8, 0'u8,
-        0'u8, 0'u8, 0'u8, 0'u8,
-      ])
+      am = newArrayMemory(@[4'i32, 4, 0])
       ip: int32 = 0
       instr: Instruction = newInstruction(0, 4, 8, 0x100)
     instr.execute(am, ip)
@@ -70,11 +57,7 @@ suite "instruction":
 
   test "execute - jmp on negative result":
     var
-      am = newArrayMemory(@[
-        4'u8, 0'u8, 0'u8, 0'u8,
-        5'u8, 0'u8, 0'u8, 0'u8,
-        0'u8, 0'u8, 0'u8, 0'u8,
-      ])
+      am = newArrayMemory(@[4'i32, 5, 0])
       ip: int32 = 0
       instr: Instruction = newInstruction(0, 4, 8, 0x100)
     instr.execute(am, ip)
@@ -85,11 +68,9 @@ suite "instruction":
 
   test "execute - negative numbers no jmp":
     var
-      am = newArrayMemory(12)
+      am = newArrayMemory(@[-4'i32, -5, 0])
       ip: int32 = 0
       instr: Instruction = newInstruction(0, 4, 8, 0x100)
-    am.writeInt32(0, -4)
-    am.writeInt32(4, -5)
     instr.execute(am, ip)
     check(am.readInt32(8) == 1)
     check(ip == 16)
@@ -97,97 +78,69 @@ suite "instruction":
 
   test "execute - negative numbers jmp":
     var
-      am = newArrayMemory(12)
+      am = newArrayMemory(@[-5'i32, -4, 0])
       ip: int32 = 0
       instr: Instruction = newInstruction(0, 4, 8, 0x100)
-    am.writeInt32(0, -5)
-    am.writeInt32(4, -4)
     instr.execute(am, ip)
     check(am.readInt32(8) == -1)
     check(ip == 0x100)
 
   test "execute - indirect ops no jmp":
     var
-      am = newArrayMemory(24)
+      am = newArrayMemory(@[0'i32, 12, 16, 5, 4, 0])
       ip: int32 = 0
       instr: Instruction = newInstruction(-4, -8, 20, 0x100)
-    am.writeInt32(4, 12)
-    am.writeInt32(8, 16)
-    am.writeInt32(12, 5)
-    am.writeInt32(16, 4)
     instr.execute(am, ip)
     check(am.readInt32(20) == 1)
     check(ip == 16)
 
   test "execute - indirect ops jmp":
     var
-      am = newArrayMemory(24)
+      am = newArrayMemory(@[0'i32, 12, 16, 4, 5, 0])
       ip: int32 = 0
       instr: Instruction = newInstruction(-4, -8, 20, 0x100)
-    am.writeInt32(4, 12)
-    am.writeInt32(8, 16)
-    am.writeInt32(12, 4)
-    am.writeInt32(16, 5)
     instr.execute(am, ip)
     check(am.readInt32(20) == -1)
     check(ip == 0x100)
 
   test "execute - indirect ops negative numbers no jmp":
     var
-      am = newArrayMemory(24)
+      am = newArrayMemory(@[0'i32, 12, 16, -4, -5, 0])
       ip: int32 = 0
       instr: Instruction = newInstruction(-4, -8, 20, 0x100)
-    am.writeInt32(4, 12)
-    am.writeInt32(8, 16)
-    am.writeInt32(12, -4)
-    am.writeInt32(16, -5)
     instr.execute(am, ip)
     check(am.readInt32(20) == 1)
     check(ip == 16)
 
   test "execute - indirect ops negative numbers jmp":
     var
-      am = newArrayMemory(24)
+      am = newArrayMemory(@[0'i32, 12, 16, -5, -4, 0])
       ip: int32 = 0
       instr: Instruction = newInstruction(-4, -8, 20, 0x100)
-    am.writeInt32(4, 12)
-    am.writeInt32(8, 16)
-    am.writeInt32(12, -5)
-    am.writeInt32(16, -4)
     instr.execute(am, ip)
     check(am.readInt32(20) == -1)
     check(ip == 0x100)
 
   test "execute - indirect target":
     var
-      am = newArrayMemory(16)
+      am = newArrayMemory(@[5'i32, 4, 12, 0])
       ip: int32 = 0
       instr: Instruction = newInstruction(0, 4, -8, 0x100)
-    am.writeInt32(0, 5)
-    am.writeInt32(4, 4)
-    am.writeInt32(8, 12)
     instr.execute(am, ip)
     check(am.readInt32(12) == 1)
 
   test "execute - indirect jmp":
     var
-      am = newArrayMemory(16)
+      am = newArrayMemory(@[4'i32, 5, 0, 0x100])
       ip: int32 = 0
       instr: Instruction = newInstruction(0, 4, 8, -12)
-    am.writeInt32(0, 4)
-    am.writeInt32(4, 5)
-    am.writeInt32(12, 0x100)
     instr.execute(am, ip)
     check(am.readInt32(8) == -1)
     check(ip == 0x100)
 
   test "execute - non-word boundary":
     var
-      am = newArrayMemory(@[
-        4'u8, 0'u8, 0'u8, 0'u8,
-        5'u8, 0'u8, 0'u8, 0'u8,
-        0'u8, 0'u8, 0'u8, 0'u8,
-      ])
+      am = newArrayMemory(@[4'i32, 5, 0])
       ip: int32 = 0
       instr: Instruction = newInstruction(0, 4, 8, 31)
     instr.execute(am, ip)
