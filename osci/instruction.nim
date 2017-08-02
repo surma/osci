@@ -75,7 +75,7 @@ proc execute*(instr: Instruction, m: Memory, ip: var int32) =
   if jmp < 0: jmp = m.readInt32(-jmp)
   let result = m.readInt32(op_a) - m.readInt32(op_b)
   m.writeInt32(target, result)
-  if result < 0:
+  if result <= 0:
     # Round up to the next word boundary
     ip = int32(int((jmp + WORD_SIZE - 1) / WORD_SIZE) * WORD_SIZE)
   else:

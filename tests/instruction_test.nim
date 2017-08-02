@@ -53,7 +53,22 @@ suite "instruction":
     check(am.readInt32(8) == 1)
     check(ip == 16)
 
-  test "execute - jmp":
+  test "execute - jmp on zero":
+    var
+      am = newArrayMemory(@[
+        4'u8, 0'u8, 0'u8, 0'u8,
+        4'u8, 0'u8, 0'u8, 0'u8,
+        0'u8, 0'u8, 0'u8, 0'u8,
+      ])
+      ip: int32 = 0
+      instr: Instruction = newInstruction(0, 4, 8, 0x100)
+    instr.execute(am, ip)
+    check(am.readInt32(0) == 4)
+    check(am.readInt32(4) == 4)
+    check(am.readInt32(8) == 0)
+    check(ip == 0x100)
+
+  test "execute - jmp on negative result":
     var
       am = newArrayMemory(@[
         4'u8, 0'u8, 0'u8, 0'u8,
