@@ -1,6 +1,19 @@
 import unittest
 
 suite "ArrayMemory":
+  test "from byte sequence":
+    var am = newArrayMemory(@[0'u8, 1, 2, 3, 4])
+    for i in 0..<am.size:
+      check(am.get(int32(i)) == uint8(i))
+
+  test "from word sequence":
+    var am = newArrayMemory(@[
+      0x03020100'i32,
+      0x07060504,
+    ])
+    for i in 0..<am.size:
+      check(am.get(int32(i)) == uint8(i))
+
   test "size":
     var am = newArrayMemory(128)
     check(am.size == 128)

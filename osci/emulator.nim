@@ -11,7 +11,7 @@ from future import `=>`
 ## Things like instruction pointer, mount points and BIOS memory – basically all state – is
 ## encapsulated in an ``Emulator`` instance.
 
-let emptyBiosMemory = newArrayMemory(@[])
+let emptyBiosMemory = newArrayMemory(0)
 
 type
   EmulatorObj = object of RootObj

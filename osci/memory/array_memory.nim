@@ -12,6 +12,16 @@ proc newArrayMemory*(data: openArray[uint8]): ArrayMemory =
   ## Creates a new ``ArrayMemory`` with the given sequence as the initial value.
   ArrayMemory(data: toSeq(data.items))
 
+proc newArrayMemory*(data: openArray[int32]): ArrayMemory =
+  ## Creates a new ``ArrayMemory`` with the given sequence as the initial value.
+  iterator toLittleEndian(data: openArray[int32]): uint8 =
+    for v in data:
+      yield uint8((v shr 0)  and 0xFF)
+      yield uint8((v shr 8)  and 0xFF)
+      yield uint8((v shr 16) and 0xFF)
+      yield uint8((v shr 24) and 0xFF)
+  ArrayMemory(data: toSeq(toLittleEndian(data)))
+
 method size*(self: ArrayMemory): int =
   self.data.len
 
