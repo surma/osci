@@ -90,3 +90,78 @@ suite "instruction":
     instr.execute(am, ip)
     check(am.readInt32(8) == -1)
     check(ip == 0x100)
+
+  test "execute - indirect ops no jmp":
+    var
+      am = newArrayMemory(24)
+      ip: int32 = 0
+      instr: Instruction = newInstruction(-4, -8, 20, 0x100)
+    am.writeInt32(4, 12)
+    am.writeInt32(8, 16)
+    am.writeInt32(12, 5)
+    am.writeInt32(16, 4)
+    instr.execute(am, ip)
+    check(am.readInt32(20) == 1)
+    check(ip == 16)
+
+  test "execute - indirect ops jmp":
+    var
+      am = newArrayMemory(24)
+      ip: int32 = 0
+      instr: Instruction = newInstruction(-4, -8, 20, 0x100)
+    am.writeInt32(4, 12)
+    am.writeInt32(8, 16)
+    am.writeInt32(12, 4)
+    am.writeInt32(16, 5)
+    instr.execute(am, ip)
+    check(am.readInt32(20) == -1)
+    check(ip == 0x100)
+
+  test "execute - indirect ops negative numbers no jmp":
+    var
+      am = newArrayMemory(24)
+      ip: int32 = 0
+      instr: Instruction = newInstruction(-4, -8, 20, 0x100)
+    am.writeInt32(4, 12)
+    am.writeInt32(8, 16)
+    am.writeInt32(12, -4)
+    am.writeInt32(16, -5)
+    instr.execute(am, ip)
+    check(am.readInt32(20) == 1)
+    check(ip == 16)
+
+  test "execute - indirect ops negative numbers jmp":
+    var
+      am = newArrayMemory(24)
+      ip: int32 = 0
+      instr: Instruction = newInstruction(-4, -8, 20, 0x100)
+    am.writeInt32(4, 12)
+    am.writeInt32(8, 16)
+    am.writeInt32(12, -5)
+    am.writeInt32(16, -4)
+    instr.execute(am, ip)
+    check(am.readInt32(20) == -1)
+    check(ip == 0x100)
+
+  test "execute - indirect target":
+    var
+      am = newArrayMemory(16)
+      ip: int32 = 0
+      instr: Instruction = newInstruction(0, 4, -8, 0x100)
+    am.writeInt32(0, 5)
+    am.writeInt32(4, 4)
+    am.writeInt32(8, 12)
+    instr.execute(am, ip)
+    check(am.readInt32(12) == 1)
+
+  test "execute - indirect jmp":
+    var
+      am = newArrayMemory(16)
+      ip: int32 = 0
+      instr: Instruction = newInstruction(0, 4, 8, -12)
+    am.writeInt32(0, 4)
+    am.writeInt32(4, 5)
+    am.writeInt32(12, 0x100)
+    instr.execute(am, ip)
+    check(am.readInt32(8) == -1)
+    check(ip == 0x100)
