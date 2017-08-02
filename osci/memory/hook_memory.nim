@@ -17,20 +17,20 @@ type
 proc newHookMemory*(): HookMemory =
   HookMemory()
 
-method size*(pm: HookMemory): int =
-  pm.Fsize.map(cb => cb()).get(0)
+method size*(self: HookMemory): int =
+  self.Fsize.map(cb => cb()).get(0)
 
-method get*(pm: HookMemory, address: int32): uint8 =
-  pm.Fget.map(cb => cb(address)).get(0)
+method get*(self: HookMemory, address: int32): uint8 =
+  self.Fget.map(cb => cb(address)).get(0)
 
-method set*(pm: HookMemory, address: int32, value: uint8) =
-  discard pm.Fset.map(cb => (cb(address, value); true))
+method set*(self: HookMemory, address: int32, value: uint8) =
+  discard self.Fset.map(cb => (cb(address, value); true))
 
-proc `size=`*(pm: HookMemory, h: SizeHook) =
-  pm.Fsize = some[SizeHook](h).filter(h => h != nil)
+proc `size=`*(self: HookMemory, h: SizeHook) =
+  self.Fsize = some[SizeHook](h).filter(h => h != nil)
 
-proc `get=`*(pm: HookMemory, h: GetHook) =
-  pm.Fget = some[GetHook](h).filter(h => h != nil)
+proc `get=`*(self: HookMemory, h: GetHook) =
+  self.Fget = some[GetHook](h).filter(h => h != nil)
 
-proc `set=`*(pm: HookMemory, h: SetHook) =
-  pm.Fset = some[SetHook](h).filter(h => h != nil)
+proc `set=`*(self: HookMemory, h: SetHook) =
+  self.Fset = some[SetHook](h).filter(h => h != nil)

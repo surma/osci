@@ -5,11 +5,11 @@ proc newNullMemory*(): NullMemory =
   ## Creates a new ``NullMemory`.
   NullMemory()
 
-method size*(nm: NullMemory): int =
+method size*(self: NullMemory): int =
   MAX_SIZE
 
-method get*(nm: NullMemory, address: int32): uint8 =
+method get*(self: NullMemory, address: int32): uint8 =
   0
 
-method set*(nm: NullMemory, address: int32, value: uint8) =
+method set*(self: NullMemory, address: int32, value: uint8) =
   discard

@@ -43,32 +43,32 @@ proc `==`*(instr1, instr2: Instruction): bool =
     instr1.target == instr2.target and
     instr1.jmp == instr2.jmp
 
-proc serialize*(instr: Instruction, m: Memory, address: int32) =
+proc serialize*(self: Instruction, m: Memory, address: int32) =
   ## Serializes (writes) an instruction to memory.
-  m.writeInt32(address + 00, instr.op_a)
-  m.writeInt32(address + 04, instr.op_b)
-  m.writeInt32(address + 08, instr.target)
-  m.writeInt32(address + 12, instr.jmp)
+  m.writeInt32(address + 00, self.op_a)
+  m.writeInt32(address + 04, self.op_b)
+  m.writeInt32(address + 08, self.target)
+  m.writeInt32(address + 12, self.jmp)
 
-proc deserialize*(instr: Instruction, m: Memory, address: int32) =
+proc deserialize*(self: Instruction, m: Memory, address: int32) =
   ## Deserializes (reads) an instruction from memory.
-  instr.op_a = m.readInt32(address + 00)
-  instr.op_b = m.readInt32(address + 04)
-  instr.target = m.readInt32(address + 08)
-  instr.jmp = m.readInt32(address + 12)
+  self.op_a = m.readInt32(address + 00)
+  self.op_b = m.readInt32(address + 04)
+  self.target = m.readInt32(address + 08)
+  self.jmp = m.readInt32(address + 12)
 
 proc fromMemory*(m: Memory, address: int32): Instruction =
   ## Creates a new instruction and initializes it with the values at the given memory location.
   result = newInstruction()
   result.deserialize(m, address)
 
-proc execute*(instr: Instruction, m: Memory, ip: var int32) =
+proc execute*(self: Instruction, m: Memory, ip: var int32) =
   ## Executes the instruction on the given memory.
   var
-    op_a = instr.op_a
-    op_b = instr.op_b
-    target = instr.target
-    jmp = instr.jmp
+    op_a = self.op_a
+    op_b = self.op_b
+    target = self.target
+    jmp = self.jmp
   if op_a < 0: op_a = m.readInt32(-op_a)
   if op_b < 0: op_b = m.readInt32(-op_b)
   if target < 0: target = m.readInt32(-target)

@@ -41,7 +41,7 @@ proc newMappedMemory*(): MappedMemory =
   mm.mounts.append((memory: Sentinel(), mountPoint: high(int32), size: 0))
   return mm
 
-proc mount*(mm: MappedMemory, m: Memory, mountPoint: int32) =
+proc mount*(self: MappedMemory, m: Memory, mountPoint: int32) =
   ## Mounts a given memory at the given address.
   let
     mount: Mount =
@@ -50,7 +50,7 @@ proc mount*(mm: MappedMemory, m: Memory, mountPoint: int32) =
         mountPoint: mountPoint,
         size: m.size
       )
-  for node in mm.mounts.nodes():
+  for node in self.mounts.nodes():
     if node.value.mountPoint <= mountPoint:
       continue
     var newNode: DoublyLinkedNode[Mount] = lists.newDoublyLinkedNode[Mount](mount)
@@ -60,42 +60,42 @@ proc mount*(mm: MappedMemory, m: Memory, mountPoint: int32) =
     node.prev = newNode
     return
 
-proc remount*(mm: MappedMemory, oldM, newM: Memory) =
+proc remount*(self: MappedMemory, oldM, newM: Memory) =
   ## Replaces a mounted memory with another, preserving shadowing order.
-  for node in mm.mounts.nodes():
+  for node in self.mounts.nodes():
     if node.value.memory == oldM:
       node.value.memory = newM
       node.value.size = newM.size
       return
 
-proc unmount*(mm: MappedMemory, m: Memory) =
+proc unmount*(self: MappedMemory, m: Memory) =
   ## Unmounts a memory. If a memory is mounted multiple times, one instance will be unmounted.
-  discard mm.mounts
+  discard self.mounts
     .findNodeWithPredicate(mount => mount.memory == m)
-    .map(node => (mm.mounts.remove(node); true))
+    .map(node => (self.mounts.remove(node); true))
 
-proc numMounts*(mm: MappedMemory): int =
+proc numMounts*(self: MappedMemory): int =
   ## Returns the number of mounted memories (counting duplicates).
-  mm.mounts.length - 2
+  self.mounts.length - 2
 
-proc memoryAtAddress(mm: MappedMemory, address: int32): Option[Mount] =
-  for mount in mm.mounts.mitemsReverse():
+proc memoryAtAddress(self: MappedMemory, address: int32): Option[Mount] =
+  for mount in self.mounts.mitemsReverse():
     if mount.mountPoint <= address and
         int(mount.mountPoint) + mount.size > int(address):
       return some(mount)
   return none(Mount)
 
-proc isMounted*(mm: MappedMemory, m: Memory): bool =
+proc isMounted*(self: MappedMemory, m: Memory): bool =
   ## Checks if the given memory is mounted somewhere.
-  mm.mounts.findWithPredicate(mount => mount.memory == m).isSome()
+  self.mounts.findWithPredicate(mount => mount.memory == m).isSome()
 
-method size*(mm: MappedMemory): int =
+method size*(self: MappedMemory): int =
   MAX_SIZE
 
-method get*(mm: MappedMemory, address: int32): uint8 =
-  let mount = mm.memoryAtAddress(address).get()
+method get*(self: MappedMemory, address: int32): uint8 =
+  let mount = self.memoryAtAddress(address).get()
   mount.memory.get(address - mount.mountPoint)
 
-method set*(mm: MappedMemory, address: int32, value: uint8) =
-  let mount = mm.memoryAtAddress(address).get()
+method set*(self: MappedMemory, address: int32, value: uint8) =
+  let mount = self.memoryAtAddress(address).get()
   mount.memory.set(address - mount.mountPoint, value)

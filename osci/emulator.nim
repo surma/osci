@@ -27,45 +27,45 @@ type
     FbiosDone: bool
   Emulator* = ref EmulatorObj
 
-proc `mainMemory=`*(emu: Emulator, newVal: Memory) =
-  emu.Fmemory.remount(emu.FmainMemory, newVal)
-  emu.FmainMemory = newVal
+proc `mainMemory=`*(self: Emulator, newVal: Memory) =
+  self.Fmemory.remount(self.FmainMemory, newVal)
+  self.FmainMemory = newVal
 
-proc mainMemory*(emu: Emulator): Memory =
-  emu.FmainMemory
+proc mainMemory*(self: Emulator): Memory =
+  self.FmainMemory
 
-proc `biosMemory=`*(emu: Emulator, newVal: Memory) =
-  emu.FbiosMemory = newVal
-  let n = newReadonlyMemory(emu.FbiosMemory)
-  emu.Fmemory.remount(emu.FreadonlyBiosMemory, n)
-  emu.FreadonlyBiosMemory = n
+proc `biosMemory=`*(self: Emulator, newVal: Memory) =
+  self.FbiosMemory = newVal
+  let n = newReadonlyMemory(self.FbiosMemory)
+  self.Fmemory.remount(self.FreadonlyBiosMemory, n)
+  self.FreadonlyBiosMemory = n
 
 
-proc biosMemory*(emu: Emulator): Memory =
-  emu.FbiosMemory
+proc biosMemory*(self: Emulator): Memory =
+  self.FbiosMemory
 
-proc biosDone*(emu: Emulator): bool =
-  emu.FbiosDone
+proc biosDone*(self: Emulator): bool =
+  self.FbiosDone
 
-proc `biosDone=`*(emu: Emulator, done: bool) =
-  if done != emu.FbiosDone and not done:
-    emu.Fmemory.remount(emptyBiosMemory, emu.FreadonlyBiosMemory)
-  if done != emu.FbiosDone and done:
-    emu.Fmemory.remount(emu.FreadonlyBiosMemory, emptyBiosMemory)
-  emu.FbiosDone = done
+proc `biosDone=`*(self: Emulator, done: bool) =
+  if done != self.FbiosDone and not done:
+    self.Fmemory.remount(emptyBiosMemory, self.FreadonlyBiosMemory)
+  if done != self.FbiosDone and done:
+    self.Fmemory.remount(self.FreadonlyBiosMemory, emptyBiosMemory)
+  self.FbiosDone = done
 
-proc flagSet(emu: Emulator, address: int32, value: uint8) =
+proc flagSet(self: Emulator, address: int32, value: uint8) =
   case address
   of 0*4 + 0:
-    emu.halted = ((value shr FLAG_HALT) and 1) == 1
-    emu.biosDone = ((value shr FLAG_BIOS_DONE) and 1) == 1
+    self.halted = ((value shr FLAG_HALT) and 1) == 1
+    self.biosDone = ((value shr FLAG_BIOS_DONE) and 1) == 1
   else:
     discard
 
-proc flagGet(emu: Emulator, address: int32): uint8 =
+proc flagGet(self: Emulator, address: int32): uint8 =
   case address
   of 0:
-    result = (uint8(emu.halted) shl FLAG_HALT) or (uint8(emu.biosDone) shl FLAG_BIOS_DONE)
+    result = (uint8(self.halted) shl FLAG_HALT) or (uint8(self.biosDone) shl FLAG_BIOS_DONE)
   else:
     result = 0
 
@@ -92,14 +92,14 @@ proc newEmulator*(mainMemory: Memory = newNullMemory(), biosMemory: Memory = new
   r.Fmemory.mount(r.FregisterMemory, REGISTER0_ADDRESS)
   r
 
-proc register*(emu: Emulator, idx: int): int32 =
-  emu.FregisterMemory.readInt32(int32(idx * WORD_SIZE))
+proc register*(self: Emulator, idx: int): int32 =
+  self.FregisterMemory.readInt32(int32(idx * WORD_SIZE))
 
-proc memory*(emu: Emulator): Memory =
-  return emu.Fmemory
+proc memory*(self: Emulator): Memory =
+  return self.Fmemory
 
-proc step*(emu: Emulator) =
+proc step*(self: Emulator) =
   ## Executes the current instruction.
-  if emu.halted: return
-  var instr = instruction.fromMemory(emu.memory, emu.ip)
-  instr.execute(emu.memory, emu.ip)
+  if self.halted: return
+  var instr = instruction.fromMemory(self.memory, self.ip)
+  instr.execute(self.memory, self.ip)
