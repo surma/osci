@@ -21,7 +21,7 @@ type
     FmainMemory, FbiosMemory: Memory
     FregisterMemory: ArrayMemory
     ip*: uint32
-    halted: bool
+    halted*: bool
     FbiosDone: bool
   Emulator* = ref EmulatorObj
 
