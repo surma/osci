@@ -3,19 +3,19 @@
 ## =================================
 ##
 ## The ``memory`` module provides both the ``Memory`` object as well a couple of subtypes. These
-## subtypes can be combined to build osci’s memory. By themselves, they are not necessarily compliant
-## to osci’s specification.
+## subtypes can be combined to build osci’s memory. By themselves, they are not necessarily
+## compliant to osci’s specification.
 ##
 ## osci’s memory
 ## -------------
-## osci’s memory is only addressable at a word boundary and only entire words can be read or written. A
-## word is 4 bytes in little endian. osci always has 2^32 bytes of virtual memory. Not all the memory
-## addresses are necessarily backed by physical memory. Reads from unbacked (“unmapped”) memory
-## yield 0. Writes to unmapped memory are discarded.
+## osci’s memory is only addressable at a word boundary and only entire words can be read or
+## written. A word is 4 bytes in little endian. osci always has 2^31 bytes of virtual memory. Not
+## all the memory addresses are necessarily backed by physical memory. Reads from unbacked
+## (“unmapped”) memory yield 0. Writes to unmapped memory are discarded.
 ##
-## At boot, the BIOS memory of unspecified size is mapped to the address space at 2^31, shadowing the
-## potentially existing physical memory at that address. The instruction pointer (IP) is set to 2^31.
-## The BIOS memory can be unmapped by setting the ``bD`` flag. BIOS memory is read-only.
+## At boot, the BIOS memory of unspecified size is mapped to the address space at 2^30, shadowing
+## the potentially existing physical memory at that address. The instruction pointer (IP) is set to
+## 2^30. The BIOS memory can be unmapped by setting the ``bD`` flag. BIOS memory is read-only.
 ##
 ## The end of the address range is an area of mapped memory for control flags, peripherals and
 ## interrupts::
