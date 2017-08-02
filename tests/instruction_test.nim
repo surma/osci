@@ -11,8 +11,8 @@ suite "instruction":
     a.op_b = 0x04050607
     a.target = 0x08090a0b
     a.jmp = 0x0c0d0e0f
-    a.serialize(am, 0'u32)
-    b.deserialize(am, 0'u32)
+    a.serialize(am, 0'i32)
+    b.deserialize(am, 0'i32)
     check(a.op_a == b.op_a)
     check(a.op_b == b.op_b)
     check(a.target == b.target)
@@ -45,7 +45,7 @@ suite "instruction":
         4'u8, 0'u8, 0'u8, 0'u8,
         0'u8, 0'u8, 0'u8, 0'u8,
       ])
-      ip: uint32 = 0
+      ip: int32 = 0
       instr: Instruction = newInstruction(0, 4, 8, 0x100)
     instr.execute(am, ip)
     check(am.readInt32(0) == 5)
@@ -60,7 +60,7 @@ suite "instruction":
         5'u8, 0'u8, 0'u8, 0'u8,
         0'u8, 0'u8, 0'u8, 0'u8,
       ])
-      ip: uint32 = 0
+      ip: int32 = 0
       instr: Instruction = newInstruction(0, 4, 8, 0x100)
     instr.execute(am, ip)
     check(am.readInt32(0) == 4)
@@ -71,7 +71,7 @@ suite "instruction":
   test "execute - negative numbers no jmp":
     var
       am = newArrayMemory(12)
-      ip: uint32 = 0
+      ip: int32 = 0
       instr: Instruction = newInstruction(0, 4, 8, 0x100)
     am.writeInt32(0, -4)
     am.writeInt32(4, -5)
@@ -83,7 +83,7 @@ suite "instruction":
   test "execute - negative numbers jmp":
     var
       am = newArrayMemory(12)
-      ip: uint32 = 0
+      ip: int32 = 0
       instr: Instruction = newInstruction(0, 4, 8, 0x100)
     am.writeInt32(0, -5)
     am.writeInt32(4, -4)

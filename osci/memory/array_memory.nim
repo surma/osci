@@ -15,8 +15,8 @@ proc newArrayMemory*(data: openArray[uint8]): ArrayMemory =
 method size*(am: ArrayMemory): int =
   am.data.len
 
-method get*(am: ArrayMemory, address: uint32): uint8 =
+method get*(am: ArrayMemory, address: int32): uint8 =
   am.data[int(address)]
 
-method set*(am: ArrayMemory, address: uint32, value: uint8) =
+method set*(am: ArrayMemory, address: int32, value: uint8) =
   am.data[int(address + 0)] = value

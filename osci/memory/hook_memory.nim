@@ -4,8 +4,8 @@ import options
 from future import `->`, `=>`
 
 type
-  SetHook* = (a: uint32, b: uint8) -> void
-  GetHook* = (uint32) -> uint8
+  SetHook* = (a: int32, b: uint8) -> void
+  GetHook* = (int32) -> uint8
   SizeHook* = () -> int
   HookMemory* = ref object of Memory
     ## Externalizes the interface as callbacks (or “hooks”). ``get`` and ``size`` will default to
@@ -20,10 +20,10 @@ proc newHookMemory*(): HookMemory =
 method size*(pm: HookMemory): int =
   pm.Fsize.map(cb => cb()).get(0)
 
-method get*(pm: HookMemory, address: uint32): uint8 =
+method get*(pm: HookMemory, address: int32): uint8 =
   pm.Fget.map(cb => cb(address)).get(0)
 
-method set*(pm: HookMemory, address: uint32, value: uint8) =
+method set*(pm: HookMemory, address: int32, value: uint8) =
   discard pm.Fset.map(cb => (cb(address, value); true))
 
 proc `size=`*(pm: HookMemory, h: SizeHook) =

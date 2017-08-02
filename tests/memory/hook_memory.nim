@@ -15,7 +15,7 @@ suite "HookMemory":
     var pm = newHookMemory()
     check(pm.get(0) == 0)
     check(pm.get(123) == 0)
-    pm.get = (address: uint32) => uint8(address) + 1
+    pm.get = (address: int32) => uint8(address) + 1
     check(pm.get(0) == 1)
     check(pm.get(123) == 124)
     pm.get = nil
@@ -26,7 +26,7 @@ suite "HookMemory":
     var
       pm = newHookMemory()
       called = false
-    pm.set = (address: uint32, value: uint8) => (called = true)
+    pm.set = (address: int32, value: uint8) => (called = true)
     pm.set(0, 0)
     check(called == true)
     called = false

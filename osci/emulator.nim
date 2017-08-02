@@ -20,7 +20,7 @@ type
     FflagMemory: HookMemory
     FmainMemory, FbiosMemory: Memory
     FregisterMemory: ArrayMemory
-    ip*: uint32
+    ip*: int32
     halted*: bool
     FbiosDone: bool
   Emulator* = ref EmulatorObj
@@ -47,7 +47,7 @@ proc `biosDone=`*(emu: Emulator, done: bool) =
     emu.Fmemory.remount(emu.biosMemory, emptyBiosMemory)
   emu.FbiosDone = done
 
-proc flagSet(emu: Emulator, address: uint32, value: uint8) =
+proc flagSet(emu: Emulator, address: int32, value: uint8) =
   case address
   of 0*4 + 0:
     emu.halted = ((value shr FLAG_HALT) and 1) == 1
@@ -55,7 +55,7 @@ proc flagSet(emu: Emulator, address: uint32, value: uint8) =
   else:
     discard
 
-proc flagGet(emu: Emulator, address: uint32): uint8 =
+proc flagGet(emu: Emulator, address: int32): uint8 =
   case address
   of 0:
     result = (uint8(emu.halted) shl FLAG_HALT) or (uint8(emu.biosDone) shl FLAG_BIOS_DONE)
@@ -77,15 +77,15 @@ proc newEmulator*(mainMemory: Memory = newNullMemory(), biosMemory: Memory = new
   r.Fmemory.mount(r.FbiosMemory, BIOS_ADDRESS)
   r.halted = false
   r.biosDone = false
-  r.FflagMemory.get = (address: uint32) => r.flagGet(address)
-  r.FflagMemory.set = (address: uint32, value: uint8) => r.flagSet(address, value)
+  r.FflagMemory.get = (address: int32) => r.flagGet(address)
+  r.FflagMemory.set = (address: int32, value: uint8) => r.flagSet(address, value)
   r.FflagMemory.size = () => NUM_FLAG_WORDS
   r.Fmemory.mount(r.FflagMemory, FLAGS0_ADDRESS)
   r.Fmemory.mount(r.FregisterMemory, REGISTER0_ADDRESS)
   r
 
 proc register*(emu: Emulator, idx: int): int32 =
-  emu.FregisterMemory.readInt32(uint32(idx * WORD_SIZE))
+  emu.FregisterMemory.readInt32(int32(idx * WORD_SIZE))
 
 proc memory*(emu: Emulator): Memory =
   return emu.Fmemory

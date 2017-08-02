@@ -6,7 +6,7 @@ from future import `=>`
 type
   Mount = tuple
     memory: Memory
-    mountPoint: uint32
+    mountPoint: int32
     size: int
 
   Sentinel = ref object of Memory
@@ -37,11 +37,11 @@ type
 proc newMappedMemory*(): MappedMemory =
   ## Creates a new ``MappedMemory`` with no mappings.
   var mm = MappedMemory(mounts: lists.initDoublyLinkedList[Mount]())
-  mm.mounts.append((memory: Sentinel(), mountPoint: 0'u32, size: 0))
-  mm.mounts.append((memory: Sentinel(), mountPoint: high(uint32), size: 0))
+  mm.mounts.append((memory: Sentinel(), mountPoint: 0'i32, size: 0))
+  mm.mounts.append((memory: Sentinel(), mountPoint: high(int32), size: 0))
   return mm
 
-proc mount*(mm: MappedMemory, m: Memory, mountPoint: uint32) =
+proc mount*(mm: MappedMemory, m: Memory, mountPoint: int32) =
   ## Mounts a given memory at the given address.
   let
     mount: Mount =
@@ -78,7 +78,7 @@ proc numMounts*(mm: MappedMemory): int =
   ## Returns the number of mounted memories (counting duplicates).
   mm.mounts.length - 2
 
-proc memoryAtAddress(mm: MappedMemory, address: uint32): Option[Mount] =
+proc memoryAtAddress(mm: MappedMemory, address: int32): Option[Mount] =
   for mount in mm.mounts.mitemsReverse():
     if mount.mountPoint <= address and
         int(mount.mountPoint) + mount.size > int(address):
@@ -92,10 +92,10 @@ proc isMounted*(mm: MappedMemory, m: Memory): bool =
 method size*(mm: MappedMemory): int =
   MAX_SIZE
 
-method get*(mm: MappedMemory, address: uint32): uint8 =
+method get*(mm: MappedMemory, address: int32): uint8 =
   let mount = mm.memoryAtAddress(address).get()
   mount.memory.get(address - mount.mountPoint)
 
-method set*(mm: MappedMemory, address: uint32, value: uint8) =
+method set*(mm: MappedMemory, address: int32, value: uint8) =
   let mount = mm.memoryAtAddress(address).get()
   mount.memory.set(address - mount.mountPoint, value)

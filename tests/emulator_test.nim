@@ -106,12 +106,13 @@ suite "emulator":
         biosMemory = newArrayMemory(@[
           0'u8, 0, 0, 0,
           4, 0, 0, 0,
-          0'u8 - WORD_SIZE * NUM_REGISTERS, 0xFF, 0xFF, 0xFF
+          0, 0, 0, 0,
         ]),
         mainMemory = newArrayMemory(@[
           8'u8, 0'u8, 0'u8, 0'u8,
           3'u8, 0'u8, 0'u8, 0'u8,
         ])
       )
+    emu.biosMemory.writeInt32(8, REGISTER0_ADDRESS)
     emu.step();
     check(emu.register(0) == 5)
