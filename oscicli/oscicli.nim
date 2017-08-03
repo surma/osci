@@ -11,10 +11,9 @@ proc readFileBuffer(path: string): seq[uint8] =
   discard file.readBuffer(addr(result[0]), len)
   close(file)
 
-
 let params = commandLineParams()
 if params.len != 2:
-  echo "Usage: osci-cli <bios image> <main image>"
+  echo "Usage: oscicli <bios image> <main image>"
   quit(1)
 
 let

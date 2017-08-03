@@ -22,8 +22,8 @@ Example:
 ```
 $ cat examples/simpleloop.bios.hex | ./tools/hexcompile/hexcompile.sh > bios.img
 $ echo something > main.img
-$ nim c osci/cli.nim
-$ ./osci/cli ./bios.img ./main.img
+$ nim c oscicli/oscicli.nim
+$ ./oscicli/oscicli ./bios.img ./main.img
 ```
 
 License
