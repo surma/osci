@@ -4,17 +4,21 @@ const WORD_SIZE*: int = 4
 const MAX_ADDRESS*: int32 = 0x7FFFFFFF'i32
 const MAX_SIZE*: int = int(MAX_ADDRESS) + 1
 const BIOS_ADDRESS*: int32 = 0x40000000'i32
-const NUM_REGISTERS*: int = 4
-const REGISTER0_ADDRESS*: int32 = MAX_SIZE - NUM_REGISTERS * WORD_SIZE
-const IVT_RETURN_ADDRESS*: int32 = REGISTER0_ADDRESS - 1 * WORD_SIZE
-const NUM_IVTS*: int = 1
-const IVT0_ADDRESS*: int32 = IVT_RETURN_ADDRESS - NUM_IVTS * WORD_SIZE
+
+const FLAG_HALT*: int = 0
+const FLAG_BIOS_DONE*: int = 1
 const NUM_FLAGS: int = 2
 const NUM_FLAG_BYTES*: int = int(math.ceil(NUM_FLAGS/8))
 const NUM_FLAG_WORDS*: int = int(math.ceil(NUM_FLAG_BYTES / 4))
-const FLAGS0_ADDRESS*: int32 = IVT0_ADDRESS - int32(NUM_FLAG_WORDS * WORD_SIZE)
-const FLAG_HALT*: int = 0
-const FLAG_BIOS_DONE*: int = 1
+const FLAGS0_ADDRESS*: int32 = MAX_SIZE - int32(NUM_FLAG_WORDS * WORD_SIZE)
+
+const NUM_IVTS*: int = 1
+const IVT0_ADDRESS*: int32 = FLAGS0_ADDRESS - NUM_IVTS * WORD_SIZE
+
+const NUM_REGISTERS*: int = 4
+const REGISTER0_ADDRESS*: int32 = IVT0_ADDRESS - NUM_REGISTERS * WORD_SIZE
+
+const STACK_POINTER_ADDRESS*: int32 = REGISTER0_ADDRESS - WORD_SIZE
 
 type Memory* = ref object of RootObj
   ## The base object for all memory implementations. By enforcing this “interface”,

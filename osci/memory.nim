@@ -24,22 +24,21 @@
 ##   |                 Word 0                |
 ##   |                 Word 1                |
 ##   |                   ...                 |
-##   +---------------------------------------+ FLAGS0_ADDRESS
-##   |              Flags Word 0             |
-##   |                   ...                 |
-##   |              Flags Word i             |
-##   +---------------------------------------+ IVT0_ADDRESS
-##   |               IVT Entry 0             |
-##   |                   ...                 |
-##   |               IVT Entry j             |
-##   +---------------------------------------+
-##   |           IVT Return address          | IVT_RETURN_ADDRESS
+##   +---------------------------------------+ STACK_POINTER_ADDRESS
+##   |              Stack Pointer            |
 ##   +---------------------------------------+ REGISTER0_ADDRESS
 ##   |                Register 0             |
 ##   |                   ...                 |
 ##   |                Register k             |
+##   +---------------------------------------+ IVT0_ADDRESS
+##   |               IVT Entry 0             |
+##   |                   ...                 |
+##   |               IVT Entry j             |
+##   +---------------------------------------+ FLAGS0_ADDRESS
+##   |              Flags Word 0             |
+##   |                   ...                 |
+##   |              Flags Word i             |
 ##   +---------------------------------------+ MAX_ADDRESS = 2^32-1
-##
 ##
 ## Flags Word 0::
 ##
