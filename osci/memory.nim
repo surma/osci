@@ -38,7 +38,16 @@
 ##   |              Flags Word 0             |
 ##   |                   ...                 |
 ##   |              Flags Word i             |
-##   +---------------------------------------+ MAX_ADDRESS = 2^32-1
+##   +---------------------------------------+ MAX_ADDRESS = 2^31-1
+##
+## Registers:
+## - Register 0: General purpose
+## - Register 1: General purpose
+## - Register 2: General purpose
+## - Register 3: General purpose
+##
+## IVTs:
+## - IVT Entry 0: Unused
 ##
 ## Flags Word 0::
 ##
