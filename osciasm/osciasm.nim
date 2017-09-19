@@ -26,16 +26,22 @@ ASMInstruction = <label>? <dotIdent> (<str>|<ident>|<number>)+
 CPUInstruction = (<label>? <Expr>){4}
 Label = <ident> <colon>
 <Expr> = <Sum>
-Sum = <Product> +-] <Sum>
-Product = <Number> [*/] <Product>
-Number = <ident> | <number>
+Sum = <Product> (<op_add> | <op_sub>) <Sum>
+Product = <Number> (<op_mul> | <op_div>) <Product>
+Number = <ident> | <number> | <lparen> <Sum> <rparen>
 
-<colon> = ':'
-<dotIdent> = '.' [a-zA-Z0-9]
-<newline> = '\n'
 <ident> = [$a-zA-Z][a-zA-Z0-9_-]*
+<dotIdent> = '.' [a-zA-Z0-9]
 <number> = ('0x' [0-9a-fA-F]+ | '0b' [01]+ | '0o' [0-7]+ | [0-9]+)
 <str> = "([^"]|\\.)+"
+<op_add> = '+'
+<op_sub> = '-'
+<op_mul> = '*'
+<op_div> = '/'
+<lparen> = '('
+<rparen> = ')'
+<colon> = ':'
+<newline> = '\n'
 ]#
 
 

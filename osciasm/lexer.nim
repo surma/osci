@@ -2,70 +2,63 @@ import pegs
 import tables
 import options
 import hashes
+from future import `->`, `=>`
 from strutils import `format`
 
 type
   TokenType* = enum colon, dotIdent, newline, ident, number, str
-  TokenPosition* = tuple[offset: int, line: int, col: int]
+  TokenPosition* = tuple[line: int, col: int]
   Token* = ref object of RootObj
     typ: TokenType
     pos: TokenPosition
     value: string
 
-proc newTokenPosition(offset: int, line: int, col: int): TokenPosition =
-  (offset: offset, line: line, col: col)
+proc `==`*(a, b: Token): bool =
+  a.typ == b.typ and a.pos == b.pos and a.value == b.value
 
-# proc hash(p: Peg): Hash =
-#   hash($p)
+proc `$`*(t: Token): string =
+  "Token(typ: $1, pos: $2, value: \"$3\")".format($t.typ, $t.pos, if t.value == nil: "nil" else: $t.value)
 
-# let
-#   tokenMatchers = {
-#     peg"^{\s*}": (none(TokenType), 0),
-#     peg"^:": (some(colon), 1),
-#     peg"^'.' {[a-zA-Z0-9]*}": (some(dotIdent), 1),
-#   }
-#   tokenMatcherTable = tokenMatchers.toTable()
+template token(patternStr: string, body: untyped): untyped =
+  let
+    pattern = peg(patternStr)
+    matchLen = s.matchLen(pattern, matches, offset)
+  if matchLen >= 0:
+    value = s.substr(offset, offset + matchLen - 1)
+    offset += matchLen
+    when true:
+      body
+    col += value.len
 
 iterator tokenize*(s: string): Token =
   var
-    buf = s
+    matches: array[pegs.MaxSubpatterns, string]
+    value: string
     offset = 0
+
     line = 1
     col = 0
-    matchlen = 0;
-  while buf.len > 0:
+  while offset < s.len:
+    # whitespace
+    token """^{(!\n\s)+}""":
+      discard
     # <colon>
-    if buf =~ peg"""^':'""":
-      matchlen = 1
-      yield Token(typ: colon, pos: newTokenPosition(offset, line, col), value: matches[0])
+    token """^':'""":
+      yield Token(typ: colon, pos: (line: line, col: col), value: nil)
     # <dotIdent>
-    elif buf =~ peg"""^'.'{[a-zA-Z0-9]+}""":
-      matchlen = matches[0].len + 1
-      yield Token(typ: dotIdent, pos: newTokenPosition(offset, line, col), value: matches[0])
+    token """^'.'{[a-zA-Z0-9]+}""":
+      yield Token(typ: dotIdent, pos: (line: line, col: col), value: matches[0])
     # <ident>
-    elif buf =~ peg"""^{[$a-zA-Z][a-zA-Z0-9_-]*}""":
-      matchlen = matches[0].len
-      yield Token(typ: ident, pos: newTokenPosition(offset, line, col), value: matches[0])
+    token """^{[$a-zA-Z][a-zA-Z0-9_-]*}""":
+      yield Token(typ: ident, pos: (line: line, col: col), value: matches[0])
     # <number>
-    elif buf =~ peg"""^{'0x' [0-9a-fA-F]+ / '0b' [0-1]+ / '0o' [0-7]+ / [0-9]+}""":
-      matchlen = matches[0].len
-      yield Token(typ: number, pos: newTokenPosition(offset, line, col), value: matches[0])
+    token """^{'0x' [0-9a-fA-F]+ / '0b' [0-1]+ / '0o' [0-7]+ / [0-9]+}""":
+      yield Token(typ: number, pos: (line: line, col: col), value: matches[0])
     # <str>
-    elif buf =~ peg"""^\"{([^\\\"] / '\\'_)*}\"""":
-      matchlen = matches[0].len + 2
-      yield Token(typ: str, pos: newTokenPosition(offset, line, col), value: matches[0])
+    token """^\"{([^\\\"] / '\\'_)*}\"""":
+      yield Token(typ: str, pos: (line: line, col: col), value: matches[0])
     # <newline>
-    elif buf =~ peg"""^{\n}""":
-      matchlen = matches[0].len
-      yield Token(typ: newline, pos: newTokenPosition(offset, line, col))
+    token """^{\n}""":
+      yield Token(typ: newline, pos: (line: line, col: col), value: nil)
+      col = -value.len
       line += 1
-      col = 0
-    # Any whitespace between tokens
-    elif buf =~ peg"""^{(!\n\s)+}""":
-      matchlen = matches[0].len
-    else:
-      raise newException(ValueError, "Unknown token at line $1, column $2 (offset $3): \"$4\"".format(line, col, offset, buf.substr(0, 10)))
-
-    offset += matchlen
-    col += matchlen
-    buf = buf.substr(matchlen)
