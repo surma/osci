@@ -1,4 +1,4 @@
-include ../osciasm/lexer
+include ../../osciasm/lexer
 import unittest
 from future import `->`, `=>`
 from sequtils import toSeq, map, apply

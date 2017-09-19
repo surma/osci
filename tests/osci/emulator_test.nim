@@ -1,5 +1,5 @@
-include ../osci/emulator
-import ../osci/memory
+include ../../osci/emulator
+import ../../osci/memory
 import unittest
 
 suite "emulator":

@@ -1,5 +1,5 @@
-include ../osci/instruction
-from ../osci/memory import newArrayMemory
+include ../../osci/instruction
+from ../../osci/memory import newArrayMemory
 import unittest
 
 suite "instruction":

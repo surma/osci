@@ -15,8 +15,8 @@ requires "nim >= 0.17.0"
 # Tasks
 
 task test, "Runs the test suite":
-  exec "nim c -r tests/helpers_test.nim"
-  exec "nim c -r tests/memory_test.nim"
-  exec "nim c -r tests/instruction_test.nim"
-  exec "nim c -r tests/emulator_test.nim"
-  exec "nim c -r tests/lexer_test.nim"
+  exec "nim c -r tests/osci/helpers_test.nim"
+  exec "nim c -r tests/osci/memory_test.nim"
+  exec "nim c -r tests/osci/instruction_test.nim"
+  exec "nim c -r tests/osci/emulator_test.nim"
+  exec "nim c -r tests/osciasm/lexer_test.nim"

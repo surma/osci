@@ -1,4 +1,4 @@
-include ../osci/helpers
+include ../../osci/helpers
 from lists import append
 import options
 from future import `=>`
