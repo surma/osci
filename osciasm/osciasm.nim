@@ -22,7 +22,7 @@ mom:
 
 Program = <Instruction>*
 Instruction =  (<ASMInstruction> | <CPUInstruction>)? <newline>
-ASMInstruction = <label>? <dotIdent> (<str>|<ident>|<number>)+
+ASMInstruction = <label>? <dotIdent> (<str>|<ident>|<number>|<expr>)+
 CPUInstruction = (<label>? <Expr>){4}
 Label = <ident> <colon>
 <Expr> = <Sum>

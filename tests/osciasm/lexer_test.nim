@@ -65,3 +65,19 @@ suite "parser":
       Token(typ: ident, pos: (line: 4, col: 18), value: "base"),
       Token(typ: newline, pos: (line: 4, col: 22), value: nil),
     ])
+
+    input = """
+    .symbol base 0x80000000 + 4*4
+    """
+    tokenList = toSeq(tokenize(input))
+
+    check(tokenList == @[
+      Token(typ: dotIdent, pos: (line: 1, col: 4), value: "symbol"),
+      Token(typ: ident, pos: (line: 1, col: 12), value: "base"),
+      Token(typ: number, pos: (line: 1, col: 17), value: "0x80000000"),
+      Token(typ: op_add, pos: (line: 1, col: 28), value: nil),
+      Token(typ: number, pos: (line: 1, col: 30), value: "4"),
+      Token(typ: op_mul, pos: (line: 1, col: 31), value: nil),
+      Token(typ: number, pos: (line: 1, col: 32), value: "4"),
+      Token(typ: newline, pos: (line: 1, col: 33), value: nil),
+    ])

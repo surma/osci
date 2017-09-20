@@ -6,7 +6,7 @@ from future import `->`, `=>`
 from strutils import `format`
 
 type
-  TokenType* = enum colon, dotIdent, newline, ident, number, str
+  TokenType* = enum colon, dotIdent, newline, ident, number, str, op_add, op_sub, op_mul, op_div, lparen, rparen
   TokenPosition* = tuple[line: int, col: int]
   Token* = ref object of RootObj
     typ: TokenType
@@ -39,12 +39,6 @@ iterator tokenize*(s: string): Token =
     line = 1
     col = 0
   while offset < s.len:
-    # whitespace
-    token """^{(!\n\s)+}""":
-      discard
-    # <colon>
-    token """^':'""":
-      yield Token(typ: colon, pos: (line: line, col: col), value: nil)
     # <dotIdent>
     token """^'.'{[a-zA-Z0-9]+}""":
       yield Token(typ: dotIdent, pos: (line: line, col: col), value: matches[0])
@@ -62,3 +56,28 @@ iterator tokenize*(s: string): Token =
       yield Token(typ: newline, pos: (line: line, col: col), value: nil)
       col = -value.len
       line += 1
+    # <colon>
+    token """^':'""":
+      yield Token(typ: colon, pos: (line: line, col: col), value: nil)
+    # <op_add>
+    token """^'+'""":
+      yield Token(typ: op_add, pos: (line: line, col: col), value: nil)
+    # <op_sub>
+    token """^'-'""":
+      yield Token(typ: op_sub, pos: (line: line, col: col), value: nil)
+    # <op_mul>
+    token """^'*'""":
+      yield Token(typ: op_mul, pos: (line: line, col: col), value: nil)
+    # <op_div>
+    token """^'/'""":
+      yield Token(typ: op_div, pos: (line: line, col: col), value: nil)
+    # <lparen>
+    token """^'('""":
+      yield Token(typ: lparen, pos: (line: line, col: col), value: nil)
+    # <rparen>
+    token """^')'""":
+      yield Token(typ: rparen, pos: (line: line, col: col), value: nil)
+
+    # whitespace
+    token """^{(!\n\s)+}""":
+      discard
