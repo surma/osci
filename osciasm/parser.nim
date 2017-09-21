@@ -14,17 +14,17 @@ type
 proc newPeekableIterator[T](data: seq[T]): PeekableIterator[T] =
   PeekableIterator[T](data: data, head: data.low)
 
-proc done(pit: PeekableIterator): bool =
-  pit.head > pit.data.high
+proc done(self: PeekableIterator): bool =
+  self.head > self.data.high
 
-proc next[T](pit: PeekableIterator[T]): T =
-  if pit.head > pit.data.high:
+proc next[T](self: PeekableIterator[T]): T =
+  if self.head > self.data.high:
     raise newException(RangeError, "Attempt to read past EOF")
-  result = pit.data[pit.head]
-  pit.head += 1
+  result = self.data[self.head]
+  self.head += 1
 
-proc peek[T](pit: PeekableIterator[T]): T =
-  pit.data[pit.head]
+proc peek[T](self: PeekableIterator[T]): T =
+  self.data[self.head]
 
 template unreachable[T](pit: PeekableIterator[T]): untyped =
   assert(false, "Unreachable. Current token: $1".format($pit.peek()))
@@ -48,9 +48,9 @@ proc newParseTreeNode*(production: string, token: Token): ParseTreeNode =
 proc newParseTreeNode*(production: string): ParseTreeNode =
   ParseTreeNode(children: @[], production: production, token: none(Token))
 
-proc addChild*(n: ParseTreeNode, c: ParseTreeNode) =
-  n.children.add(c)
-  c.parent = n
+proc addChild*(self: ParseTreeNode, c: ParseTreeNode) =
+  self.children.add(c)
+  c.parent = self
 
 proc `$`*(n: ParseTreeNode): string =
   "($1 [$2])".format(n.production, n.children.map(c => $c).join(", "))
@@ -133,7 +133,7 @@ proc parseInstruction(pit: PeekableIterator[Token]): ParseTreeNode =
 
 proc parseProgram(pit: PeekableIterator[Token]): ParseTreeNode =
   result = newParseTreeNode("program")
-  while not pit.done():
+  while not pit.done:
     var exprNode = parseInstruction(pit)
     result.addChild(exprNode)
 
