@@ -2,6 +2,7 @@ import pegs
 import tables
 import options
 import hashes
+import symboltable
 from future import `->`, `=>`
 from strutils import `format`
 
@@ -30,10 +31,12 @@ template token(patternStr: string, body: untyped): untyped =
       body
     col += value.len
 
-iterator tokenize*(s: string): Token =
+
+iterator tokenize*(s: string, st: Option[SymbolTable]): Token =
   var
     matches: array[pegs.MaxSubpatterns, string]
     value: string
+    name: string
     offset = 0
 
     line = 1
@@ -41,9 +44,13 @@ iterator tokenize*(s: string): Token =
   while offset < s.len:
     # <dotIdent>
     token """^'.'{[a-zA-Z0-9]+}""":
-      yield Token(typ: dotIdent, pos: (line: line, col: col), value: matches[0])
+      name = matches[0]
+      discard st.map(st => st.mgetOrPut(name, newSymbol(name, asmInstruction)))
+      yield Token(typ: dotIdent, pos: (line: line, col: col), value: name)
     # <ident>
     token """^{[$a-zA-Z][a-zA-Z0-9_-]*}""":
+      name = matches[0]
+      discard st.map(st => st.mgetOrPut(name, newSymbol(name, variable)))
       yield Token(typ: ident, pos: (line: line, col: col), value: matches[0])
     # <number>
     token """^{'0x' [0-9a-fA-F]+ / '0b' [0-1]+ / '0o' [0-7]+ / [0-9]+}""":
@@ -81,3 +88,11 @@ iterator tokenize*(s: string): Token =
     # whitespace
     token """^{(!\n\s)+}""":
       discard
+
+iterator tokenize*(s: string): Token =
+  for token in tokenize(s, none(SymbolTable)):
+    yield token
+
+iterator tokenize*(s: string, st: SymbolTable): Token =
+  for token in tokenize(s, some(st)):
+    yield token

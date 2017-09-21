@@ -2,15 +2,25 @@ import tables
 import options
 
 type
-  Symbol* = ref object of RootObject
-    name: string
+  SymbolType* = enum asmInstruction, variable
+  Symbol* = ref object of RootObj
+    name*: string
+    typ*: SymbolType
+    value*: Option[string]
 
-  SymbolTable* = Table[string, Symbol]
+  SymbolTable* = TableRef[string, Symbol]
+
+proc newSymbol*(name: string, typ: SymbolType): Symbol =
+  Symbol(name: name, typ: typ, value: none(string))
+
+proc newSymbol*(name: string, typ: SymbolType, value: string): Symbol =
+  Symbol(name: name, typ: typ, value: some(value))
 
 proc newSymbolTable*(): SymbolTable =
-  return SymbolTable(Table[string, Symbol]())
+  newTable[string, Symbol]()
 
-proc get(self: SymbolTable, symbol: string): Option[Symbol] =
-  if not self.hasKey(symbol):
-    return none(Symbol)
-  some(self.get(symbol))
+# proc get*[A, B](self: Table[A, B], key: A): Option[B] =
+#   if self.hasKey(key):
+#     return none(B)
+#   some(self.get(key))
+

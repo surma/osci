@@ -1,4 +1,5 @@
 include ../../osciasm/lexer
+import ../../osciasm/symboltable
 import unittest
 from future import `->`, `=>`
 from sequtils import toSeq, map, apply
@@ -7,7 +8,7 @@ import unicode
 import strutils
 
 suite "parser":
-  test "tokens":
+  test "tokenize":
     var
       input: string
       tokenList: seq[Token]
@@ -81,3 +82,17 @@ suite "parser":
       Token(typ: number, pos: (line: 1, col: 32), value: "4"),
       Token(typ: newline, pos: (line: 1, col: 33), value: nil),
     ])
+
+    test "tokenize with symboltable":
+      var
+        input: string
+        st = newSymbolTable()
+
+      input = """
+      .base (0x80 + bios)
+      """
+      discard toSeq(tokenize(input, st))
+
+      check(st.len == 2)
+      check(st["bios"].typ == variable)
+      check(st["base"].typ == asmInstruction)
