@@ -4,6 +4,7 @@ import options
 import symboltable
 import token
 from future import `->`, `=>`
+from sequtils import toSeq
 
 template token(patternStr: string, body: untyped): untyped =
   let
@@ -74,10 +75,8 @@ iterator tokenize*(s: string, st: Option[SymbolTable]): Token =
     token """^{(!\n\s)+}""":
       discard
 
-iterator tokenize*(s: string): Token =
-  for token in tokenize(s, none(SymbolTable)):
-    yield token
+proc tokenize*(s: string): seq[Token] =
+  toSeq(tokenize(s, none(SymbolTable)))
 
-iterator tokenize*(s: string, st: SymbolTable): Token =
-  for token in tokenize(s, some(st)):
-    yield token
+proc tokenize*(s: string, st: SymbolTable): seq[Token] =
+  toSeq(tokenize(s, some(st)))

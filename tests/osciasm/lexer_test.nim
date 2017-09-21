@@ -17,7 +17,7 @@ suite "parser":
     input = """
     .include "std.asm"
     """
-    tokenList = toSeq(tokenize(input))
+    tokenList = tokenize(input)
 
     check(tokenList == @[
       Token(typ: token.dotIdent, pos: (line: 1, col: 4), value: "include"),
@@ -29,7 +29,7 @@ suite "parser":
     my_label:
     .utf8 "Something \"with\" quotes"
     """
-    tokenList = toSeq(tokenize(input))
+    tokenList = tokenize(input)
 
     check(tokenList == @[
       Token(typ: token.label, pos: (line: 1, col: 4), value: "my_label"),
@@ -45,7 +45,7 @@ suite "parser":
     instr1:
     op1:4 op2:9 $ base
     """
-    tokenList = toSeq(tokenize(input))
+    tokenList = tokenize(input)
 
     check(tokenList == @[
       Token(typ: token.dotIdent, pos: (line: 1, col: 4), value: "symbol"),
@@ -67,7 +67,7 @@ suite "parser":
     input = """
     .symbol base 0x80000000 + 4*4
     """
-    tokenList = toSeq(tokenize(input))
+    tokenList = tokenize(input)
 
     check(tokenList == @[
       Token(typ: token.dotIdent, pos: (line: 1, col: 4), value: "symbol"),
@@ -88,7 +88,7 @@ suite "parser":
       input = """
       .base (0x80 + bios)
       """
-      discard toSeq(tokenize(input, st))
+      discard tokenize(input, st)
 
       check(st.len == 2)
       check(st["bios"].typ == variable)
