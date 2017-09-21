@@ -27,6 +27,9 @@ iterator tokenize*(s: string, st: Option[SymbolTable]): Token =
     line = 1
     col = 0
   while offset < s.len:
+    # <label>
+    token """^{[$a-zA-Z][a-zA-Z0-9_-]*}':'""":
+      yield Token(typ: token.label, pos: (line: line, col: col), value: matches[0])
     # <dotIdent>
     token """^'.'{[a-zA-Z0-9]+}""":
       name = matches[0]
@@ -48,9 +51,6 @@ iterator tokenize*(s: string, st: Option[SymbolTable]): Token =
       yield Token(typ: token.newline, pos: (line: line, col: col), value: nil)
       col = -value.len
       line += 1
-    # <colon>
-    token """^':'""":
-      yield Token(typ: token.colon, pos: (line: line, col: col), value: nil)
     # <op_add>
     token """^'+'""":
       yield Token(typ: token.op_add, pos: (line: line, col: col), value: nil)

@@ -1,7 +1,7 @@
 from strutils import `format`
 
 type
-  TokenType* = enum colon, dotIdent, newline, ident, number, str, op_add, op_sub, op_mul, op_div, lparen, rparen
+  TokenType* = enum label, dotIdent, newline, ident, number, str, op_add, op_sub, op_mul, op_div, lparen, rparen
   TokenPosition* = tuple[line: int, col: int]
   Token* = ref object of RootObj
     typ*: TokenType

@@ -20,16 +20,18 @@ lost:
 mom:
 .include "mom.jpg"
 
+# Grammar
 Program = <Instruction>*
-Instruction =  (<ASMInstruction> | <CPUInstruction>)? <newline>
-ASMInstruction = <label>? <dotIdent> (<str>|<ident>|<number>|<expr>)+
+Instruction = (<ASMInstruction> | <CPUInstruction>)? <newline>
+ASMInstruction = <label>? <dotIdent> (<str>|<expr>)+
 CPUInstruction = (<label>? <Expr>){4}
-Label = <ident> <colon>
-<Expr> = <Sum>
+Expr = <Sum>
 Sum = <Product> (<op_add> | <op_sub>) <Sum>
 Product = <Number> (<op_mul> | <op_div>) <Product>
 Number = <ident> | <number> | <lparen> <Sum> <rparen>
 
+# Token patterns
+<label> = [a-zA-Z][a-zA-Z0-9_-]* ':'
 <ident> = [$a-zA-Z][a-zA-Z0-9_-]*
 <dotIdent> = '.' [a-zA-Z0-9]
 <number> = ('0x' [0-9a-fA-F]+ | '0b' [01]+ | '0o' [0-7]+ | [0-9]+)

@@ -32,8 +32,7 @@ suite "parser":
     tokenList = toSeq(tokenize(input))
 
     check(tokenList == @[
-      Token(typ: token.ident, pos: (line: 1, col: 4), value: "my_label"),
-      Token(typ: token.colon, pos: (line: 1, col: 12), value: nil),
+      Token(typ: token.label, pos: (line: 1, col: 4), value: "my_label"),
       Token(typ: token.newline, pos: (line: 1, col: 13), value: nil),
       Token(typ: token.dotIdent, pos: (line: 2, col: 4), value: "utf8"),
       Token(typ: token.str, pos: (line: 2, col: 10), value: "Something \\\"with\\\" quotes"),
@@ -54,14 +53,11 @@ suite "parser":
       Token(typ: token.number, pos: (line: 1, col: 17), value: "0x80000000"),
       Token(typ: token.newline, pos: (line: 1, col: 27), value: nil),
       Token(typ: token.newline, pos: (line: 2, col: 0), value: nil),
-      Token(typ: token.ident, pos: (line: 3, col: 4), value: "instr1"),
-      Token(typ: token.colon, pos: (line: 3, col: 10), value: nil),
+      Token(typ: token.label, pos: (line: 3, col: 4), value: "instr1"),
       Token(typ: token.newline, pos: (line: 3, col: 11), value: nil),
-      Token(typ: token.ident, pos: (line: 4, col: 4), value: "op1"),
-      Token(typ: token.colon, pos: (line: 4, col: 7), value: nil),
+      Token(typ: token.label, pos: (line: 4, col: 4), value: "op1"),
       Token(typ: token.number, pos: (line: 4, col: 8), value: "4"),
-      Token(typ: token.ident, pos: (line: 4, col: 10), value: "op2"),
-      Token(typ: token.colon, pos: (line: 4, col: 13), value: nil),
+      Token(typ: token.label, pos: (line: 4, col: 10), value: "op2"),
       Token(typ: token.number, pos: (line: 4, col: 14), value: "9"),
       Token(typ: token.ident, pos: (line: 4, col: 16), value: "$"),
       Token(typ: token.ident, pos: (line: 4, col: 18), value: "base"),
