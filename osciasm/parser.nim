@@ -6,9 +6,6 @@ from future import `->`, `=>`
 from strutils import format, join
 from sequtils import map, toSeq
 
-template unreachable(): untyped =
-  assert(false, "Unreachable")
-
 type
   PeekableIterator[T] = ref object of RootObj
     data: seq[T]
@@ -28,6 +25,9 @@ proc next[T](pit: PeekableIterator[T]): T =
 
 proc peek[T](pit: PeekableIterator[T]): T =
   pit.data[pit.head]
+
+template unreachable[T](pit: PeekableIterator[T]): untyped =
+  assert(false, "Unreachable. Current token: $1".format($pit.peek()))
 
 type
   ParseTreeNode* = ref object of RootObj
@@ -62,7 +62,7 @@ proc assertNext(pit: PeekableIterator[Token], typ: TokenType): Token =
 proc peekIsFirstOfExpr(pit: PeekableIterator[Token]): bool =
   return pit.peek().typ == token.ident or pit.peek().typ == token.number or pit.peek().typ == token.lparen
 
-proc parseExpr(pit: PeekableIterator[Token]): ParseTreeNode
+proc parseSum(pit: PeekableIterator[Token]): ParseTreeNode
 
 proc parseValue(pit: PeekableIterator[Token]): ParseTreeNode =
   result = newParseTreeNode("value")
@@ -72,10 +72,10 @@ proc parseValue(pit: PeekableIterator[Token]): ParseTreeNode =
     result.addChild(newParseTreeNode("number", pit.assertNext(token.number)))
   elif pit.peek().typ == token.lparen:
     discard pit.assertNext(token.lparen)
-    result.addChild(parseExpr(pit))
+    result.addChild(parseSum(pit))
     discard pit.assertNext(token.rparen)
   else:
-    unreachable()
+    unreachable(pit)
 
 proc parseProduct(pit: PeekableIterator[Token]): ParseTreeNode =
   result = newParseTreeNode("product")
@@ -97,7 +97,7 @@ proc parseExpr(pit: PeekableIterator[Token]): ParseTreeNode =
 
 proc parseCPUInstruction(pit: PeekableIterator[Token]): ParseTreeNode =
   result = newParseTreeNode("cpu_instruction")
-  for i in 0..3:
+  for i in 0..2:
     result.addChild(parseExpr(pit))
     if pit.peek().typ == token.label:
       result.addChild(newParseTreeNode("label", pit.assertNext(token.label)))
@@ -129,7 +129,7 @@ proc parseInstruction(pit: PeekableIterator[Token]): ParseTreeNode =
   if pit.peekIsFirstOfExpr():
     result.addChild(parseCPUInstruction(pit))
     return
-  unreachable()
+  unreachable(pit)
 
 proc parseProgram(pit: PeekableIterator[Token]): ParseTreeNode =
   result = newParseTreeNode("program")
