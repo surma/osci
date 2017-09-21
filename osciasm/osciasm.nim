@@ -26,8 +26,18 @@ Instruction = (<ASMInstruction> | <CPUInstruction>)? <newline>
 ASMInstruction = <label>? <dotIdent> (<str>|<expr>)+
 CPUInstruction = (<label>? <Expr>){4}
 Expr = <Sum>
-Sum = <Product> (<op_add> | <op_sub>) <Sum>
-Product = <Number> (<op_mul> | <op_div>) <Product>
+Sum = <Product> ((<op_add> | <op_sub>) <Sum>)?
+Product = <Number> ((<op_mul> | <op_div>) <Product>)?
+Number = <ident> | <number> | <lparen> <Sum> <rparen>
+
+# Left-factored grammar
+Program = <Instruction>*
+Instruction = <label>? (<ASMInstruction> | <CPUInstruction>)? <newline>
+ASMInstruction = <dotIdent> (<str>|<Expr>)+
+CPUInstruction = <Expr> (<label>? <Expr>){3}
+Expr = <Sum>
+Sum = <Product> ((<op_add> | <op_sub>) <Sum>)?
+Product = <Number> ((<op_mul> | <op_div>) <Product>)?
 Number = <ident> | <number> | <lparen> <Sum> <rparen>
 
 # Token patterns
