@@ -64,8 +64,8 @@ proc peekIsFirstOfExpr(pit: PeekableIterator[Token]): bool =
 
 proc parseExpr(pit: PeekableIterator[Token]): ParseTreeNode
 
-proc parseNumber(pit: PeekableIterator[Token]): ParseTreeNode =
-  result = newParseTreeNode("number")
+proc parseValue(pit: PeekableIterator[Token]): ParseTreeNode =
+  result = newParseTreeNode("value")
   if pit.peek().typ == token.ident:
     result.addChild(newParseTreeNode("ident", pit.assertNext(token.ident)))
   elif pit.peek().typ == token.number:
@@ -79,7 +79,7 @@ proc parseNumber(pit: PeekableIterator[Token]): ParseTreeNode =
 
 proc parseProduct(pit: PeekableIterator[Token]): ParseTreeNode =
   result = newParseTreeNode("product")
-  result.addChild(parseNumber(pit))
+  result.addChild(parseValue(pit))
   if pit.peek().typ == token.op_mul or pit.peek().typ == token.op_div:
     result.addChild(newParseTreeNode("op_product", pit.next()))
     result.addChild(parseProduct(pit))

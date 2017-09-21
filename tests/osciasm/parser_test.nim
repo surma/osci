@@ -24,16 +24,16 @@ suite "parser":
           newParseTreeNode("expr", none(Token), @[
             newParseTreeNode("sum", none(Token), @[
               newParseTreeNode("product", none(Token), @[
-                newParseTreeNode("number", none(Token), @[
+                newParseTreeNode("value", none(Token), @[
                   newParseTreeNode("ident", some(Token(typ: token.ident, pos: (0, 0), value: "bios")), @[])])]),
               newParseTreeNode("op_sum", some(Token(typ: token.op_sub, pos: (0, 0), value: nil)), @[]),
               newParseTreeNode("sum", none(Token), @[
                 newParseTreeNode("product", none(Token), @[
-                  newParseTreeNode("number", none(Token), @[
+                  newParseTreeNode("value", none(Token), @[
                     newParseTreeNode("number", some(Token(typ: token.number, pos: (0, 0), value: "8")), @[])]),
                   newParseTreeNode("op_product", some(Token(typ: token.op_mul, pos: (0, 0), value: nil)), @[]),
                   newParseTreeNode("product", none(Token), @[
-                    newParseTreeNode("number", none(Token), @[
+                    newParseTreeNode("value", none(Token), @[
                       newParseTreeNode("number", some(Token(typ: token.number, pos: (0, 0), value: "4")), @[]),
                     ]),
                   ]),
