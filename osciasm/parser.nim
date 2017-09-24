@@ -1,5 +1,4 @@
 import token
-import ast
 import options
 
 from future import `->`, `=>`
