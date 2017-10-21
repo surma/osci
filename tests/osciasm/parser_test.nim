@@ -5,7 +5,7 @@ from future import `->`, `=>`
 
 suite "parser":
   test "parse":
-    var tree: ParseTreeNode
+    var tree: Node
 
     tree = parse(@[
       Token(typ: token.dotIdent, pos: (0, 0), value: "addr"),
@@ -17,24 +17,24 @@ suite "parser":
       Token(typ: token.newline, pos: (0, 0), value: nil),
     ])
 
-    check(tree == newParseTreeNode("program", none(Token), @[
-      newParseTreeNode("instruction", none(Token), @[
-        newParseTreeNode("asm_instruction", none(Token), @[
-          newParseTreeNode("dot_ident", some(Token(typ: token.dotIdent, pos: (0, 0), value: "addr")), @[]),
-          newParseTreeNode("expr", none(Token), @[
-            newParseTreeNode("sum", none(Token), @[
-              newParseTreeNode("product", none(Token), @[
-                newParseTreeNode("value", none(Token), @[
-                  newParseTreeNode("ident", some(Token(typ: token.ident, pos: (0, 0), value: "bios")), @[])])]),
-              newParseTreeNode("op_sum", some(Token(typ: token.op_sub, pos: (0, 0), value: nil)), @[]),
-              newParseTreeNode("sum", none(Token), @[
-                newParseTreeNode("product", none(Token), @[
-                  newParseTreeNode("value", none(Token), @[
-                    newParseTreeNode("number", some(Token(typ: token.number, pos: (0, 0), value: "8")), @[])]),
-                  newParseTreeNode("op_product", some(Token(typ: token.op_mul, pos: (0, 0), value: nil)), @[]),
-                  newParseTreeNode("product", none(Token), @[
-                    newParseTreeNode("value", none(Token), @[
-                      newParseTreeNode("number", some(Token(typ: token.number, pos: (0, 0), value: "4")), @[]),
+    check(tree == newNode("program", none(Token), @[
+      newNode("instruction", none(Token), @[
+        newNode("asm_instruction", none(Token), @[
+          newNode("dot_ident", some(Token(typ: token.dotIdent, pos: (0, 0), value: "addr")), @[]),
+          newNode("expr", none(Token), @[
+            newNode("sum", none(Token), @[
+              newNode("product", none(Token), @[
+                newNode("value", none(Token), @[
+                  newNode("ident", some(Token(typ: token.ident, pos: (0, 0), value: "bios")), @[])])]),
+              newNode("op_sum", some(Token(typ: token.op_sub, pos: (0, 0), value: nil)), @[]),
+              newNode("sum", none(Token), @[
+                newNode("product", none(Token), @[
+                  newNode("value", none(Token), @[
+                    newNode("number", some(Token(typ: token.number, pos: (0, 0), value: "8")), @[])]),
+                  newNode("op_product", some(Token(typ: token.op_mul, pos: (0, 0), value: nil)), @[]),
+                  newNode("product", none(Token), @[
+                    newNode("value", none(Token), @[
+                      newNode("number", some(Token(typ: token.number, pos: (0, 0), value: "4")), @[]),
                     ]),
                   ]),
                 ]),
@@ -60,42 +60,42 @@ suite "parser":
       Token(typ: token.newline, pos: (0, 0), value: nil),
     ])
 
-    check(tree == newParseTreeNode("program", none(Token), @[
-      newParseTreeNode("instruction", none(Token), @[
-        newParseTreeNode("label", some(Token(typ: token.label, pos: (0, 0), value: "mylabel")), @[]),
-        newParseTreeNode("cpu_instruction", none(Token), @[
-          newParseTreeNode("expr", none(Token), @[
-            newParseTreeNode("sum", none(Token), @[
-              newParseTreeNode("product", none(Token), @[
-                newParseTreeNode("value", none(Token), @[
-                  newParseTreeNode("number", some(Token(typ: token.number, pos: (0, 0), value: "1")), @[])])])])]),
-          newParseTreeNode("expr", none(Token), @[
-            newParseTreeNode("sum", none(Token), @[
-              newParseTreeNode("product", none(Token), @[
-                newParseTreeNode("value", none(Token), @[
-                  newParseTreeNode("number", some(Token(typ: token.number, pos: (0, 0), value: "2")), @[])])])])]),
-          newParseTreeNode("expr", none(Token), @[
-            newParseTreeNode("sum", none(Token), @[
-              newParseTreeNode("product", none(Token), @[
-                newParseTreeNode("value", none(Token), @[
-                  newParseTreeNode("number", some(Token(typ: token.number, pos: (0, 0), value: "3")), @[])])])])]),
-          newParseTreeNode("expr", none(Token), @[
-            newParseTreeNode("sum", none(Token), @[
-              newParseTreeNode("product", none(Token), @[
-                newParseTreeNode("value", none(Token), @[
-                  newParseTreeNode("sum", none(Token), @[
-                    newParseTreeNode("product", none(Token), @[
-                      newParseTreeNode("value", none(Token), @[
-                        newParseTreeNode("number", some(Token(typ: token.number, pos: (0, 0), value: "4")), @[])])]),
-                    newParseTreeNode("op_sum", some(Token(typ: token.op_add, pos: (0, 0), value: nil)), @[]),
-                    newParseTreeNode("sum", none(Token), @[
-                      newParseTreeNode("product", none(Token), @[
-                        newParseTreeNode("value", none(Token), @[
-                          newParseTreeNode("number", some(Token(typ: token.number, pos: (0, 0), value: "5")), @[])])])])])]),
-                newParseTreeNode("op_product", some(Token(typ: token.op_mul, pos: (0, 0), value: nil)), @[]),
-                newParseTreeNode("product", none(Token), @[
-                  newParseTreeNode("value", none(Token), @[
-                    newParseTreeNode("number", some(Token(typ: token.number, pos: (0, 0), value: "6")), @[]),
+    check(tree == newNode("program", none(Token), @[
+      newNode("instruction", none(Token), @[
+        newNode("label", some(Token(typ: token.label, pos: (0, 0), value: "mylabel")), @[]),
+        newNode("cpu_instruction", none(Token), @[
+          newNode("expr", none(Token), @[
+            newNode("sum", none(Token), @[
+              newNode("product", none(Token), @[
+                newNode("value", none(Token), @[
+                  newNode("number", some(Token(typ: token.number, pos: (0, 0), value: "1")), @[])])])])]),
+          newNode("expr", none(Token), @[
+            newNode("sum", none(Token), @[
+              newNode("product", none(Token), @[
+                newNode("value", none(Token), @[
+                  newNode("number", some(Token(typ: token.number, pos: (0, 0), value: "2")), @[])])])])]),
+          newNode("expr", none(Token), @[
+            newNode("sum", none(Token), @[
+              newNode("product", none(Token), @[
+                newNode("value", none(Token), @[
+                  newNode("number", some(Token(typ: token.number, pos: (0, 0), value: "3")), @[])])])])]),
+          newNode("expr", none(Token), @[
+            newNode("sum", none(Token), @[
+              newNode("product", none(Token), @[
+                newNode("value", none(Token), @[
+                  newNode("sum", none(Token), @[
+                    newNode("product", none(Token), @[
+                      newNode("value", none(Token), @[
+                        newNode("number", some(Token(typ: token.number, pos: (0, 0), value: "4")), @[])])]),
+                    newNode("op_sum", some(Token(typ: token.op_add, pos: (0, 0), value: nil)), @[]),
+                    newNode("sum", none(Token), @[
+                      newNode("product", none(Token), @[
+                        newNode("value", none(Token), @[
+                          newNode("number", some(Token(typ: token.number, pos: (0, 0), value: "5")), @[])])])])])]),
+                newNode("op_product", some(Token(typ: token.op_mul, pos: (0, 0), value: nil)), @[]),
+                newNode("product", none(Token), @[
+                  newNode("value", none(Token), @[
+                    newNode("number", some(Token(typ: token.number, pos: (0, 0), value: "6")), @[]),
                   ]),
                 ]),
               ]),
