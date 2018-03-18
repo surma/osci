@@ -3,21 +3,21 @@ use std::fmt;
 
 /// Data object for a single instruction.
 ///
-/// An instruction consists of 4 words á 4 bytes. Each instruction can be
-/// intepreted as 4 address `[op_a, op_b, target, jmp]`. the
-/// execution of an instruction is equivalent to
+/// An instruction consists of 4 words á 32 bit. Each instruction is a set of 4
+/// addresses ``op_a``, ``op_b``, ``target`` and ``jmp``. All 4 words are
+/// *signed* words. If a word is negative, it is considered indirect. The
+/// execution of an instruction is described by the following pseudo-code:
 ///
 /// ```text
-///   *target := *op_a - *op_b
-///   if (*target <= 0)
-///     GOTO jmp;
+/// if(op_a < 0) op_a = *(-op_a)
+/// if(op_b < 0) op_b = *(-op_b)
+/// if(target < 0) target = *(-target)
+/// if(jmp < 0) jmp = *(-jmp)
+///
+/// *target := *op_a - *op_b
+/// if (*target <= 0)
+///   GOTO jmp;
 /// ```
-///
-/// `jmp` must be a multiple of the word size. If it’s not, it will be rounded
-/// to the next biggest multiple of the word size.
-///
-/// osci is a 32-bit little endian CPU and instructions must be serialized
-/// accordingly.
 ///
 /// # Examples
 /// ```
