@@ -33,6 +33,7 @@ fn main() {
         .expect("Can’t open bios file")
         .read_to_end(&mut bios_vec);
 
+    /*
     let img_mem = SliceMemory(image_vec.into_boxed_slice());
     let bios_mem = SliceMemory(bios_vec.into_boxed_slice());
     let mut emulator = Emulator::new(img_mem, bios_mem);
@@ -55,4 +56,5 @@ fn main() {
             let _ = io::stdin().read_line(&mut buffer);
         }
     }
+    */
 }

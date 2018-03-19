@@ -35,8 +35,8 @@ use std::cell::{Ref, RefMut, RefCell};
 /// use osciemu::memory::mappedmemory::MemoryToken;
 ///
 /// let mut mm = MappedMemory::new();
-/// let m1 = MemoryToken::new(SliceMemory::from_slice_u32(4, &[1]));
-/// let m2 = MemoryToken::new(SliceMemory::from_slice_u32(8, &[2, 2]));
+/// let m1 = MemoryToken::new(SliceMemory::from_slice(Box::new([1])));
+/// let m2 = MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
 /// mm.mount(0, &m1);
 /// mm.mount(8, &m2);
 /// // Now mm =~ [1, _, 2, 2]
@@ -54,7 +54,7 @@ use std::cell::{Ref, RefMut, RefCell};
 /// let mut mm = MappedMemory::new();
 /// let m1 = MemoryToken::new(NullMemory::new());
 /// mm.mount(0, &m1);
-/// let m2 = MemoryToken::new(SliceMemory::from_slice(4, &[1, 2, 3, 4]));
+/// let m2 = MemoryToken::new(SliceMemory::from_slice(Box::new(4, [1, 2, 3, 4])));
 /// mm.mount(0, &m2);
 /// mm.set(0, 99);
 /// assert_eq!(mm.get(0), 99);
@@ -69,7 +69,7 @@ use std::cell::{Ref, RefMut, RefCell};
 /// # let mut mm = MappedMemory::new();
 /// # let m1 = MemoryToken::new(NullMemory::new());
 /// # mm.mount(0, &m1);
-/// # let m2 = MemoryToken::new(SliceMemory::from_slice(4, &[1, 2, 3, 4]));
+/// # let m2 = MemoryToken::new(SliceMemory::from_slice(Box::new(4, [1, 2, 3, 4])));
 /// # mm.mount(0, &m2);
 /// # mm.set(0, 99);
 /// # assert_eq!(mm.get(0), 99);
@@ -195,8 +195,8 @@ mod tests {
 
     #[test]
     fn memory_at_addr() {
-        let m1 = super::MemoryToken::new(SliceMemory::from_slice_u32(4, &[1]));
-        let m2 = super::MemoryToken::new(SliceMemory::from_slice_u32(8, &[2, 2]));
+        let m1 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([1])));
+        let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
         let mut mm = super::MappedMemory::new();
         mm.mount(0, &m1);
         mm.mount(8, &m2);
@@ -214,8 +214,8 @@ mod tests {
     #[test]
     fn overlapping_mounts() {
         let m1 = super::MemoryToken::new(NullMemory::new());
-        let m2 = super::MemoryToken::new(SliceMemory::from_slice_u32(8, &[2, 2]));
-        let m3 = super::MemoryToken::new(SliceMemory::from_slice_u32(4, &[3]));
+        let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
+        let m3 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([3])));
         let mut mm = super::MappedMemory::new();
         mm.mount(0, &m1);
         mm.mount(4, &m2);
@@ -228,8 +228,8 @@ mod tests {
 
     #[test]
     fn get_and_set() {
-        let m1 = super::MemoryToken::new(SliceMemory::from_slice_u32(4, &[1]));
-        let m2 = super::MemoryToken::new(SliceMemory::from_slice_u32(8, &[2, 2]));
+        let m1 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([1])));
+        let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
         let mut mm = super::MappedMemory::new();
 
         mm.mount(0, &m1);
@@ -248,8 +248,8 @@ mod tests {
 
     #[test]
     fn size() {
-        let m1 = super::MemoryToken::new(SliceMemory::from_slice_u32(4, &[1]));
-        let m2 = super::MemoryToken::new(SliceMemory::from_slice_u32(8, &[2, 2]));
+        let m1 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([1])));
+        let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
         let mut mm = super::MappedMemory::new();
         assert_eq!(mm.size(), 0);
 
@@ -262,9 +262,9 @@ mod tests {
 
     #[test]
     fn size_with_overlap() {
-        let m1 = super::MemoryToken::new(SliceMemory::from_slice_u32(20, &[1, 1, 1, 1, 1]));
-        let m2 = super::MemoryToken::new(SliceMemory::from_slice_u32(8, &[2, 2]));
-        let m3 = super::MemoryToken::new(SliceMemory::from_slice_u32(12, &[3, 3, 3]));
+        let m1 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1])));
+        let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
+        let m3 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([3, 3, 3])));
         let mut mm = super::MappedMemory::new();
 
         mm.mount(0, &m1);
@@ -277,9 +277,9 @@ mod tests {
 
     #[test]
     fn unmount() {
-        let m1 = super::MemoryToken::new(SliceMemory::from_slice_u32(20, &[1, 1, 1, 1, 1]));
-        let m2 = super::MemoryToken::new(SliceMemory::from_slice_u32(20, &[2, 2, 2, 2, 2]));
-        let m3 = super::MemoryToken::new(SliceMemory::from_slice_u32(20, &[3, 3, 3, 3, 3]));
+        let m1 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1])));
+        let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2])));
+        let m3 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([3, 3, 3, 3, 3])));
         let mut mm = super::MappedMemory::new();
         mm.mount(0, &m1);
         mm.mount(0, &m2);
