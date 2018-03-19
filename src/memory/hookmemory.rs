@@ -23,7 +23,7 @@ type SizeHook = Fn(&mut usize);
 ///
 /// let mut hook_mem =
 ///     HookMemory::new(
-///         SliceMemory::from_slice_u32(16, &[0, 1, 2, 3])
+///         SliceMemory::from_slice_u32(16, [0, 1, 2, 3])
 ///     );
 /// hook_mem.read_prehook(Box::new(|addr| *addr += 4));
 /// hook_mem.read_posthook(Box::new(|addr, val| *val <<= 1));
@@ -94,7 +94,7 @@ mod tests {
 
     #[test]
     fn read_prehook() {
-        let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice_u32(12, &[0, 2, 4]));
+        let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice(Box::new([0, 2, 4])));
         assert_eq!(hook_mem.get(0), 0);
         hook_mem.read_prehook(Box::new(|addr| *addr += 4));
         assert_eq!(hook_mem.get(0), 2);
@@ -103,7 +103,7 @@ mod tests {
 
     #[test]
     fn read_posthook() {
-        let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice_u32(12, &[0, 2, 4]));
+        let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice(Box::new([0, 2, 4])));
         assert_eq!(hook_mem.get(0), 0);
         hook_mem.read_posthook(Box::new(|_, val| *val += 1));
         assert_eq!(hook_mem.get(0), 1);
@@ -113,7 +113,7 @@ mod tests {
 
     #[test]
     fn write_hook() {
-        let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice_u32(8, &[0, 0]));
+        let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice(Box::new([0, 0])));
         assert_eq!(hook_mem.get(0), 0);
         hook_mem.set(0, 1);
         assert_eq!(hook_mem.get(0), 1);
@@ -129,7 +129,7 @@ mod tests {
 
     #[test]
     fn size_hook() {
-        let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice_u32(8, &[0, 0]));
+        let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice(Box::new([0, 0])));
         assert_eq!(hook_mem.size(), 8);
         hook_mem.size_hook(Box::new(|size| { *size += 1; }));
         assert_eq!(hook_mem.size(), 9);

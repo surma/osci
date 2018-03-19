@@ -81,8 +81,8 @@ mod tests {
 
     #[test]
     fn unmounts_bios() {
-        let bios = SliceMemory::from_slice_u32(32,
-                                               &[address::BIOS_START_ADDRESS as u32 + 16,
+        let bios = SliceMemory::from_slice(Box::new(
+                                               [address::BIOS_START_ADDRESS as u32 + 16,
                                                  address::BIOS_START_ADDRESS as u32 + 20,
                                                  address::FLAGS_START_ADDRESS as u32,
                                                  0,
@@ -90,7 +90,7 @@ mod tests {
                                                  2,
                                                  0,
                                                  0,
-                                                 0]);
+                                                 0]));
         let mut emu = super::Emulator::new(NullMemory::new(), bios);
 
         assert!(!emu.flag_is_set(address::FLAG0_BIOS_DONE));
@@ -102,8 +102,8 @@ mod tests {
 
     #[test]
     fn is_halted() {
-        let bios = SliceMemory::from_slice_u32(32,
-                                               &[address::BIOS_START_ADDRESS as u32 + 16,
+        let bios = SliceMemory::from_slice(Box::new(
+                                               [address::BIOS_START_ADDRESS as u32 + 16,
                                                  address::BIOS_START_ADDRESS as u32 + 20,
                                                  address::FLAGS_START_ADDRESS as u32,
                                                  0,
@@ -111,7 +111,7 @@ mod tests {
                                                  1,
                                                  0,
                                                  0,
-                                                 0]);
+                                                 0]));
         let mut emu = super::Emulator::new(NullMemory::new(), bios);
 
         assert!(!emu.is_halted());
