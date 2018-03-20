@@ -3,7 +3,7 @@ use std;
 
 /// Like `/dev/null`.
 ///
-/// The `NullMemory` is always 2^32 bytes large (osci’s memory size),
+/// The `NullMemory` is always 2^31 bytes large (osci’s memory size),
 /// reads `0` everywhere and discards all writes.
 ///
 /// # Examples
@@ -34,7 +34,7 @@ impl Memory for NullMemory {
 
     #[inline]
     fn size(&self) -> usize {
-        std::u32::MAX as usize
+        2<<31
     }
 }
 
@@ -47,7 +47,6 @@ mod tests {
         let m = super::NullMemory::new();
         assert_eq!(m.get(0), 0);
         assert_eq!(m.get(123), 0);
-        assert_eq!(m.get(u32::max_value() as usize), 0);
     }
 
     #[test]
