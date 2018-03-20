@@ -30,9 +30,9 @@ impl<'a, T, U> Emulator<'a, T, U>
 
         let controls_memory =
             MemoryToken::new(memory::SliceMemory::new(address::MAX_ADDRESS -
-                                                      address::FLAGS_START_ADDRESS +
+                                                      address::CONTROLS_ADDRESS +
                                                       1));
-        memory.mount(address::FLAGS_START_ADDRESS, &controls_memory);
+        memory.mount(address::CONTROLS_ADDRESS, &controls_memory);
 
         Emulator {
             memory: memory,
@@ -50,7 +50,7 @@ impl<'a, T, U> Emulator<'a, T, U>
     }
 
     pub fn get_register(&self, reg_idx: usize) -> u32 {
-        self.memory.get(address::REGISTERS_START_ADDRESS + reg_idx * 4)
+        self.memory.get(address::REGISTERS_START_ADDRESS + reg_idx)
     }
 
     pub fn step(&mut self) {
@@ -82,8 +82,8 @@ mod tests {
     #[test]
     fn unmounts_bios() {
         let bios = SliceMemory::from_slice(Box::new(
-                                               [address::BIOS_START_ADDRESS as u32 + 16,
-                                                 address::BIOS_START_ADDRESS as u32 + 20,
+                                               [address::BIOS_START_ADDRESS as u32 + 4,
+                                                 address::BIOS_START_ADDRESS as u32 + 5,
                                                  address::FLAGS_START_ADDRESS as u32,
                                                  0,
 
@@ -94,17 +94,17 @@ mod tests {
         let mut emu = super::Emulator::new(NullMemory::new(), bios);
 
         assert!(!emu.flag_is_set(address::FLAG0_BIOS_DONE));
-        assert_eq!(emu.memory.get(address::BIOS_START_ADDRESS + 16), 2);
+        assert_eq!(emu.memory.get(address::BIOS_START_ADDRESS + 4), 2);
         emu.step();
         assert!(emu.flag_is_set(address::FLAG0_BIOS_DONE));
-        assert_eq!(emu.memory.get(address::BIOS_START_ADDRESS + 16), 0);
+        assert_eq!(emu.memory.get(address::BIOS_START_ADDRESS + 4), 0);
     }
 
     #[test]
     fn is_halted() {
         let bios = SliceMemory::from_slice(Box::new(
-                                               [address::BIOS_START_ADDRESS as u32 + 16,
-                                                 address::BIOS_START_ADDRESS as u32 + 20,
+                                               [address::BIOS_START_ADDRESS as u32 + 4,
+                                                 address::BIOS_START_ADDRESS as u32 + 5,
                                                  address::FLAGS_START_ADDRESS as u32,
                                                  0,
 
