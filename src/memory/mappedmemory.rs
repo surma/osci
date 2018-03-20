@@ -38,10 +38,10 @@ use std::cell::{Ref, RefMut, RefCell};
 /// let m1 = MemoryToken::new(SliceMemory::from_slice(Box::new([1])));
 /// let m2 = MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
 /// mm.mount(0, &m1);
-/// mm.mount(8, &m2);
+/// mm.mount(2, &m2);
 /// // Now mm =~ [1, _, 2, 2]
 /// assert_eq!(mm.get(0), 1);
-/// assert_eq!(mm.get(12), 2);
+/// assert_eq!(mm.get(3), 2);
 /// ```
 ///
 /// The `MemoryToken`s can be used to access the `Memory` even if it has been
@@ -54,7 +54,7 @@ use std::cell::{Ref, RefMut, RefCell};
 /// let mut mm = MappedMemory::new();
 /// let m1 = MemoryToken::new(NullMemory::new());
 /// mm.mount(0, &m1);
-/// let m2 = MemoryToken::new(SliceMemory::from_slice(Box::new(4, [1, 2, 3, 4])));
+/// let m2 = MemoryToken::new(SliceMemory::from_slice(Box::new([1, 2, 3, 4])));
 /// mm.mount(0, &m2);
 /// mm.set(0, 99);
 /// assert_eq!(mm.get(0), 99);
@@ -69,7 +69,7 @@ use std::cell::{Ref, RefMut, RefCell};
 /// # let mut mm = MappedMemory::new();
 /// # let m1 = MemoryToken::new(NullMemory::new());
 /// # mm.mount(0, &m1);
-/// # let m2 = MemoryToken::new(SliceMemory::from_slice(Box::new(4, [1, 2, 3, 4])));
+/// # let m2 = MemoryToken::new(SliceMemory::from_slice(Box::new([1, 2, 3, 4])));
 /// # mm.mount(0, &m2);
 /// # mm.set(0, 99);
 /// # assert_eq!(mm.get(0), 99);
@@ -127,7 +127,6 @@ impl<'a> MappedMemory<'a> {
     pub fn mount<T>(&mut self, start: usize, memory: &MemoryToken<T>)
         where T: Memory + 'a
     {
-        assert!(start % 4 == 0, "Mount needs to be on a word boundary");
         let size = memory.borrow().size();
         let new_entry = Entry {
             start_address: start,
@@ -199,16 +198,16 @@ mod tests {
         let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
         let mut mm = super::MappedMemory::new();
         mm.mount(0, &m1);
-        mm.mount(8, &m2);
+        mm.mount(2, &m2);
 
         assert!(mm.memory_at_addr(0)
             .map_or(false, |entry| entry.memory.borrow().get(0) == 1));
+        assert!(mm.memory_at_addr(1).is_none());
+        assert!(mm.memory_at_addr(2)
+            .map_or(false, |entry| entry.memory.borrow().get(0) == 2));
+        assert!(mm.memory_at_addr(3)
+            .map_or(false, |entry| entry.memory.borrow().get(0) == 2));
         assert!(mm.memory_at_addr(4).is_none());
-        assert!(mm.memory_at_addr(8)
-            .map_or(false, |entry| entry.memory.borrow().get(0) == 2));
-        assert!(mm.memory_at_addr(12)
-            .map_or(false, |entry| entry.memory.borrow().get(0) == 2));
-        assert!(mm.memory_at_addr(16).is_none());
     }
 
     #[test]
@@ -218,12 +217,12 @@ mod tests {
         let m3 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([3])));
         let mut mm = super::MappedMemory::new();
         mm.mount(0, &m1);
-        mm.mount(4, &m2);
-        mm.mount(8, &m3);
+        mm.mount(1, &m2);
+        mm.mount(2, &m3);
         assert_eq!(mm.get(0), 0);
-        assert_eq!(mm.get(4), 2);
-        assert_eq!(mm.get(8), 3);
-        assert_eq!(mm.get(12), 0);
+        assert_eq!(mm.get(1), 2);
+        assert_eq!(mm.get(2), 3);
+        assert_eq!(mm.get(3), 0);
     }
 
     #[test]
@@ -233,17 +232,17 @@ mod tests {
         let mut mm = super::MappedMemory::new();
 
         mm.mount(0, &m1);
-        mm.mount(8, &m2);
+        mm.mount(2, &m2);
         assert_eq!(mm.get(0), 1);
-        assert_eq!(mm.get(8), 2);
+        assert_eq!(mm.get(2), 2);
 
         mm.set(0, 3);
         assert_eq!(mm.get(0), 3);
 
-        mm.set(12, 0);
-        assert_eq!(mm.get(12), 0);
+        mm.set(3, 0);
+        assert_eq!(mm.get(3), 0);
         assert_eq!(m1.borrow().get(0), 3);
-        assert_eq!(m2.borrow().get(4), 0);
+        assert_eq!(m2.borrow().get(1), 0);
     }
 
     #[test]
@@ -254,10 +253,10 @@ mod tests {
         assert_eq!(mm.size(), 0);
 
         mm.mount(0, &m1);
-        assert_eq!(mm.size(), 4);
+        assert_eq!(mm.size(), 1);
 
-        mm.mount(8, &m2);
-        assert_eq!(mm.size(), 16);
+        mm.mount(2, &m2);
+        assert_eq!(mm.size(), 4);
     }
 
     #[test]
@@ -268,11 +267,11 @@ mod tests {
         let mut mm = super::MappedMemory::new();
 
         mm.mount(0, &m1);
-        mm.mount(8, &m2);
-        assert_eq!(mm.size(), 20);
+        mm.mount(2, &m2);
+        assert_eq!(mm.size(), 5);
 
-        mm.mount(24, &m3);
-        assert_eq!(mm.size(), 36);
+        mm.mount(6, &m3);
+        assert_eq!(mm.size(), 9);
     }
 
     #[test]
@@ -286,20 +285,20 @@ mod tests {
         mm.mount(0, &m3);
 
         for i in 0..5 {
-            assert_eq!(mm.get(i << 2), 3);
+            assert_eq!(mm.get(i), 3);
         }
         mm.unmount(&m3);
         for i in 0..5 {
-            assert_eq!(mm.get(i << 2), 2);
+            assert_eq!(mm.get(i), 2);
         }
         mm.unmount(&m3);
         mm.unmount(&m3);
         for i in 0..5 {
-            assert_eq!(mm.get(i << 2), 2);
+            assert_eq!(mm.get(i), 2);
         }
         mm.unmount(&m1);
         for i in 0..5 {
-            assert_eq!(mm.get(i << 2), 2);
+            assert_eq!(mm.get(i), 2);
         }
     }
 }
