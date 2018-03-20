@@ -3,21 +3,21 @@ use std::fmt;
 
 /// Data object for a single instruction.
 ///
-/// An instruction consists of 4 words á 4 bytes. Each instruction can be
-/// intepreted as 4 address `[op_a, op_b, target, jmp]`. the
-/// execution of an instruction is equivalent to
+/// An instruction consists of 4 words á 32 bit. Each instruction is a set of 4
+/// addresses ``op_a``, ``op_b``, ``target`` and ``jmp``. All 4 words are
+/// *signed* words. If a word is negative, it is considered indirect. The
+/// execution of an instruction is described by the following pseudo-code:
 ///
 /// ```text
-///   *target := *op_a - *op_b
-///   if (*target <= 0)
-///     GOTO jmp;
+/// if(op_a < 0) op_a = *(-op_a)
+/// if(op_b < 0) op_b = *(-op_b)
+/// if(target < 0) target = *(-target)
+/// if(jmp < 0) jmp = *(-jmp)
+///
+/// *target := *op_a - *op_b
+/// if (*target <= 0)
+///   GOTO jmp;
 /// ```
-///
-/// `jmp` must be a multiple of the word size. If it’s not, it will be rounded
-/// to the next biggest multiple of the word size.
-///
-/// osci is a 32-bit little endian CPU and instructions must be serialized
-/// accordingly.
 ///
 /// # Examples
 /// ```
@@ -25,9 +25,9 @@ use std::fmt;
 /// use osciemu::instruction::Instruction;
 ///
 /// let mut ip = 0;
-/// let mut m = SliceMemory::from_slice_u32(16, &[
-///     0, 4, 8, 128,
-/// ]);
+/// let mut m = SliceMemory::from_slice(Box::new([
+///     0, 1, 2, 128,
+/// ]));
 /// Instruction::execute_at(&mut ip, &mut m);
 /// assert_eq!(ip, 128);
 /// ```
@@ -47,18 +47,18 @@ impl Instruction {
     pub fn from_memory(addr: usize, mem: &Memory) -> Instruction {
         Instruction {
             op_a: mem.get(addr),
-            op_b: mem.get(addr + 4),
-            target: mem.get(addr + 8),
-            jmp: mem.get(addr + 12),
+            op_b: mem.get(addr + 1),
+            target: mem.get(addr + 2),
+            jmp: mem.get(addr + 3),
         }
     }
 
     /// Serializes the instruction to memory at the given adress.
     pub fn serialize(&self, addr: usize, mem: &mut Memory) {
         mem.set(addr + 0, self.op_a);
-        mem.set(addr + 4, self.op_b);
-        mem.set(addr + 8, self.target);
-        mem.set(addr + 12, self.jmp);
+        mem.set(addr + 1, self.op_b);
+        mem.set(addr + 2, self.target);
+        mem.set(addr + 3, self.jmp);
     }
 
     /// Executes the instruction using `mem` for reads and writes and
@@ -68,7 +68,7 @@ impl Instruction {
         let b = mem.get(self.op_b as usize) as i32;
         let r = a - b;
         mem.set(self.target as usize, r as u32);
-        *ip = if r <= 0 { self.jmp as usize } else { *ip + 16 }
+        *ip = if r <= 0 { self.jmp as usize } else { *ip + 4 }
     }
 
     /// Executes the instruction in memory at the given address, adjusting the
@@ -97,41 +97,38 @@ mod tests {
     #[test]
     fn execute() {
         let mut ip = 0;
-        let mut m = SliceMemory::from_slice_u32(16, &[1, 2, 0, 0]);
+        let mut m = SliceMemory::from_slice(Box::new([1, 2, 0, 0]));
         let i1 = super::Instruction {
             op_a: 0,
-            op_b: 4,
-            target: 8,
+            op_b: 1,
+            target: 2,
             jmp: 128,
         };
         i1.execute(&mut ip, &mut m);
-        assert_eq!(m.get(8) as i32, -1);
+        assert_eq!(m.get(2) as i32, -1);
         assert_eq!(ip, 128);
 
         ip = 0;
         let i2 = super::Instruction {
-            op_a: 4,
+            op_a: 1,
             op_b: 0,
-            target: 8,
+            target: 2,
             jmp: 128,
         };
         i2.execute(&mut ip, &mut m);
-        assert_eq!(m.get(8), 1);
-        assert_eq!(ip, 16);
+        assert_eq!(m.get(2), 1);
+        assert_eq!(ip, 4);
     }
 
     #[test]
     fn execute_at() {
         let mut ip = 0;
-        let mut m = SliceMemory::from_slice_u32(64,
-                                                &[48, 52, 56, 60, 48, 48, 56, 60, 0, 0, 0, 0, 2,
-                                                  1, 0, 0]);
+        let mut m = SliceMemory::from_slice(Box::new([12, 13, 14, 15, 12, 12, 14, 15, 0, 0, 0, 0, 2, 1, 0, 0]));
         super::Instruction::execute_at(&mut ip, &mut m);
-        assert_eq!(m.get(56), 1);
-        assert_eq!(ip, 16);
+        assert_eq!(m.get(14), 1);
+        assert_eq!(ip, 4);
         super::Instruction::execute_at(&mut ip, &mut m);
-        assert_eq!(m.get(56), 0);
-        assert_eq!(ip, 60);
-
+        assert_eq!(m.get(14), 0);
+        assert_eq!(ip, 15);
     }
 }

@@ -5,3 +5,4 @@ authors = ["Surma <surma@surma.link>"]
 
 [dependencies]
 clap = "2.20.3"
+byteorder = "1.2.1"

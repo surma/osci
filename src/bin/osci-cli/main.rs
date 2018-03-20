@@ -1,13 +1,26 @@
 #[macro_use]
 extern crate clap;
 extern crate osciemu;
+extern crate byteorder;
 
 use std::vec::Vec;
 use std::fs::File;
 use std::io;
-use std::io::Read;
 use osciemu::memory::SliceMemory;
 use osciemu::emulator::Emulator;
+
+use byteorder::{NetworkEndian, ReadBytesExt};
+
+fn read_file_into_slice(filename: &str) -> Result<Box<[u32]>, io::Error> {
+    let mut file = File::open(filename)?;
+    let file_meta = file.metadata()?;
+    let size = file_meta.len() as usize;
+    let mut vec = Vec::<u32>::with_capacity(size);
+    vec.resize(size / 4, 0);
+    let mut slice: Box<[u32]> = vec.into_boxed_slice();
+    file.read_u32_into::<NetworkEndian>(slice.as_mut())?;
+    Ok(slice)
+}
 
 fn main() {
     let matches = clap_app!(myapp =>
@@ -20,22 +33,22 @@ fn main() {
         )
         .get_matches();
 
-    let image_filename = matches.value_of("IMAGE").unwrap();
-    let bios_filename = matches.value_of("BIOS").unwrap();
+    let image_buf = read_file_into_slice(matches.value_of("IMAGE").unwrap())
+                            .expect("Could not load image");
+    let bios_buf = read_file_into_slice(matches.value_of("BIOS").unwrap())
+                            .expect("Could not load bios");
+
     let step_mode = matches.is_present("STEP");
-    let mut image_vec: Vec<u8> = Vec::new();
-    let mut bios_vec: Vec<u8> = Vec::new();
 
-    let _ = File::open(image_filename)
-        .expect("Can’t open image file")
-        .read_to_end(&mut image_vec);
-    let _ = File::open(bios_filename)
-        .expect("Can’t open bios file")
-        .read_to_end(&mut bios_vec);
 
-    let img_mem = SliceMemory(image_vec.into_boxed_slice());
-    let bios_mem = SliceMemory(bios_vec.into_boxed_slice());
+    let img_mem = SliceMemory(image_buf);
+    let bios_mem = SliceMemory(bios_buf);
     let mut emulator = Emulator::new(img_mem, bios_mem);
+
+    println!("FLAGS_START_ADDRESS = 0x{:08X}", osciemu::memory::address::FLAGS_START_ADDRESS);
+    println!("IVT_START_ADDRESS = 0x{:08X}", osciemu::memory::address::IVT_START_ADDRESS);
+    println!("REGISTERS_START_ADDRESS = 0x{:08X}", osciemu::memory::address::REGISTERS_START_ADDRESS);
+    println!("STACK_POINTER_ADDRESS = 0x{:08X}", osciemu::memory::address::STACK_POINTER_ADDRESS);
 
     for count in 1.. {
         if emulator.is_halted() {

@@ -1,29 +1,30 @@
-# &r[0] = 0xFFFFFFF0
-# &r[1] = 0xFFFFFFF4
-# &flags[0] = 0xFFFFFFE4
+# &r[0] = 0x8FFFFFF9
+# &r[1] = 0x8FFFFFFA
+# &flags[0] = 0x8FFFFFFE
 
-# start: kBiosBoundary = 0x80000000
+# start: BIOS_START_ADDRESS = 0x40000000
 # do something, jump to start (i.e. jump *over* data)
-00000000 00000000 f0ffffff 20000080
+00000000 00000000 8ffffff9 40000008
 
-# data:  0x80000010
+# data: (BIOS_START_ADDRESS + 4) = 0x40000004
 00000000 # data[0] = 0
-01000000 # data[1] = 1
-80000000 # data[2] = 128
+00000001 # data[1] = 1
+00000080 # data[2] = 128
 00000000 # data[3] = 0
 
-# start: 0x80000020
+# start: (BIOS_START_ADDRESS + 8) =0x40000008
 # r[0] = data[2] - data[0]; set r[0] to 128
-18000080 10000080 f0ffffff 30000080
+40000006 40000004 8ffffff9 4000000c
 
-# loop: (kBiosBoundary + 4) = 0x80000030
+# loop: (BIOS_START_ADDRESS + 12) = 0x4000000c
 # r[0] = r[0] - data[1], goto end; decrease r[0] by 1, jump to end when we reach 0
-f0ffffff 14000080 f0ffffff 50000080
+8ffffff9 40000005 8ffffff9 40000014
 
-# r[1] = data[0] - data[1], goto loop; jmp to loop
-10000080 14000080 f4ffffff 30000080
+# (BIOS_START_ADDRESS + 16) = 0x40000010
+# r[1] = *0 - *0, goto loop; jmp to loop
+00000000 00000000 8ffffffa 4000000c
 
-# end: (kBiosBoundary + 12) = 0x80000050
+# end: (BIOS_START_ADDRESS + 20) = 0x40000014
 # flags[0] = data[1] - data[0]; set halt bit
-14000080 10000080 e4ffffff 00000000
+40000005 40000004 8ffffffe 00000000
 

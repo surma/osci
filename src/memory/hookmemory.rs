@@ -23,13 +23,13 @@ type SizeHook = Fn(&mut usize);
 ///
 /// let mut hook_mem =
 ///     HookMemory::new(
-///         SliceMemory::from_slice_u32(16, &[0, 1, 2, 3])
+///         SliceMemory::from_slice(Box::new([0, 9]))
 ///     );
-/// hook_mem.read_prehook(Box::new(|addr| *addr += 4));
+/// hook_mem.read_prehook(Box::new(|addr| *addr += 1));
 /// hook_mem.read_posthook(Box::new(|addr, val| *val <<= 1));
 ///
 /// // This will read cell 1 and the result will be shifted left by 1.
-/// assert_eq!(hook_mem.get(0), 2);
+/// assert_eq!(hook_mem.get(0), 18);
 /// ```
 ///
 pub struct HookMemory<T: Memory> {
@@ -94,44 +94,44 @@ mod tests {
 
     #[test]
     fn read_prehook() {
-        let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice_u32(12, &[0, 2, 4]));
+        let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice(Box::new([0, 2, 4])));
         assert_eq!(hook_mem.get(0), 0);
-        hook_mem.read_prehook(Box::new(|addr| *addr += 4));
+        hook_mem.read_prehook(Box::new(|addr| *addr += 1));
         assert_eq!(hook_mem.get(0), 2);
-        assert_eq!(hook_mem.get(4), 4);
+        assert_eq!(hook_mem.get(1), 4);
     }
 
     #[test]
     fn read_posthook() {
-        let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice_u32(12, &[0, 2, 4]));
+        let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice(Box::new([0, 2, 4])));
         assert_eq!(hook_mem.get(0), 0);
         hook_mem.read_posthook(Box::new(|_, val| *val += 1));
         assert_eq!(hook_mem.get(0), 1);
-        assert_eq!(hook_mem.get(4), 3);
-        assert_eq!(hook_mem.get(8), 5);
+        assert_eq!(hook_mem.get(1), 3);
+        assert_eq!(hook_mem.get(2), 5);
     }
 
     #[test]
     fn write_hook() {
-        let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice_u32(8, &[0, 0]));
+        let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice(Box::new([0, 0])));
         assert_eq!(hook_mem.get(0), 0);
         hook_mem.set(0, 1);
         assert_eq!(hook_mem.get(0), 1);
         hook_mem.set(0, 0);
         hook_mem.write_hook(Box::new(|addr, val| {
-            *addr += 4;
+            *addr += 1;
             *val += 1;
         }));
         hook_mem.set(0, 1);
         assert_eq!(hook_mem.get(0), 0);
-        assert_eq!(hook_mem.get(4), 2);
+        assert_eq!(hook_mem.get(1), 2);
     }
 
     #[test]
     fn size_hook() {
-        let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice_u32(8, &[0, 0]));
-        assert_eq!(hook_mem.size(), 8);
+        let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice(Box::new([0, 0])));
+        assert_eq!(hook_mem.size(), 2);
         hook_mem.size_hook(Box::new(|size| { *size += 1; }));
-        assert_eq!(hook_mem.size(), 9);
+        assert_eq!(hook_mem.size(), 3);
     }
 }
