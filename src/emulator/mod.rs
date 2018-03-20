@@ -118,4 +118,13 @@ mod tests {
         emu.step();
         assert!(emu.is_halted());
     }
+
+    #[test]
+    fn get_register() {
+        let mut emu = super::Emulator::new(NullMemory::new(), NullMemory::new());
+        emu.memory.set(address::REGISTERS_START_ADDRESS + 1, 101);
+        emu.memory.set(address::REGISTERS_START_ADDRESS, 100);
+        assert_eq!(emu.get_register(1), 101);
+        assert_eq!(emu.get_register(0), 100);
+    }
 }
