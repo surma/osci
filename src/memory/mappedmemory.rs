@@ -121,15 +121,17 @@ impl MappedMemory {
     /// Unmounts the `Memory` references by the `MemoryToken`. After unmounting,
     /// `MappedMemory` does not hold any references to the `Memory`.
     pub fn unmount(&mut self, token: &MemoryToken) {
-        let entry = self.mounted_memories
+        let idx = self.mounted_memories
             .iter()
             .enumerate()
-            .find(|&(_, entry)| entry.id == token.id)
-            .map(|(idx, _)| idx)
-            .map(|idx| {
-                self.mounted_memories.remove(idx)
-            }).unwrap();
-        self.unmounted_memories.push(entry);
+            .find(|&(_idx, entry)| entry.id == token.id)
+            .map(|(idx, _entry)| {
+               idx
+            });
+
+        idx
+            .map(|idx| self.mounted_memories.remove(idx))
+            .map(|entry| self.unmounted_memories.push(entry));
     }
 
     pub fn borrow(&self, token: &MemoryToken) -> &Box<Memory> {
