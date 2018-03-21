@@ -213,95 +213,87 @@ impl Memory for MappedMemory {
 mod tests {
     use memory::{Memory, SliceMemory, NullMemory};
 
-    // #[test]
-    // fn overlapping_mounts() {
-    //     let m1 = super::MemoryToken::new(NullMemory::new());
-    //     let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
-    //     let m3 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([3])));
-    //     let mut mm = super::MappedMemory::new();
-    //     mm.mount(0, &m1);
-    //     mm.mount(1, &m2);
-    //     mm.mount(2, &m3);
-    //     assert_eq!(mm.get(0), 0);
-    //     assert_eq!(mm.get(1), 2);
-    //     assert_eq!(mm.get(2), 3);
-    //     assert_eq!(mm.get(3), 0);
-    // }
+    #[test]
+    fn overlapping_mounts() {
+        let mut mm = super::MappedMemory::new();
+        let m1 = mm.mount(0, Box::new(NullMemory::new()));
+        let m2 = mm.mount(1, Box::new(SliceMemory::from_slice(Box::new([2, 2]))));
+        let m3 = mm.mount(2, Box::new(SliceMemory::from_slice(Box::new([3]))));
+        assert_eq!(mm.get(0), 0);
+        assert_eq!(mm.get(1), 2);
+        assert_eq!(mm.get(2), 3);
+        assert_eq!(mm.get(3), 0);
+    }
 
-    // #[test]
-    // fn get_and_set() {
-    //     let m1 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([1])));
-    //     let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
-    //     let mut mm = super::MappedMemory::new();
+    #[test]
+    fn get_and_set() {
+        let mut mm = super::MappedMemory::new();
+        let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1]))));
+        let m2 = mm.mount(2, Box::new(SliceMemory::from_slice(Box::new([2, 2]))));
 
-    //     mm.mount(0, &m1);
-    //     mm.mount(2, &m2);
-    //     assert_eq!(mm.get(0), 1);
-    //     assert_eq!(mm.get(2), 2);
+        assert_eq!(mm.get(0), 1);
+        assert_eq!(mm.get(2), 2);
 
-    //     mm.set(0, 3);
-    //     assert_eq!(mm.get(0), 3);
+        mm.set(0, 3);
+        assert_eq!(mm.get(0), 3);
 
-    //     mm.set(3, 0);
-    //     assert_eq!(mm.get(3), 0);
-    //     assert_eq!(m1.borrow().get(0), 3);
-    //     assert_eq!(m2.borrow().get(1), 0);
-    // }
+        mm.set(3, 0);
+        assert_eq!(mm.get(3), 0);
+        assert_eq!(mm.borrow(&m1).get(0), 3);
+        assert_eq!(mm.borrow(&m2).get(1), 0);
+    }
 
-    // #[test]
-    // fn size() {
-    //     let m1 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([1])));
-    //     let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
-    //     let mut mm = super::MappedMemory::new();
-    //     assert_eq!(mm.size(), 0);
+    #[test]
+    fn size() {
+        let mut mm = super::MappedMemory::new();
+        let m1 = Box::new(SliceMemory::from_slice(Box::new([1])));
+        let m2 = Box::new(SliceMemory::from_slice(Box::new([2, 2])));
+        assert_eq!(mm.size(), 0);
 
-    //     mm.mount(0, &m1);
-    //     assert_eq!(mm.size(), 1);
+        mm.mount(0, m1);
+        assert_eq!(mm.size(), 1);
 
-    //     mm.mount(2, &m2);
-    //     assert_eq!(mm.size(), 4);
-    // }
+        mm.mount(2, m2);
+        assert_eq!(mm.size(), 4);
+    }
 
-    // #[test]
-    // fn size_with_overlap() {
-    //     let m1 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1])));
-    //     let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
-    //     let m3 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([3, 3, 3])));
-    //     let mut mm = super::MappedMemory::new();
+    #[test]
+    fn size_with_overlap() {
+        let mut mm = super::MappedMemory::new();
+        let m1 = Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1])));
+        let m2 = Box::new(SliceMemory::from_slice(Box::new([2, 2])));
+        let m3 = Box::new(SliceMemory::from_slice(Box::new([3, 3, 3])));
 
-    //     mm.mount(0, &m1);
-    //     mm.mount(2, &m2);
-    //     assert_eq!(mm.size(), 5);
+        mm.mount(0, m1);
+        mm.mount(2, m2);
+        assert_eq!(mm.size(), 5);
 
-    //     mm.mount(6, &m3);
-    //     assert_eq!(mm.size(), 9);
-    // }
+        mm.mount(6, m3);
+        assert_eq!(mm.size(), 9);
+    }
 
-    // #[test]
-    // fn unmount() {
-    //     let m1 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1])));
-    //     let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2])));
-    //     let m3 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([3, 3, 3, 3, 3])));
-    //     let mut mm = super::MappedMemory::new();
-    //     mm.mount(0, &m1);
-    //     mm.mount(0, &m2);
-    //     mm.mount(0, &m3);
+    #[test]
+    fn unmount() {
+        let mut mm = super::MappedMemory::new();
+        let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))));
+        let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2]))));
+        let m3 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([3, 3, 3, 3, 3]))));
 
-    //     for i in 0..5 {
-    //         assert_eq!(mm.get(i), 3);
-    //     }
-    //     mm.unmount(&m3);
-    //     for i in 0..5 {
-    //         assert_eq!(mm.get(i), 2);
-    //     }
-    //     mm.unmount(&m3);
-    //     mm.unmount(&m3);
-    //     for i in 0..5 {
-    //         assert_eq!(mm.get(i), 2);
-    //     }
-    //     mm.unmount(&m1);
-    //     for i in 0..5 {
-    //         assert_eq!(mm.get(i), 2);
-    //     }
-    // }
+        for i in 0..5 {
+            assert_eq!(mm.get(i), 3);
+        }
+        mm.unmount(&m3);
+        for i in 0..5 {
+            assert_eq!(mm.get(i), 2);
+        }
+        mm.unmount(&m3);
+        mm.unmount(&m3);
+        for i in 0..5 {
+            assert_eq!(mm.get(i), 2);
+        }
+        mm.unmount(&m1);
+        for i in 0..5 {
+            assert_eq!(mm.get(i), 2);
+        }
+    }
 }
