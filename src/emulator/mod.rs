@@ -2,44 +2,35 @@ use super::memory::{self, address, Memory};
 use super::memory::mappedmemory::MemoryToken;
 use super::instruction::Instruction;
 
-pub struct Emulator<'a, T, U>
-    where T: Memory,
-          U: Memory
-{
-    image_memory: MemoryToken<T>,
-    bios_memory: MemoryToken<U>,
-    controls_memory: memory::mappedmemory::MemoryToken<memory::SliceMemory>,
-    pub memory: memory::MappedMemory<'a>,
+pub struct Emulator {
+    image_memory: MemoryToken,
+    bios_memory: MemoryToken,
+    controls_memory: memory::mappedmemory::MemoryToken,
+    pub memory: memory::MappedMemory,
     pub ip: usize,
     bios_mounted: bool,
 }
 
-impl<'a, T, U> Emulator<'a, T, U>
-    where T: 'a + Memory,
-          U: 'a + Memory
+impl Emulator
 {
-    pub fn new(img: T, bios: U) -> Emulator<'a, T, U> {
+    pub fn new(img: Box<Memory>, bios: Box<Memory>) -> Emulator {
         let mut memory = memory::MappedMemory::new();
-        let nm = MemoryToken::new(memory::NullMemory::new());
-        memory.mount(0, &nm);
+        memory.mount(0, Box::new(memory::NullMemory::new()));
 
-        let bios_memory = memory::mappedmemory::MemoryToken::new(bios);
-        let image_memory = memory::mappedmemory::MemoryToken::new(img);
-        memory.mount(0, &image_memory);
-        memory.mount(address::BIOS_START_ADDRESS, &bios_memory);
+        let image_memory = memory.mount(0, img);
+        let bios_memory = memory.mount(address::BIOS_START_ADDRESS, bios);
 
-        let controls_memory =
-            MemoryToken::new(memory::SliceMemory::new(address::MAX_ADDRESS -
-                                                      address::CONTROLS_ADDRESS +
-                                                      1));
-        memory.mount(address::CONTROLS_ADDRESS, &controls_memory);
+        let controls_memory = Box::new(
+            memory::SliceMemory::new(address::MAX_ADDRESS - address::CONTROLS_ADDRESS + 1)
+        );
+        let controls_memory = memory.mount(address::CONTROLS_ADDRESS, controls_memory);
 
         Emulator {
-            memory: memory,
-            image_memory: image_memory,
-            bios_memory: bios_memory,
+            memory,
+            image_memory,
+            bios_memory,
+            controls_memory,
             ip: address::BIOS_START_ADDRESS,
-            controls_memory: controls_memory,
             bios_mounted: true,
         }
     }
@@ -65,8 +56,8 @@ impl<'a, T, U> Emulator<'a, T, U>
             self.memory.unmount(&self.bios_memory);
             self.bios_mounted = false;
         } else if !self.flag_is_set(address::FLAG0_BIOS_DONE) && !self.bios_mounted {
-            self.memory.mount(address::BIOS_START_ADDRESS, &self.bios_memory);
-            self.bios_mounted = true;
+            // self.memory.mount(address::BIOS_START_ADDRESS, &self.bios_memory);
+            // self.bios_mounted = true;
         }
     }
 
@@ -91,7 +82,7 @@ mod tests {
                                                  0,
                                                  0,
                                                  0]));
-        let mut emu = super::Emulator::new(NullMemory::new(), bios);
+        let mut emu = super::Emulator::new(Box::new(NullMemory::new()), Box::new(bios));
 
         assert!(!emu.flag_is_set(address::FLAG0_BIOS_DONE));
         assert_eq!(emu.memory.get(address::BIOS_START_ADDRESS + 4), 2);
@@ -112,7 +103,7 @@ mod tests {
                                                  0,
                                                  0,
                                                  0]));
-        let mut emu = super::Emulator::new(NullMemory::new(), bios);
+        let mut emu = super::Emulator::new(Box::new(NullMemory::new()), Box::new(bios));
 
         assert!(!emu.is_halted());
         emu.step();
@@ -121,7 +112,7 @@ mod tests {
 
     #[test]
     fn get_register() {
-        let mut emu = super::Emulator::new(NullMemory::new(), NullMemory::new());
+        let mut emu = super::Emulator::new(Box::new(NullMemory::new()), Box::new(NullMemory::new()));
         emu.memory.set(address::REGISTERS_START_ADDRESS + 1, 101);
         emu.memory.set(address::REGISTERS_START_ADDRESS, 100);
         assert_eq!(emu.get_register(1), 101);
