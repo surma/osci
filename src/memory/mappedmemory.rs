@@ -51,7 +51,7 @@ use std::sync::atomic::{AtomicIsize, Ordering};
 /// let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 2, 3, 4]))));
 /// mm.set(0, 99);
 /// assert_eq!(mm.get(0), 99);
-/// // assert_eq!(m2.borrow().get(0), 99);
+/// assert_eq!(mm.borrow(&m2).get(0), 99);
 /// ```
 ///
 /// The `MemoryToken`s are also used to unmount a mounted `Memory`.
@@ -64,9 +64,9 @@ use std::sync::atomic::{AtomicIsize, Ordering};
 /// # let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 2, 3, 4]))));
 /// # mm.set(0, 99);
 /// // ...
-/// // mm.unmount(&m2);
-/// // assert_eq!(mm.get(0), 0);
-/// // assert_eq!(m2.borrow().get(0), 99);
+/// mm.unmount(&m2);
+/// assert_eq!(mm.get(0), 0);
+/// assert_eq!(mm.borrow(&m2).get(0), 99);
 /// ```
 ///
 /// # Panics
@@ -127,27 +127,42 @@ impl MappedMemory {
     }
 
     pub fn borrow(&self, token: &MemoryToken) -> &Box<Memory> {
-        let idx = self.mounted_memories
-            .iter()
-            .enumerate()
-            .find(|&(idx, entry)| entry.id == token.id)
-            .map(|(idx, _)| idx)
-            .unwrap();
-        &self.mounted_memories.get(idx).unwrap().memory
+        &self.entry_for_token(token).memory
     }
 
     pub fn borrow_mut(&mut self, token: &MemoryToken) -> &mut Box<Memory> {
-        let idx = self.mounted_memories
-            .iter()
-            .enumerate()
-            .find(|&(idx, entry)| entry.id == token.id)
-            .map(|(idx, _)| idx)
-            .unwrap();
-        &mut self.mounted_memories.get_mut(idx).unwrap().memory
+        &mut self.entry_for_token_mut(token).memory
     }
 
-    // fn memory_for_token(&self, token: &MemoryToken): &Entry {
-    // }
+    fn entry_for_token(&self, token: &MemoryToken) -> &Entry {
+        let m = self.mounted_memories
+            .iter()
+            .find(|ref entry| entry.id == token.id);
+
+        if m.is_some() {
+            m.unwrap()
+        } else {
+            self.unmounted_memories
+                .iter()
+                .find(|ref entry| entry.id == token.id)
+                .unwrap()
+        }
+    }
+
+    fn entry_for_token_mut(&mut self, token: &MemoryToken) -> &mut Entry {
+        let m = self.mounted_memories
+            .iter_mut()
+            .find(|ref mut entry| entry.id == token.id);
+
+        if m.is_some() {
+            m.unwrap()
+        } else {
+            self.unmounted_memories
+                .iter_mut()
+                .find(|ref mut entry| entry.id == token.id)
+                .unwrap()
+        }
+    }
 
     fn entry_at_addr(&self, addr: usize) -> Option<&Entry> {
         self.mounted_memories
