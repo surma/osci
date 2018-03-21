@@ -85,6 +85,12 @@ struct Entry {
     memory: Box<Memory>,
 }
 
+impl Entry {
+    fn contains(&self, addr: usize) -> bool {
+        self.start_address <= addr && self.start_address + self.size > addr
+    }
+}
+
 #[derive(Clone)]
 pub struct MemoryToken {
     id: isize,
@@ -168,14 +174,14 @@ impl MappedMemory {
         self.mounted_memories
             .iter()
             .rev()
-            .find(|entry| entry.start_address <= addr && entry.start_address + entry.size > addr)
+            .find(|entry| entry.contains(addr))
     }
 
     fn entry_at_addr_mut(&mut self, addr: usize) -> Option<&mut Entry> {
         self.mounted_memories
             .iter_mut()
             .rev()
-            .find(|entry| entry.start_address <= addr && entry.start_address + entry.size > addr)
+            .find(|entry| entry.contains(addr))
     }
 }
 
@@ -204,24 +210,6 @@ impl Memory for MappedMemory {
 #[cfg(test)]
 mod tests {
     use memory::{Memory, SliceMemory, NullMemory};
-
-    // #[test]
-    // fn memory_at_addr() {
-    //     let m1 = SliceMemory::from_slice(Box::new([1]));
-    //     let m2 = SliceMemory::from_slice(Box::new([2, 2]));
-    //     let mut mm = super::MappedMemory::new();
-    //     let m1 = mm.mount(0, &m1);
-    //     let m2 = mm.mount(2, &m2);
-
-    //     assert!(mm.memory_at_addr(0)
-    //         .map_or(false, |entry| entry.memory.get(0) == 1));
-    //     assert!(mm.memory_at_addr(1).is_none());
-    //     assert!(mm.memory_at_addr(2)
-    //         .map_or(false, |entry| entry.memory.get(0) == 2));
-    //     assert!(mm.memory_at_addr(3)
-    //         .map_or(false, |entry| entry.memory.get(0) == 2));
-    //     assert!(mm.memory_at_addr(4).is_none());
-    // }
 
     // #[test]
     // fn overlapping_mounts() {
