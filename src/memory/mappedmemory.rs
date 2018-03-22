@@ -98,7 +98,7 @@ struct Entry {
     id: isize,
     start_address: usize,
     size: usize,
-    active: bool,
+    enabled: bool,
     memory: Box<Memory>,
 }
 
@@ -129,7 +129,7 @@ impl MappedMemory {
             start_address,
             size,
             memory,
-            active: true
+            enabled: true
         };
         self.memories.push(new_entry);
         MemoryToken{id}
@@ -147,17 +147,21 @@ impl MappedMemory {
         self.memories.remove(idx).memory
     }
 
+    pub fn is_enabled_mount(&self, token: &MemoryToken) -> bool {
+        self.entry_for_token(token).enabled
+    }
+
     /// Disables a memory. This is the same as unmounting without moving
     /// ownership
     pub fn disable_mount(&mut self, token: &MemoryToken) {
         let entry = self.entry_for_token_mut(token);
-        entry.active = false;
+        entry.enabled = false;
     }
 
     // Enables a memory. The mount point remains unchanged.
     pub fn enable_mount(&mut self, token: &MemoryToken) {
         let entry = self.entry_for_token_mut(token);
-        entry.active = true;
+        entry.enabled = true;
     }
 
     /// Borrows a memory.
@@ -184,32 +188,32 @@ impl MappedMemory {
             .unwrap()
     }
 
-    fn active_entry_at_addr(&self, addr: usize) -> Option<&Entry> {
+    fn enabled_entry_at_addr(&self, addr: usize) -> Option<&Entry> {
         self.memories
             .iter()
             .rev()
-            .filter(|entry| entry.active)
+            .filter(|entry| entry.enabled)
             .find(|entry| entry.contains(addr))
     }
 
-    fn active_entry_at_addr_mut(&mut self, addr: usize) -> Option<&mut Entry> {
+    fn enabled_entry_at_addr_mut(&mut self, addr: usize) -> Option<&mut Entry> {
         self.memories
             .iter_mut()
             .rev()
-            .filter(|entry| entry.active)
+            .filter(|entry| entry.enabled)
             .find(|entry| entry.contains(addr))
     }
 }
 
 impl Memory for MappedMemory {
     fn get(&self, addr: usize) -> u32 {
-        self.active_entry_at_addr(addr)
+        self.enabled_entry_at_addr(addr)
             .map(|entry| entry.memory.get(addr - entry.start_address))
             .expect("Out of bounds")
     }
 
     fn set(&mut self, addr: usize, value: u32) {
-        self.active_entry_at_addr_mut(addr)
+        self.enabled_entry_at_addr_mut(addr)
             .map(|entry| entry.memory.set(addr - entry.start_address, value))
             .expect("Out of bounds")
     }
@@ -217,7 +221,7 @@ impl Memory for MappedMemory {
     fn size(&self) -> usize {
         self.memories
             .iter()
-            .filter(|entry| entry.active)
+            .filter(|entry| entry.enabled)
             .map(|entry| entry.start_address + entry.size)
             .max()
             .unwrap_or(0)
@@ -340,6 +344,19 @@ mod tests {
             assert_eq!(mm.get(i), 1);
             assert_eq!(m2.get(i), 2);
         }
+    }
+
+    #[test]
+    fn is_enabled_mount() {
+        let mut mm = super::MappedMemory::new();
+        let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))));
+        let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2]))));
+
+        assert!(mm.is_enabled_mount(&m2));
+        mm.disable_mount(&m2);
+        assert!(!mm.is_enabled_mount(&m2));
+        mm.enable_mount(&m2);
+        assert!(mm.is_enabled_mount(&m2));
     }
 
     #[test]
