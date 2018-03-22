@@ -1,17 +1,14 @@
 use memory::Memory;
 use std::vec::Vec;
-use std::rc::Rc;
-use std::ops::Deref;
-use std::cell::{Ref, RefMut, RefCell};
+use std::sync::atomic::{AtomicIsize, Ordering};
 
 /// Maps multiple `Memory`s into a single address space.
 ///
 /// The `MappedMemory` allows to unify multiple `Memory`s in one address space.
 /// A `Memory` is mounted at a certain address and is from now on responsible
-/// for all reads and writes between that starting at that address (the “mount
-/// point”) and ending where the mounted memory ends.
-/// The read and write calls for the responsible `Memory` will be given an
-/// address _relative_ to the mount point.
+/// for all reads and writes starting at that address (the “mount point”) and
+/// ending where the mounted memory ends. The read and write calls for the
+/// responsible `Memory` will be given an address _relative_ to e mount point.
 ///
 /// ```text
 ///                   Unmapped
@@ -32,160 +29,199 @@ use std::cell::{Ref, RefMut, RefCell};
 ///
 /// ```
 /// use osciemu::memory::{Memory, SliceMemory, MappedMemory};
-/// use osciemu::memory::mappedmemory::MemoryToken;
 ///
 /// let mut mm = MappedMemory::new();
-/// let m1 = MemoryToken::new(SliceMemory::from_slice(Box::new([1])));
-/// let m2 = MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
-/// mm.mount(0, &m1);
-/// mm.mount(2, &m2);
+/// let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1]))));
+/// let m2 = mm.mount(2, Box::new(SliceMemory::from_slice(Box::new([2, 2]))));
 /// // Now mm =~ [1, _, 2, 2]
 /// assert_eq!(mm.get(0), 1);
 /// assert_eq!(mm.get(3), 2);
 /// ```
 ///
-/// The `MemoryToken`s can be used to access the `Memory` even if it has been
-/// mounted. They work like `std::cell::RefCell`.
+/// A call to `mount` returns a `MemoryToken`. These tokens can be used to
+/// borrow a `Memory` even if it has been mounted. This works similar to a
+/// `std::cell::RefCell`.
 ///
 /// ```
 /// use osciemu::memory::{Memory, NullMemory, SliceMemory, MappedMemory};
 /// use osciemu::memory::mappedmemory::MemoryToken;
 ///
 /// let mut mm = MappedMemory::new();
-/// let m1 = MemoryToken::new(NullMemory::new());
-/// mm.mount(0, &m1);
-/// let m2 = MemoryToken::new(SliceMemory::from_slice(Box::new([1, 2, 3, 4])));
-/// mm.mount(0, &m2);
+/// let m1 = mm.mount(0, Box::new(NullMemory::new()));
+/// let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 2, 3, 4]))));
 /// mm.set(0, 99);
 /// assert_eq!(mm.get(0), 99);
-/// assert_eq!(m2.borrow().get(0), 99);
+/// assert_eq!(mm.borrow(&m2).get(0), 99);
 /// ```
 ///
-/// The `MemoryToken`s are also used to unmount a mounted `Memory`.
+/// The `MemoryToken`s are also used to disable a mounted `Memory`. A disabled
+/// memory is effectively unmounted, but remains in the ownership of the
+/// `MappedMemory` and can be enabled using `enable_mount()`.
 ///
 /// ```
 /// # use osciemu::memory::{Memory, NullMemory, SliceMemory, MappedMemory};
 /// # use osciemu::memory::mappedmemory::MemoryToken;
 /// # let mut mm = MappedMemory::new();
-/// # let m1 = MemoryToken::new(NullMemory::new());
-/// # mm.mount(0, &m1);
-/// # let m2 = MemoryToken::new(SliceMemory::from_slice(Box::new([1, 2, 3, 4])));
-/// # mm.mount(0, &m2);
+/// # let m1 = mm.mount(0, Box::new(NullMemory::new()));
+/// # let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 2, 3, 4]))));
 /// # mm.set(0, 99);
-/// # assert_eq!(mm.get(0), 99);
-/// # assert_eq!(m2.borrow().get(0), 99);
 /// // ...
-/// mm.unmount(&m2);
+/// mm.disable_mount(&m2);
 /// assert_eq!(mm.get(0), 0);
-/// assert_eq!(m2.borrow().get(0), 99);
+/// assert_eq!(mm.borrow(&m2).get(0), 99);
+/// ```
+///
+/// To move a memory out of the `MappedMemory`, a memory can be unmounted:
+///
+/// ```
+/// # use osciemu::memory::{Memory, NullMemory, SliceMemory, MappedMemory};
+/// # use osciemu::memory::mappedmemory::MemoryToken;
+/// # let mut mm = MappedMemory::new();
+/// # let m1 = mm.mount(0, Box::new(NullMemory::new()));
+/// # let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 2, 3, 4]))));
+/// # mm.set(0, 99);
+/// // ...
+/// let m2 = mm.unmount(m2);
+/// assert_eq!(mm.get(0), 0);
+/// assert_eq!(m2.get(0), 99);
 /// ```
 ///
 /// # Panics
 /// `MappedMemory` panics when an unmapped address is read or written.
-pub struct MappedMemory<'a>(Vec<Entry<'a>>);
+pub struct MappedMemory {
+    memories: Vec<Entry>,
+}
 
-struct Entry<'a> {
+static id_counter: AtomicIsize = AtomicIsize::new(0);
+
+struct Entry {
+    id: isize,
     start_address: usize,
     size: usize,
-    memory: Rc<RefCell<Memory + 'a>>,
+    active: bool,
+    memory: Box<Memory>,
 }
 
-/// Represents a mountable, shared `Memory`.
+impl Entry {
+    fn contains(&self, addr: usize) -> bool {
+        self.start_address <= addr && self.start_address + self.size > addr
+    }
+}
+
 #[derive(Clone)]
-pub struct MemoryToken<T: Memory> {
-    memory: Rc<RefCell<T>>,
+pub struct MemoryToken {
+    id: isize,
 }
 
-impl<T: Memory> MemoryToken<T> {
-    pub fn new(memory: T) -> MemoryToken<T> {
-        MemoryToken { memory: Rc::new(RefCell::new(memory)) }
-    }
-
-    /// Borrows a reference to the mounted memory until the `Ref` is destroyed.
-    /// See `std::cell::RefCell::borrow()`
-    pub fn borrow(&self) -> Ref<T> {
-        self.memory.borrow()
-    }
-
-    /// Borrows a mutable reference to the mounted memory until the `RefMut`
-    /// is destroyed.
-    /// See `std::cell::RefCell::borrow_mut()`
-    pub fn borrow_mut(&self) -> RefMut<T> {
-        self.memory.borrow_mut()
-    }
-}
-
-impl<'a> MappedMemory<'a> {
-    pub fn new() -> MappedMemory<'a> {
-        MappedMemory(Vec::new())
+impl MappedMemory {
+    pub fn new() -> MappedMemory {
+        MappedMemory {
+            memories: Vec::new(),
+        }
     }
 
     /// Mounts a `Memory` at the given address.
-    ///
-    /// # Panics
-    /// `mount` panics if a mount is not on a word boundary.
-    pub fn mount<T>(&mut self, start: usize, memory: &MemoryToken<T>)
-        where T: Memory + 'a
-    {
-        let size = memory.borrow().size();
+    pub fn mount(&mut self, start_address: usize, memory: Box<Memory>) -> MemoryToken {
+        let size = memory.size();
+        let id = id_counter.fetch_add(1, Ordering::Relaxed);
         let new_entry = Entry {
-            start_address: start,
-            size: size,
-            memory: memory.memory.clone(),
+            id,
+            start_address,
+            size,
+            memory,
+            active: true
         };
-        self.0.push(new_entry);
+        self.memories.push(new_entry);
+        MemoryToken{id}
     }
 
-    /// Unmounts the `Memory` references by the `MemoryToken`. After unmounting,
-    /// `MappedMemory` does not hold any references to the `Memory`. If the
-    /// `Memory` has already been unmounted, calling `unmount` is a no-op.
-    pub fn unmount<T>(&mut self, mount_token: &MemoryToken<T>)
-        where T: Memory + 'a
-    {
-        self.0
+    /// Unmounts a memory.
+    pub fn unmount(&mut self, token: MemoryToken) -> Box<Memory> {
+        let idx = self.memories
             .iter()
             .enumerate()
-            .find(|&(_, entry)| rc_ptr_eq(&mount_token.memory, &entry.memory))
-            .map(|(idx, _)| idx)
-            .map(|idx| self.0.remove(idx));
+            .find(|&(_idx, ref entry)| entry.id == token.id)
+            .map(|(idx, ref _entry)| idx)
+            .unwrap();
+
+        self.memories.remove(idx).memory
     }
 
-    fn memory_at_addr(&self, addr: usize) -> Option<&Entry<'a>> {
-        self.0
+    /// Disables a memory. This is the same as unmounting without moving
+    /// ownership
+    pub fn disable_mount(&mut self, token: &MemoryToken) {
+        let entry = self.entry_for_token_mut(token);
+        entry.active = false;
+    }
+
+    // Enables a memory. The mount point remains unchanged.
+    pub fn enable_mount(&mut self, token: &MemoryToken) {
+        let entry = self.entry_for_token_mut(token);
+        entry.active = true;
+    }
+
+    /// Borrows a memory.
+    pub fn borrow(&self, token: &MemoryToken) -> &Box<Memory> {
+        &self.entry_for_token(token).memory
+    }
+
+    /// Mutable borrows a memory.
+    pub fn borrow_mut(&mut self, token: &MemoryToken) -> &mut Box<Memory> {
+        &mut self.entry_for_token_mut(token).memory
+    }
+
+    fn entry_for_token(&self, token: &MemoryToken) -> &Entry {
+        self.memories
+            .iter()
+            .find(|ref entry| entry.id == token.id)
+            .unwrap()
+    }
+
+    fn entry_for_token_mut(&mut self, token: &MemoryToken) -> &mut Entry {
+        self.memories
+            .iter_mut()
+            .find(|ref mut entry| entry.id == token.id)
+            .unwrap()
+    }
+
+    fn active_entry_at_addr(&self, addr: usize) -> Option<&Entry> {
+        self.memories
             .iter()
             .rev()
-            .find(|entry| entry.start_address <= addr && entry.start_address + entry.size > addr)
+            .filter(|entry| entry.active)
+            .find(|entry| entry.contains(addr))
+    }
+
+    fn active_entry_at_addr_mut(&mut self, addr: usize) -> Option<&mut Entry> {
+        self.memories
+            .iter_mut()
+            .rev()
+            .filter(|entry| entry.active)
+            .find(|entry| entry.contains(addr))
     }
 }
 
-impl<'a> Memory for MappedMemory<'a> {
+impl Memory for MappedMemory {
     fn get(&self, addr: usize) -> u32 {
-        self.memory_at_addr(addr)
-            .map(|entry| entry.memory.borrow().get(addr - entry.start_address))
+        self.active_entry_at_addr(addr)
+            .map(|entry| entry.memory.get(addr - entry.start_address))
             .expect("Out of bounds")
     }
 
     fn set(&mut self, addr: usize, value: u32) {
-        self.memory_at_addr(addr)
-            .map(|entry| entry.memory.borrow_mut().set(addr - entry.start_address, value))
+        self.active_entry_at_addr_mut(addr)
+            .map(|entry| entry.memory.set(addr - entry.start_address, value))
             .expect("Out of bounds")
     }
 
     fn size(&self) -> usize {
-        self.0
+        self.memories
             .iter()
+            .filter(|entry| entry.active)
             .map(|entry| entry.start_address + entry.size)
             .max()
             .unwrap_or(0)
     }
-}
-
-// Helper until feature "ptr_eq" is stabilized.
-// See https://github.com/rust-lang/rust/issues/36497
-fn rc_ptr_eq<T: ?Sized, U: ?Sized>(this: &Rc<T>, other: &Rc<U>) -> bool {
-    let this_ptr = this.deref() as *const T as *const () as usize;
-    let other_ptr = other.deref() as *const U as *const () as usize;
-    this_ptr == other_ptr
 }
 
 #[cfg(test)]
@@ -193,32 +229,11 @@ mod tests {
     use memory::{Memory, SliceMemory, NullMemory};
 
     #[test]
-    fn memory_at_addr() {
-        let m1 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([1])));
-        let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
-        let mut mm = super::MappedMemory::new();
-        mm.mount(0, &m1);
-        mm.mount(2, &m2);
-
-        assert!(mm.memory_at_addr(0)
-            .map_or(false, |entry| entry.memory.borrow().get(0) == 1));
-        assert!(mm.memory_at_addr(1).is_none());
-        assert!(mm.memory_at_addr(2)
-            .map_or(false, |entry| entry.memory.borrow().get(0) == 2));
-        assert!(mm.memory_at_addr(3)
-            .map_or(false, |entry| entry.memory.borrow().get(0) == 2));
-        assert!(mm.memory_at_addr(4).is_none());
-    }
-
-    #[test]
     fn overlapping_mounts() {
-        let m1 = super::MemoryToken::new(NullMemory::new());
-        let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
-        let m3 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([3])));
         let mut mm = super::MappedMemory::new();
-        mm.mount(0, &m1);
-        mm.mount(1, &m2);
-        mm.mount(2, &m3);
+        let m1 = mm.mount(0, Box::new(NullMemory::new()));
+        let m2 = mm.mount(1, Box::new(SliceMemory::from_slice(Box::new([2, 2]))));
+        let m3 = mm.mount(2, Box::new(SliceMemory::from_slice(Box::new([3]))));
         assert_eq!(mm.get(0), 0);
         assert_eq!(mm.get(1), 2);
         assert_eq!(mm.get(2), 3);
@@ -227,12 +242,10 @@ mod tests {
 
     #[test]
     fn get_and_set() {
-        let m1 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([1])));
-        let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
         let mut mm = super::MappedMemory::new();
+        let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1]))));
+        let m2 = mm.mount(2, Box::new(SliceMemory::from_slice(Box::new([2, 2]))));
 
-        mm.mount(0, &m1);
-        mm.mount(2, &m2);
         assert_eq!(mm.get(0), 1);
         assert_eq!(mm.get(2), 2);
 
@@ -241,64 +254,102 @@ mod tests {
 
         mm.set(3, 0);
         assert_eq!(mm.get(3), 0);
-        assert_eq!(m1.borrow().get(0), 3);
-        assert_eq!(m2.borrow().get(1), 0);
+        assert_eq!(mm.borrow(&m1).get(0), 3);
+        assert_eq!(mm.borrow(&m2).get(1), 0);
     }
 
     #[test]
     fn size() {
-        let m1 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([1])));
-        let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
         let mut mm = super::MappedMemory::new();
+        let m1 = Box::new(SliceMemory::from_slice(Box::new([1])));
+        let m2 = Box::new(SliceMemory::from_slice(Box::new([2, 2])));
         assert_eq!(mm.size(), 0);
 
-        mm.mount(0, &m1);
+        mm.mount(0, m1);
         assert_eq!(mm.size(), 1);
 
-        mm.mount(2, &m2);
+        mm.mount(2, m2);
         assert_eq!(mm.size(), 4);
     }
 
     #[test]
     fn size_with_overlap() {
-        let m1 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1])));
-        let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2])));
-        let m3 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([3, 3, 3])));
         let mut mm = super::MappedMemory::new();
+        let m1 = Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1])));
+        let m2 = Box::new(SliceMemory::from_slice(Box::new([2, 2])));
+        let m3 = Box::new(SliceMemory::from_slice(Box::new([3, 3, 3])));
 
-        mm.mount(0, &m1);
-        mm.mount(2, &m2);
+        mm.mount(0, m1);
+        mm.mount(2, m2);
         assert_eq!(mm.size(), 5);
 
-        mm.mount(6, &m3);
+        mm.mount(6, m3);
         assert_eq!(mm.size(), 9);
     }
 
     #[test]
-    fn unmount() {
-        let m1 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1])));
-        let m2 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2])));
-        let m3 = super::MemoryToken::new(SliceMemory::from_slice(Box::new([3, 3, 3, 3, 3])));
+    fn disable_mount() {
         let mut mm = super::MappedMemory::new();
-        mm.mount(0, &m1);
-        mm.mount(0, &m2);
-        mm.mount(0, &m3);
+        let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))));
+        let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2]))));
+        let m3 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([3, 3, 3, 3, 3]))));
 
         for i in 0..5 {
             assert_eq!(mm.get(i), 3);
         }
-        mm.unmount(&m3);
+        mm.disable_mount(&m3);
         for i in 0..5 {
             assert_eq!(mm.get(i), 2);
         }
-        mm.unmount(&m3);
-        mm.unmount(&m3);
+        mm.disable_mount(&m1);
         for i in 0..5 {
             assert_eq!(mm.get(i), 2);
         }
-        mm.unmount(&m1);
+    }
+
+    #[test]
+    fn enable_mount() {
+        let mut mm = super::MappedMemory::new();
+        let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))));
+        let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2]))));
+
         for i in 0..5 {
             assert_eq!(mm.get(i), 2);
         }
+        mm.disable_mount(&m2);
+        for i in 0..5 {
+            assert_eq!(mm.get(i), 1);
+        }
+        mm.enable_mount(&m2);
+        for i in 0..5 {
+            assert_eq!(mm.get(i), 2);
+        }
+    }
+
+    #[test]
+    fn unmount() {
+        let mut mm = super::MappedMemory::new();
+        let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))));
+        let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2]))));
+
+        for i in 0..5 {
+            assert_eq!(mm.get(i), 2);
+        }
+        let m2 = mm.unmount(m2);
+        for i in 0..5 {
+            assert_eq!(mm.get(i), 1);
+            assert_eq!(m2.get(i), 2);
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn read_disabled() {
+        let mut mm = super::MappedMemory::new();
+        let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1]))));
+        let m2 = mm.mount(1, Box::new(SliceMemory::from_slice(Box::new([2]))));
+        let m3 = mm.mount(2, Box::new(SliceMemory::from_slice(Box::new([3]))));
+        mm.disable_mount(&m2);
+        mm.get(1);
     }
 }

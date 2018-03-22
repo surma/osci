@@ -41,8 +41,8 @@ fn main() {
     let step_mode = matches.is_present("STEP");
 
 
-    let img_mem = SliceMemory(image_buf);
-    let bios_mem = SliceMemory(bios_buf);
+    let img_mem = Box::new(SliceMemory(image_buf));
+    let bios_mem = Box::new(SliceMemory(bios_buf));
     let mut emulator = Emulator::new(img_mem, bios_mem);
 
     println!("FLAGS_START_ADDRESS = 0x{:08X}", osciemu::memory::address::FLAGS_START_ADDRESS);
