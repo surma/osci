@@ -278,14 +278,55 @@ mod tests {
         for i in 0..5 {
             assert_eq!(mm.get(i), 2);
         }
-        mm.disable_mount(&m3);
-        mm.disable_mount(&m3);
-        for i in 0..5 {
-            assert_eq!(mm.get(i), 2);
-        }
         mm.disable_mount(&m1);
         for i in 0..5 {
             assert_eq!(mm.get(i), 2);
         }
+    }
+
+    #[test]
+    fn enable_mount() {
+        let mut mm = super::MappedMemory::new();
+        let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))));
+        let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2]))));
+
+        for i in 0..5 {
+            assert_eq!(mm.get(i), 2);
+        }
+        mm.disable_mount(&m2);
+        for i in 0..5 {
+            assert_eq!(mm.get(i), 1);
+        }
+        mm.enable_mount(&m2);
+        for i in 0..5 {
+            assert_eq!(mm.get(i), 2);
+        }
+    }
+
+    #[test]
+    fn unmount() {
+        let mut mm = super::MappedMemory::new();
+        let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))));
+        let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2]))));
+
+        for i in 0..5 {
+            assert_eq!(mm.get(i), 2);
+        }
+        let m2 = mm.unmount(m2);
+        for i in 0..5 {
+            assert_eq!(mm.get(i), 1);
+            assert_eq!(m2.get(i), 2);
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn read_disabled() {
+        let mut mm = super::MappedMemory::new();
+        let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1]))));
+        let m2 = mm.mount(1, Box::new(SliceMemory::from_slice(Box::new([2]))));
+        let m3 = mm.mount(2, Box::new(SliceMemory::from_slice(Box::new([3]))));
+        mm.disable_mount(&m2);
+        mm.get(1);
     }
 }
