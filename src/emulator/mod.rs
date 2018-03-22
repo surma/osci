@@ -8,7 +8,6 @@ pub struct Emulator {
     controls_memory: memory::mappedmemory::MemoryToken,
     pub memory: memory::MappedMemory,
     pub ip: usize,
-    bios_mounted: bool,
 }
 
 impl Emulator
@@ -31,7 +30,6 @@ impl Emulator
             bios_memory,
             controls_memory,
             ip: address::BIOS_START_ADDRESS,
-            bios_mounted: true,
         }
     }
 
@@ -51,13 +49,15 @@ impl Emulator
         self.check_bios_mount()
     }
 
+    fn is_bios_mounted(&self) -> bool {
+        self.memory.is_enabled_mount(&self.bios_memory)
+    }
+
     fn check_bios_mount(&mut self) {
-        if self.flag_is_set(address::FLAG0_BIOS_DONE) && self.bios_mounted {
+        if self.flag_is_set(address::FLAG0_BIOS_DONE) && self.is_bios_mounted() {
             self.memory.disable_mount(&self.bios_memory);
-            self.bios_mounted = false;
-        } else if !self.flag_is_set(address::FLAG0_BIOS_DONE) && !self.bios_mounted {
+        } else if !self.flag_is_set(address::FLAG0_BIOS_DONE) && !self.is_bios_mounted() {
             self.memory.enable_mount(&self.bios_memory);
-            self.bios_mounted = true;
         }
     }
 
