@@ -6,10 +6,9 @@ use std::sync::atomic::{AtomicIsize, Ordering};
 ///
 /// The `MappedMemory` allows to unify multiple `Memory`s in one address space.
 /// A `Memory` is mounted at a certain address and is from now on responsible
-/// for all reads and writes between that starting at that address (the “mount
-/// point”) and ending where the mounted memory ends.
-/// The read and write calls for the responsible `Memory` will be given an
-/// address _relative_ to the mount point.
+/// for all reads and writes starting at that address (the “mount point”) and
+/// ending where the mounted memory ends. The read and write calls for the
+/// responsible `Memory` will be given an address _relative_ to e mount point.
 ///
 /// ```text
 ///                   Unmapped
@@ -39,8 +38,9 @@ use std::sync::atomic::{AtomicIsize, Ordering};
 /// assert_eq!(mm.get(3), 2);
 /// ```
 ///
-/// The `MemoryToken`s can be used to access the `Memory` even if it has been
-/// mounted. They work like `std::cell::RefCell`.
+/// A call to `mount` returns a `MemoryToken`. These tokens can be used to
+/// borrow a `Memory` even if it has been mounted. This works similar to a
+/// `std::cell::RefCell`.
 ///
 /// ```
 /// use osciemu::memory::{Memory, NullMemory, SliceMemory, MappedMemory};
@@ -54,7 +54,9 @@ use std::sync::atomic::{AtomicIsize, Ordering};
 /// assert_eq!(mm.borrow(&m2).get(0), 99);
 /// ```
 ///
-/// The `MemoryToken`s are also used to unmount a mounted `Memory`.
+/// The `MemoryToken`s are also used to disable a mounted `Memory`. A disabled
+/// memory is effectively unmounted, but remains in the ownership of the
+/// `MappedMemory` and can be enabled using `enable_mount()`.
 ///
 /// ```
 /// # use osciemu::memory::{Memory, NullMemory, SliceMemory, MappedMemory};
@@ -67,6 +69,21 @@ use std::sync::atomic::{AtomicIsize, Ordering};
 /// mm.disable_mount(&m2);
 /// assert_eq!(mm.get(0), 0);
 /// assert_eq!(mm.borrow(&m2).get(0), 99);
+/// ```
+///
+/// To move a memory out of the `MappedMemory`, a memory can be unmounted:
+///
+/// ```
+/// # use osciemu::memory::{Memory, NullMemory, SliceMemory, MappedMemory};
+/// # use osciemu::memory::mappedmemory::MemoryToken;
+/// # let mut mm = MappedMemory::new();
+/// # let m1 = mm.mount(0, Box::new(NullMemory::new()));
+/// # let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 2, 3, 4]))));
+/// # mm.set(0, 99);
+/// // ...
+/// let m2 = mm.unmount(m2);
+/// assert_eq!(mm.get(0), 0);
+/// assert_eq!(m2.get(0), 99);
 /// ```
 ///
 /// # Panics
@@ -118,6 +135,7 @@ impl MappedMemory {
         MemoryToken{id}
     }
 
+    /// Unmounts a memory.
     pub fn unmount(&mut self, token: MemoryToken) -> Box<Memory> {
         let idx = self.memories
             .iter()
@@ -129,20 +147,25 @@ impl MappedMemory {
         self.memories.remove(idx).memory
     }
 
+    /// Disables a memory. This is the same as unmounting without moving
+    /// ownership
     pub fn disable_mount(&mut self, token: &MemoryToken) {
         let entry = self.entry_for_token_mut(token);
         entry.active = false;
     }
 
+    // Enables a memory. The mount point remains unchanged.
     pub fn enable_mount(&mut self, token: &MemoryToken) {
         let entry = self.entry_for_token_mut(token);
         entry.active = true;
     }
 
+    /// Borrows a memory.
     pub fn borrow(&self, token: &MemoryToken) -> &Box<Memory> {
         &self.entry_for_token(token).memory
     }
 
+    /// Mutable borrows a memory.
     pub fn borrow_mut(&mut self, token: &MemoryToken) -> &mut Box<Memory> {
         &mut self.entry_for_token_mut(token).memory
     }
