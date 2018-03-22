@@ -53,11 +53,11 @@ impl Emulator
 
     fn check_bios_mount(&mut self) {
         if self.flag_is_set(address::FLAG0_BIOS_DONE) && self.bios_mounted {
-            self.memory.unmount(&self.bios_memory);
+            self.memory.disable_mount(&self.bios_memory);
             self.bios_mounted = false;
         } else if !self.flag_is_set(address::FLAG0_BIOS_DONE) && !self.bios_mounted {
-            // self.memory.mount(address::BIOS_START_ADDRESS, &self.bios_memory);
-            // self.bios_mounted = true;
+            self.memory.enable_mount(&self.bios_memory);
+            self.bios_mounted = true;
         }
     }
 

@@ -64,7 +64,7 @@ use std::sync::atomic::{AtomicIsize, Ordering};
 /// # let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 2, 3, 4]))));
 /// # mm.set(0, 99);
 /// // ...
-/// mm.unmount(&m2);
+/// mm.disable_mount(&m2);
 /// assert_eq!(mm.get(0), 0);
 /// assert_eq!(mm.borrow(&m2).get(0), 99);
 /// ```
@@ -72,8 +72,7 @@ use std::sync::atomic::{AtomicIsize, Ordering};
 /// # Panics
 /// `MappedMemory` panics when an unmapped address is read or written.
 pub struct MappedMemory {
-    mounted_memories: Vec<Entry>,
-    unmounted_memories: Vec<Entry>,
+    memories: Vec<Entry>,
 }
 
 static id_counter: AtomicIsize = AtomicIsize::new(0);
@@ -82,6 +81,7 @@ struct Entry {
     id: isize,
     start_address: usize,
     size: usize,
+    active: bool,
     memory: Box<Memory>,
 }
 
@@ -99,8 +99,7 @@ pub struct MemoryToken {
 impl MappedMemory {
     pub fn new() -> MappedMemory {
         MappedMemory {
-            mounted_memories: Vec::new(),
-            unmounted_memories: Vec::new(),
+            memories: Vec::new(),
         }
     }
 
@@ -113,25 +112,31 @@ impl MappedMemory {
             start_address,
             size,
             memory,
+            active: true
         };
-        self.mounted_memories.push(new_entry);
+        self.memories.push(new_entry);
         MemoryToken{id}
     }
 
-    /// Unmounts the `Memory` references by the `MemoryToken`. After unmounting,
-    /// `MappedMemory` does not hold any references to the `Memory`.
-    pub fn unmount(&mut self, token: &MemoryToken) {
-        let idx = self.mounted_memories
+    pub fn unmount(&mut self, token: MemoryToken) -> Box<Memory> {
+        let idx = self.memories
             .iter()
             .enumerate()
-            .find(|&(_idx, entry)| entry.id == token.id)
-            .map(|(idx, _entry)| {
-               idx
-            });
+            .find(|&(_idx, ref entry)| entry.id == token.id)
+            .map(|(idx, ref _entry)| idx)
+            .unwrap();
 
-        idx
-            .map(|idx| self.mounted_memories.remove(idx))
-            .map(|entry| self.unmounted_memories.push(entry));
+        self.memories.remove(idx).memory
+    }
+
+    pub fn disable_mount(&mut self, token: &MemoryToken) {
+        let entry = self.entry_for_token_mut(token);
+        entry.active = false;
+    }
+
+    pub fn enable_mount(&mut self, token: &MemoryToken) {
+        let entry = self.entry_for_token_mut(token);
+        entry.active = true;
     }
 
     pub fn borrow(&self, token: &MemoryToken) -> &Box<Memory> {
@@ -143,66 +148,53 @@ impl MappedMemory {
     }
 
     fn entry_for_token(&self, token: &MemoryToken) -> &Entry {
-        let m = self.mounted_memories
+        self.memories
             .iter()
-            .find(|ref entry| entry.id == token.id);
-
-        if m.is_some() {
-            m.unwrap()
-        } else {
-            self.unmounted_memories
-                .iter()
-                .find(|ref entry| entry.id == token.id)
-                .unwrap()
-        }
+            .find(|ref entry| entry.id == token.id)
+            .unwrap()
     }
 
     fn entry_for_token_mut(&mut self, token: &MemoryToken) -> &mut Entry {
-        let m = self.mounted_memories
+        self.memories
             .iter_mut()
-            .find(|ref mut entry| entry.id == token.id);
-
-        if m.is_some() {
-            m.unwrap()
-        } else {
-            self.unmounted_memories
-                .iter_mut()
-                .find(|ref mut entry| entry.id == token.id)
-                .unwrap()
-        }
+            .find(|ref mut entry| entry.id == token.id)
+            .unwrap()
     }
 
-    fn entry_at_addr(&self, addr: usize) -> Option<&Entry> {
-        self.mounted_memories
+    fn active_entry_at_addr(&self, addr: usize) -> Option<&Entry> {
+        self.memories
             .iter()
             .rev()
+            .filter(|entry| entry.active)
             .find(|entry| entry.contains(addr))
     }
 
-    fn entry_at_addr_mut(&mut self, addr: usize) -> Option<&mut Entry> {
-        self.mounted_memories
+    fn active_entry_at_addr_mut(&mut self, addr: usize) -> Option<&mut Entry> {
+        self.memories
             .iter_mut()
             .rev()
+            .filter(|entry| entry.active)
             .find(|entry| entry.contains(addr))
     }
 }
 
 impl Memory for MappedMemory {
     fn get(&self, addr: usize) -> u32 {
-        self.entry_at_addr(addr)
+        self.active_entry_at_addr(addr)
             .map(|entry| entry.memory.get(addr - entry.start_address))
             .expect("Out of bounds")
     }
 
     fn set(&mut self, addr: usize, value: u32) {
-        self.entry_at_addr_mut(addr)
+        self.active_entry_at_addr_mut(addr)
             .map(|entry| entry.memory.set(addr - entry.start_address, value))
             .expect("Out of bounds")
     }
 
     fn size(&self) -> usize {
-        self.mounted_memories
+        self.memories
             .iter()
+            .filter(|entry| entry.active)
             .map(|entry| entry.start_address + entry.size)
             .max()
             .unwrap_or(0)
@@ -273,7 +265,7 @@ mod tests {
     }
 
     #[test]
-    fn unmount() {
+    fn disable_mount() {
         let mut mm = super::MappedMemory::new();
         let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))));
         let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2]))));
@@ -282,16 +274,16 @@ mod tests {
         for i in 0..5 {
             assert_eq!(mm.get(i), 3);
         }
-        mm.unmount(&m3);
+        mm.disable_mount(&m3);
         for i in 0..5 {
             assert_eq!(mm.get(i), 2);
         }
-        mm.unmount(&m3);
-        mm.unmount(&m3);
+        mm.disable_mount(&m3);
+        mm.disable_mount(&m3);
         for i in 0..5 {
             assert_eq!(mm.get(i), 2);
         }
-        mm.unmount(&m1);
+        mm.disable_mount(&m1);
         for i in 0..5 {
             assert_eq!(mm.get(i), 2);
         }
