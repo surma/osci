@@ -1,6 +1,6 @@
 pub const BIOS_START_ADDRESS: usize = 0x40000000;
 pub const NUM_REGISTERS: usize = 4;
-pub const MAX_ADDRESS: usize = 0x8FFFFFFF;
+pub const MAX_ADDRESS: usize = 0x7FFFFFFF;
 pub const NUM_IVT_ENTRIES: usize = 1;
 pub const NUM_FLAGS: usize = 1;
 pub const FLAGS_START_ADDRESS: usize = MAX_ADDRESS - NUM_FLAGS;
