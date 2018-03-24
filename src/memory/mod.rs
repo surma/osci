@@ -79,9 +79,9 @@ pub use self::mappedmemory::MappedMemory;
 /// Access to individual memory cells.
 pub trait Memory {
     /// Gets the value of the memory cell at `addr`.
-    fn get(&self, addr: usize) -> u32;
+    fn get(&self, addr: usize) -> i32;
     /// Sets the value of the memory cell at `addr`.
-    fn set(&mut self, addr: usize, value: u32);
+    fn set(&mut self, addr: usize, value: i32);
     /// Returns the size of this memory in bytes.
     fn size(&self) -> usize;
 }

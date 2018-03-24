@@ -11,14 +11,14 @@ use osciemu::emulator::Emulator;
 
 use byteorder::{NetworkEndian, ReadBytesExt};
 
-fn read_file_into_slice(filename: &str) -> Result<Box<[u32]>, io::Error> {
+fn read_file_into_slice(filename: &str) -> Result<Box<[i32]>, io::Error> {
     let mut file = File::open(filename)?;
     let file_meta = file.metadata()?;
     let size = file_meta.len() as usize;
-    let mut vec = Vec::<u32>::with_capacity(size);
+    let mut vec = Vec::<i32>::with_capacity(size);
     vec.resize(size / 4, 0);
-    let mut slice: Box<[u32]> = vec.into_boxed_slice();
-    file.read_u32_into::<NetworkEndian>(slice.as_mut())?;
+    let mut slice: Box<[i32]> = vec.into_boxed_slice();
+    file.read_i32_into::<NetworkEndian>(slice.as_mut())?;
     Ok(slice)
 }
 

@@ -21,12 +21,12 @@ use std::vec::Vec;
 /// ```
 /// # use osciemu::memory::{Memory, SliceMemory};
 ///
-/// let v : Vec<u32> = vec![0, 0xFFFFFFFF];
+/// let v : Vec<i32> = vec![0, 0xFFFFFFFF];
 /// let m = SliceMemory(v.into_boxed_slice());
 /// assert_eq!(m.get(0), 0);
 /// assert_eq!(m.get(1), 0xFFFFFFFF);
 /// ```
-pub struct SliceMemory(pub Box<[u32]>);
+pub struct SliceMemory(pub Box<[i32]>);
 
 impl SliceMemory {
     /// Creates a new `SliceMemory`.
@@ -38,18 +38,18 @@ impl SliceMemory {
         SliceMemory(v.into_boxed_slice())
     }
 
-    /// Initializes the new memory with the given `u32` slice data.
-    pub fn from_slice(data: Box<[u32]>) -> SliceMemory {
+    /// Initializes the new memory with the given `i32` slice data.
+    pub fn from_slice(data: Box<[i32]>) -> SliceMemory {
         SliceMemory(data)
     }
 }
 
 impl Memory for SliceMemory {
-    fn get(&self, addr: usize) -> u32 {
+    fn get(&self, addr: usize) -> i32 {
         self.0[addr]
     }
 
-    fn set(&mut self, addr: usize, v: u32) {
+    fn set(&mut self, addr: usize, v: i32) {
         self.0[addr] = v;
     }
 
@@ -66,10 +66,10 @@ mod tests {
     fn get_and_set() {
         let mut m = super::SliceMemory::new(16);
         for i in 0..4 {
-            m.set(i, i as u32);
+            m.set(i, i as i32);
         }
         for i in 0..4 {
-            assert_eq!(m.get(i), i as u32);
+            assert_eq!(m.get(i), i as i32);
         }
     }
 

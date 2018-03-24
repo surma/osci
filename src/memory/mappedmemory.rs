@@ -206,13 +206,13 @@ impl MappedMemory {
 }
 
 impl Memory for MappedMemory {
-    fn get(&self, addr: usize) -> u32 {
+    fn get(&self, addr: usize) -> i32 {
         self.enabled_entry_at_addr(addr)
             .map(|entry| entry.memory.get(addr - entry.start_address))
             .expect("Out of bounds")
     }
 
-    fn set(&mut self, addr: usize, value: u32) {
+    fn set(&mut self, addr: usize, value: i32) {
         self.enabled_entry_at_addr_mut(addr)
             .map(|entry| entry.memory.set(addr - entry.start_address, value))
             .expect("Out of bounds")

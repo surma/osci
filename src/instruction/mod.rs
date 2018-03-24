@@ -33,13 +33,13 @@ use std::fmt;
 /// ```
 pub struct Instruction {
     /// Address of operand A
-    pub op_a: u32,
+    pub op_a: i32,
     /// Address of operand B
-    pub op_b: u32,
+    pub op_b: i32,
     /// Address to store result of `*A - *B`
-    pub target: u32,
+    pub target: i32,
     /// Address to jump to when `*target <= 0`
-    pub jmp: u32,
+    pub jmp: i32,
 }
 
 impl Instruction {
@@ -64,11 +64,29 @@ impl Instruction {
     /// Executes the instruction using `mem` for reads and writes and
     /// adjusting `ip` appropriately.
     pub fn execute(&self, ip: &mut usize, mem: &mut Memory) {
-        let a = mem.get(self.op_a as usize) as i32;
-        let b = mem.get(self.op_b as usize) as i32;
+        let mut op_a = self.op_a;
+        let mut op_b = self.op_b;
+        let mut target = self.target;
+        let mut jmp = self.jmp;
+
+        if op_a < 0 {
+            op_a = mem.get(-op_a as usize);
+        }
+        if op_b < 0 {
+            op_b = mem.get(-op_b as usize);
+        }
+        if target < 0 {
+            target = mem.get(-target as usize);
+        }
+        if jmp < 0 {
+            jmp = mem.get(-jmp as usize);
+        }
+
+        let a = mem.get(op_a as usize);
+        let b = mem.get(op_b as usize);
         let r = a - b;
-        mem.set(self.target as usize, r as u32);
-        *ip = if r <= 0 { self.jmp as usize } else { *ip + 4 }
+        mem.set(target as usize, r);
+        *ip = if r <= 0 { jmp as usize } else { *ip + 4 }
     }
 
     /// Executes the instruction in memory at the given address, adjusting the
@@ -98,26 +116,39 @@ mod tests {
     fn execute() {
         let mut ip = 0;
         let mut m = SliceMemory::from_slice(Box::new([1, 2, 0, 0]));
-        let i1 = super::Instruction {
+        let i = super::Instruction {
             op_a: 0,
             op_b: 1,
             target: 2,
             jmp: 128,
         };
-        i1.execute(&mut ip, &mut m);
+        i.execute(&mut ip, &mut m);
         assert_eq!(m.get(2) as i32, -1);
         assert_eq!(ip, 128);
 
-        ip = 0;
-        let i2 = super::Instruction {
+        let mut m = SliceMemory::from_slice(Box::new([1, 2, 0, 0]));
+        let mut ip = 0;
+        let i = super::Instruction {
             op_a: 1,
             op_b: 0,
             target: 2,
             jmp: 128,
         };
-        i2.execute(&mut ip, &mut m);
+        i.execute(&mut ip, &mut m);
         assert_eq!(m.get(2), 1);
         assert_eq!(ip, 4);
+
+        let mut m = SliceMemory::from_slice(Box::new([1, 2, 0, 0, 1, 8]));
+        let mut ip = 0;
+        let i = super::Instruction {
+            op_a: -2,
+            op_b: -4,
+            target: -1,
+            jmp: -5
+        };
+        i.execute(&mut ip, &mut m);
+        assert_eq!(m.get(2), -1);
+        assert_eq!(ip, 8);
     }
 
     #[test]

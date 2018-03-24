@@ -4,10 +4,10 @@ use memory::Memory;
 /// Hook for changing the address before a value is read from `Memory`.
 type ReadPreHook = Fn(&mut usize);
 /// Hook for changing the value that is returned after being read from `Memory`.
-type ReadPostHook = Fn(&usize, &mut u32);
+type ReadPostHook = Fn(&usize, &mut i32);
 /// Hook for changing both the address and the value before it is written
 /// to `Memory`.
-type WriteHook = Fn(&mut usize, &mut u32);
+type WriteHook = Fn(&mut usize, &mut i32);
 /// Hook for changing the reported size of `Memory`.
 type SizeHook = Fn(&mut usize);
 
@@ -69,14 +69,14 @@ impl<T: Memory> HookMemory<T> {
 }
 
 impl<T: Memory> Memory for HookMemory<T> {
-    fn get(&self, mut addr: usize) -> u32 {
+    fn get(&self, mut addr: usize) -> i32 {
         self.get_prehook.as_ref().map(|ref f| f(&mut addr));
         let mut v = self.memory.get(addr);
         self.get_posthook.as_ref().map(|f| f(&addr, &mut v));
         v
     }
 
-    fn set(&mut self, mut addr: usize, mut value: u32) {
+    fn set(&mut self, mut addr: usize, mut value: i32) {
         self.set_hook.as_ref().map(|f| f(&mut addr, &mut value));
         self.memory.set(addr, value);
     }

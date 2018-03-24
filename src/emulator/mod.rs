@@ -38,7 +38,7 @@ impl Emulator
         self.memory.get(address::FLAGS_START_ADDRESS + flag_idx / 32) & (1 << bit) != 0
     }
 
-    pub fn get_register(&self, reg_idx: usize) -> u32 {
+    pub fn get_register(&self, reg_idx: usize) -> i32 {
         self.memory.get(address::REGISTERS_START_ADDRESS + reg_idx)
     }
 
@@ -73,9 +73,9 @@ mod tests {
     #[test]
     fn unmounts_bios() {
         let bios = SliceMemory::from_slice(Box::new(
-                                               [address::BIOS_START_ADDRESS as u32 + 4,
-                                                 address::BIOS_START_ADDRESS as u32 + 5,
-                                                 address::FLAGS_START_ADDRESS as u32,
+                                               [address::BIOS_START_ADDRESS as i32 + 4,
+                                                 address::BIOS_START_ADDRESS as i32 + 5,
+                                                 address::FLAGS_START_ADDRESS as i32,
                                                  0,
 
                                                  2,
@@ -94,9 +94,9 @@ mod tests {
     #[test]
     fn is_halted() {
         let bios = SliceMemory::from_slice(Box::new(
-                                               [address::BIOS_START_ADDRESS as u32 + 4,
-                                                 address::BIOS_START_ADDRESS as u32 + 5,
-                                                 address::FLAGS_START_ADDRESS as u32,
+                                               [address::BIOS_START_ADDRESS as i32 + 4,
+                                                 address::BIOS_START_ADDRESS as i32 + 5,
+                                                 address::FLAGS_START_ADDRESS as i32,
                                                  0,
 
                                                  1,

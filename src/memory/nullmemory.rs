@@ -25,12 +25,12 @@ impl NullMemory {
 
 impl Memory for NullMemory {
     #[inline]
-    fn get(&self, _: usize) -> u32 {
+    fn get(&self, _: usize) -> i32 {
         0
     }
 
     #[inline]
-    fn set(&mut self, _: usize, _: u32) {}
+    fn set(&mut self, _: usize, _: i32) {}
 
     #[inline]
     fn size(&self) -> usize {
