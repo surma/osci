@@ -147,12 +147,13 @@ impl MappedMemory {
         self.memories.remove(idx).memory
     }
 
+    // Checks if a mounted memory is enabled.
     pub fn is_enabled_mount(&self, token: &MemoryToken) -> bool {
         self.entry_for_token(token).enabled
     }
 
     /// Disables a memory. This is the same as unmounting without moving
-    /// ownership
+    /// ownership out of `MappedMemory`.
     pub fn disable_mount(&mut self, token: &MemoryToken) {
         let entry = self.entry_for_token_mut(token);
         entry.enabled = false;
