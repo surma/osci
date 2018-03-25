@@ -17,7 +17,8 @@ impl Emulator
         memory.mount(0, Box::new(memory::NullMemory::new()));
 
         let image_memory = memory.mount(0, img);
-        let bios_memory = memory.mount(address::BIOS_START_ADDRESS, bios);
+        let bios_memory = memory.mount(address::BIOS_START_ADDRESS,
+                                Box::new(memory::ReadOnlyMemory::new(bios)));
 
         let controls_memory = Box::new(
             memory::SliceMemory::new(address::MAX_ADDRESS - address::CONTROLS_ADDRESS + 1)
@@ -108,6 +109,23 @@ mod tests {
         assert!(!emu.is_halted());
         emu.step();
         assert!(emu.is_halted());
+    }
+
+    #[test]
+    fn readonly_bios() {
+        let bios = SliceMemory::from_slice(Box::new(
+                                               [address::BIOS_START_ADDRESS as i32 + 4,
+                                                 address::BIOS_START_ADDRESS as i32 + 5,
+                                                 address::BIOS_START_ADDRESS as i32 + 6,
+                                                 0,
+
+                                                 1,
+                                                 0,
+                                                 0,
+                                                 0]));
+        let mut emu = super::Emulator::new(Box::new(NullMemory::new()), Box::new(bios));
+        emu.step();
+        assert_eq!(emu.memory.get(address::BIOS_START_ADDRESS + 6), 0);
     }
 
     #[test]
