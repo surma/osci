@@ -30,8 +30,14 @@ fn main() {
             (@arg IMAGE: -i --image +required +takes_value "Image to load into memory")
             (@arg BIOS: -b --bios +required +takes_value "BIOS to load")
             (@arg STEP: --step "Walk through in stepping mode")
+            (@arg MAX_STEP: --maxstep +takes_value "Maximum number of CPU cycles")
         )
         .get_matches();
+
+    let max_steps = matches.value_of("MAX_STEP")
+                            .unwrap_or("1000000");
+    let max_steps = max_steps.parse::<usize>()
+                            .expect("--max-step needs to be a number");
 
     let image_buf = read_file_into_slice(matches.value_of("IMAGE").unwrap())
                             .expect("Could not load image");
@@ -50,7 +56,7 @@ fn main() {
     println!("REGISTERS_START_ADDRESS = 0x{:08X}", osciemu::memory::address::REGISTERS_START_ADDRESS);
     println!("STACK_POINTER_ADDRESS = 0x{:08X}", osciemu::memory::address::STACK_POINTER_ADDRESS);
 
-    for count in 1.. {
+    for count in 1..max_steps+1 {
         if emulator.is_halted() {
             break;
         }
@@ -67,5 +73,8 @@ fn main() {
             let mut buffer = String::new();
             let _ = io::stdin().read_line(&mut buffer);
         }
+    }
+    if !emulator.is_halted() {
+        std::process::exit(1);
     }
 }
