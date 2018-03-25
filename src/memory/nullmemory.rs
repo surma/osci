@@ -1,5 +1,4 @@
 use memory::Memory;
-use std;
 
 /// Like `/dev/null`.
 ///
