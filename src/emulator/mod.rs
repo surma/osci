@@ -3,9 +3,7 @@ use super::memory::mappedmemory::MemoryToken;
 use super::instruction::Instruction;
 
 pub struct Emulator {
-    image_memory: MemoryToken,
-    bios_memory: MemoryToken,
-    controls_memory: memory::mappedmemory::MemoryToken,
+    bios_memory_token: MemoryToken,
     pub memory: memory::MappedMemory,
     pub ip: usize,
 }
@@ -16,20 +14,18 @@ impl Emulator
         let mut memory = memory::MappedMemory::new();
         memory.mount(0, Box::new(memory::NullMemory::new()));
 
-        let image_memory = memory.mount(0, img);
-        let bios_memory = memory.mount(address::BIOS_START_ADDRESS,
+        memory.mount(0, img);
+        let bios_memory_token = memory.mount(address::BIOS_START_ADDRESS,
                                 Box::new(memory::ReadOnlyMemory::new(bios)));
 
         let controls_memory = Box::new(
             memory::SliceMemory::new(address::MAX_ADDRESS - address::CONTROLS_ADDRESS + 1)
         );
-        let controls_memory = memory.mount(address::CONTROLS_ADDRESS, controls_memory);
+        memory.mount(address::CONTROLS_ADDRESS, controls_memory);
 
         Emulator {
             memory,
-            image_memory,
-            bios_memory,
-            controls_memory,
+            bios_memory_token,
             ip: address::BIOS_START_ADDRESS,
         }
     }
@@ -51,14 +47,14 @@ impl Emulator
     }
 
     fn is_bios_mounted(&self) -> bool {
-        self.memory.is_enabled_mount(&self.bios_memory)
+        self.memory.is_enabled_mount(&self.bios_memory_token)
     }
 
     fn check_bios_mount(&mut self) {
         if self.flag_is_set(address::FLAG0_BIOS_DONE) && self.is_bios_mounted() {
-            self.memory.disable_mount(&self.bios_memory);
+            self.memory.disable_mount(&self.bios_memory_token);
         } else if !self.flag_is_set(address::FLAG0_BIOS_DONE) && !self.is_bios_mounted() {
-            self.memory.enable_mount(&self.bios_memory);
+            self.memory.enable_mount(&self.bios_memory_token);
         }
     }
 

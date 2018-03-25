@@ -92,7 +92,7 @@ pub struct MappedMemory {
     memories: Vec<Entry>,
 }
 
-static id_counter: AtomicIsize = AtomicIsize::new(0);
+static ID_COUNTER: AtomicIsize = AtomicIsize::new(0);
 
 struct Entry {
     id: isize,
@@ -123,7 +123,7 @@ impl MappedMemory {
     /// Mounts a `Memory` at the given address.
     pub fn mount(&mut self, start_address: usize, memory: Box<Memory>) -> MemoryToken {
         let size = memory.size();
-        let id = id_counter.fetch_add(1, Ordering::Relaxed);
+        let id = ID_COUNTER.fetch_add(1, Ordering::Relaxed);
         let new_entry = Entry {
             id,
             start_address,
