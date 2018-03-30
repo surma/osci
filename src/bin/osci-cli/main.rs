@@ -2,23 +2,11 @@
 extern crate clap;
 extern crate osciemu;
 
-use std::fs::File;
 use std::io;
-use std::path::Path;
+use osciemu::utils::{load_file};
 use osciemu::memory::{Memory, SliceMemory};
 use osciemu::emulator::Emulator;
 use osciemu::loader::{hexloader, rawloader};
-
-
-
-fn load_file(filename: &str) -> Result<Box<Memory>, io::Error> {
-    let mut file = File::open(filename)?;
-    match Path::new(filename).extension().and_then(|ext| ext.to_str()) {
-        Some("img") | Some("bin") | None => rawloader::load_with_seek(&mut file),
-        Some("hex") => hexloader::load(&mut file),
-        _ => Err(io::Error::new(io::ErrorKind::Other, "Unknown file extension"))
-    }
-}
 
 fn main() {
     let matches = clap_app!(myapp =>
@@ -50,7 +38,6 @@ fn main() {
                             .expect("Could not load bios");
 
     let step_mode = matches.is_present("STEP");
-
 
     let mut emulator = Emulator::new(image_mem, bios_mem);
 
