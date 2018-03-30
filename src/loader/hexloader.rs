@@ -1,8 +1,8 @@
 
-use memory::SliceMemory;
+use memory::{Memory, SliceMemory};
 use std::io::{Read, ErrorKind, Error, BufReader, BufRead};
 
-pub fn load<U: Read>(f: &mut U) -> Result<SliceMemory, Error> {
+pub fn load<U: Read>(f: &mut U) -> Result<Box<Memory>, Error> {
     let mut vec = Vec::<i32>::new();
     let buf = BufReader::new(f);
     for line in buf.lines().map(|l| l.unwrap()) {
@@ -25,7 +25,7 @@ pub fn load<U: Read>(f: &mut U) -> Result<SliceMemory, Error> {
             }
         }
     }
-    Ok(SliceMemory::from_slice(vec.into_boxed_slice()))
+    Ok(Box::new(SliceMemory::from_slice(vec.into_boxed_slice())))
 }
 
 #[cfg(test)]

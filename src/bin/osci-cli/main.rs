@@ -1,25 +1,23 @@
 #[macro_use]
 extern crate clap;
 extern crate osciemu;
-extern crate byteorder;
 
-use std::vec::Vec;
 use std::fs::File;
 use std::io;
-use osciemu::memory::SliceMemory;
+use std::path::Path;
+use osciemu::memory::{Memory};
 use osciemu::emulator::Emulator;
+use osciemu::loader::{hexloader, rawloader};
 
-use byteorder::{NetworkEndian, ReadBytesExt};
 
-fn read_file_into_slice(filename: &str) -> Result<Box<[i32]>, io::Error> {
+
+fn load_file(filename: &str) -> Result<Box<Memory>, io::Error> {
     let mut file = File::open(filename)?;
-    let file_meta = file.metadata()?;
-    let size = file_meta.len() as usize;
-    let mut vec = Vec::<i32>::with_capacity(size);
-    vec.resize(size / 4, 0);
-    let mut slice: Box<[i32]> = vec.into_boxed_slice();
-    file.read_i32_into::<NetworkEndian>(slice.as_mut())?;
-    Ok(slice)
+    match Path::new(filename).extension().and_then(|ext| ext.to_str()) {
+        Some("img") | Some("bin") | None => rawloader::load_with_seek(&mut file),
+        Some("hex") => hexloader::load(&mut file),
+        _ => Err(io::Error::new(io::ErrorKind::Other, "Unknown file extension"))
+    }
 }
 
 fn main() {
@@ -41,17 +39,15 @@ fn main() {
                         })
                         .unwrap_or(0);
 
-    let image_buf = read_file_into_slice(matches.value_of("IMAGE").unwrap())
+    let image_mem = load_file(matches.value_of("IMAGE").unwrap())
                             .expect("Could not load image");
-    let bios_buf = read_file_into_slice(matches.value_of("BIOS").unwrap())
+    let bios_mem = load_file(matches.value_of("BIOS").unwrap())
                             .expect("Could not load bios");
 
     let step_mode = matches.is_present("STEP");
 
 
-    let img_mem = Box::new(SliceMemory(image_buf));
-    let bios_mem = Box::new(SliceMemory(bios_buf));
-    let mut emulator = Emulator::new(img_mem, bios_mem);
+    let mut emulator = Emulator::new(image_mem, bios_mem);
 
     println!("FLAGS_START_ADDRESS = 0x{:08X}", osciemu::memory::address::FLAGS_START_ADDRESS);
     println!("IVT_START_ADDRESS = 0x{:08X}", osciemu::memory::address::IVT_START_ADDRESS);

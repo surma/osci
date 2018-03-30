@@ -1,20 +1,20 @@
 extern crate byteorder;
 
-use memory::SliceMemory;
+use memory::{Memory, SliceMemory};
 use std::io::{ErrorKind, Read, Seek, Error, SeekFrom};
 use self::byteorder::{NetworkEndian, ReadBytesExt};
 
-pub fn load_with_seek<U: Read + Seek>(f: &mut U) -> Result<SliceMemory, Error> {
+pub fn load_with_seek<U: Read + Seek>(f: &mut U) -> Result<Box<Memory>, Error> {
     let size: usize = (f.seek(SeekFrom::End(0))? as usize) / 4;
     f.seek(SeekFrom::Start(0))?;
     let mut vec = Vec::<i32>::with_capacity(size);
     vec.resize(size, 0);
     let mut slice: Box<[i32]> = vec.into_boxed_slice();
     f.read_i32_into::<NetworkEndian>(slice.as_mut())?;
-    Ok(SliceMemory::from_slice(slice))
+    Ok(Box::new(SliceMemory::from_slice(slice)))
 }
 
-pub fn load<U: Read>(f: &mut U) -> Result<SliceMemory, Error> {
+pub fn load<U: Read>(f: &mut U) -> Result<Box<Memory>, Error> {
     let mut vec = Vec::<i32>::new();
     // let mut buf: [u8; 4];
     loop {
@@ -29,7 +29,7 @@ pub fn load<U: Read>(f: &mut U) -> Result<SliceMemory, Error> {
         }
     }
     let slice: Box<[i32]> = vec.into_boxed_slice();
-    Ok(SliceMemory::from_slice(slice))
+    Ok(Box::new(SliceMemory::from_slice(slice)))
 }
 
 #[cfg(test)]
