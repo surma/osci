@@ -58,13 +58,12 @@ fn main() {
     println!("REGISTERS_START_ADDRESS = 0x{:08X}", osciemu::memory::address::REGISTERS_START_ADDRESS);
     println!("STACK_POINTER_ADDRESS = 0x{:08X}", osciemu::memory::address::STACK_POINTER_ADDRESS);
 
-    for count in RangeIterator::new(0, max_steps) {
+    for _count in RangeIterator::new(0, max_steps) {
         if emulator.is_halted() {
             break;
         }
-        println!("count: {:4}, ip: 0x{:08X}, r0: 0x{:08X}, r1: 0x{:08X}, r2: 0x{:08X}, r3: \
+        println!("ip: 0x{:08X}, r0: 0x{:08X}, r1: 0x{:08X}, r2: 0x{:08X}, r3: \
                   0x{:08X}",
-                 count,
                  emulator.ip,
                  emulator.get_register(0),
                  emulator.get_register(1),
