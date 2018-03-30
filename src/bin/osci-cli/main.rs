@@ -5,7 +5,7 @@ extern crate osciemu;
 use std::fs::File;
 use std::io;
 use std::path::Path;
-use osciemu::memory::{Memory};
+use osciemu::memory::{Memory, SliceMemory};
 use osciemu::emulator::Emulator;
 use osciemu::loader::{hexloader, rawloader};
 
@@ -25,7 +25,7 @@ fn main() {
             (version: "0.1.0")
             (author: "Surma <surma@surma.link>")
             (about: "Emulates an osci CPU")
-            (@arg IMAGE: -i --image +required +takes_value "Image to load into memory")
+            (@arg IMAGE: -i --image +takes_value "Image to load into memory")
             (@arg BIOS: -b --bios +required +takes_value "BIOS to load")
             (@arg STEP: --step "Walk through in stepping mode")
             (@arg MAX_STEP: --maxstep +takes_value "Maximum number of CPU cycles (0 means infinite)")
@@ -39,9 +39,14 @@ fn main() {
                         })
                         .unwrap_or(0);
 
-    let image_mem = load_file(matches.value_of("IMAGE").unwrap())
-                            .expect("Could not load image");
-    let bios_mem = load_file(matches.value_of("BIOS").unwrap())
+    let image_mem = matches.value_of("IMAGE")
+                            .ok_or(io::Error::new(io::ErrorKind::Other, "Parameter not specified"))
+                            .and_then(load_file)
+                            .unwrap_or_else(|_err| Box::new(SliceMemory::new(0)));
+
+    let bios_mem = matches.value_of("BIOS")
+                            .ok_or(io::Error::new(io::ErrorKind::Other, "Parameter not specified"))
+                            .and_then(load_file)
                             .expect("Could not load bios");
 
     let step_mode = matches.is_present("STEP");
