@@ -1,33 +1,19 @@
 #[macro_use]
 extern crate clap;
 extern crate osciemu;
-extern crate byteorder;
 
-use std::vec::Vec;
-use std::fs::File;
 use std::io;
-use osciemu::memory::SliceMemory;
+use osciemu::utils::{load_file};
+use osciemu::memory::{Memory, SliceMemory};
 use osciemu::emulator::Emulator;
-
-use byteorder::{NetworkEndian, ReadBytesExt};
-
-fn read_file_into_slice(filename: &str) -> Result<Box<[i32]>, io::Error> {
-    let mut file = File::open(filename)?;
-    let file_meta = file.metadata()?;
-    let size = file_meta.len() as usize;
-    let mut vec = Vec::<i32>::with_capacity(size);
-    vec.resize(size / 4, 0);
-    let mut slice: Box<[i32]> = vec.into_boxed_slice();
-    file.read_i32_into::<NetworkEndian>(slice.as_mut())?;
-    Ok(slice)
-}
+use osciemu::loader::{hexloader, rawloader};
 
 fn main() {
     let matches = clap_app!(myapp =>
             (version: "0.1.0")
             (author: "Surma <surma@surma.link>")
             (about: "Emulates an osci CPU")
-            (@arg IMAGE: -i --image +required +takes_value "Image to load into memory")
+            (@arg IMAGE: -i --image +takes_value "Image to load into memory")
             (@arg BIOS: -b --bios +required +takes_value "BIOS to load")
             (@arg STEP: --step "Walk through in stepping mode")
             (@arg MAX_STEP: --maxstep +takes_value "Maximum number of CPU cycles (0 means infinite)")
@@ -41,17 +27,19 @@ fn main() {
                         })
                         .unwrap_or(0);
 
-    let image_buf = read_file_into_slice(matches.value_of("IMAGE").unwrap())
-                            .expect("Could not load image");
-    let bios_buf = read_file_into_slice(matches.value_of("BIOS").unwrap())
+    let image_mem = matches.value_of("IMAGE")
+                            .ok_or(io::Error::new(io::ErrorKind::Other, "Parameter not specified"))
+                            .and_then(load_file)
+                            .unwrap_or_else(|_err| Box::new(SliceMemory::new(0)));
+
+    let bios_mem = matches.value_of("BIOS")
+                            .ok_or(io::Error::new(io::ErrorKind::Other, "Parameter not specified"))
+                            .and_then(load_file)
                             .expect("Could not load bios");
 
     let step_mode = matches.is_present("STEP");
 
-
-    let img_mem = Box::new(SliceMemory(image_buf));
-    let bios_mem = Box::new(SliceMemory(bios_buf));
-    let mut emulator = Emulator::new(img_mem, bios_mem);
+    let mut emulator = Emulator::new(image_mem, bios_mem);
 
     println!("FLAGS_START_ADDRESS = 0x{:08X}", osciemu::memory::address::FLAGS_START_ADDRESS);
     println!("IVT_START_ADDRESS = 0x{:08X}", osciemu::memory::address::IVT_START_ADDRESS);
