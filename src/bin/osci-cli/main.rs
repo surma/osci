@@ -6,7 +6,6 @@ use std::io;
 use osciemu::utils::{load_file};
 use osciemu::memory::{Memory, SliceMemory};
 use osciemu::emulator::Emulator;
-use osciemu::loader::{hexloader, rawloader};
 
 fn main() {
     let matches = clap_app!(myapp =>
@@ -17,6 +16,7 @@ fn main() {
             (@arg BIOS: -b --bios +required +takes_value "BIOS to load")
             (@arg STEP: --step "Walk through in stepping mode")
             (@arg MAX_STEP: --maxstep +takes_value "Maximum number of CPU cycles (0 means infinite)")
+            (@arg PRINT: --print +takes_value "Addresses to print after CPU halts")
         )
         .get_matches();
 
@@ -26,6 +26,13 @@ fn main() {
                                 .expect("--max-step needs to be a number")
                         })
                         .unwrap_or(0);
+
+    let prints = matches.value_of("PRINT")
+                    .map(|s| -> Vec<u32> {
+                        s.split(",")
+                         .map(|s| u32::from_str_radix(s.trim(), 16).expect("Invalid address"))
+                         .collect()
+                    });
 
     let image_mem = matches.value_of("IMAGE")
                             .ok_or(io::Error::new(io::ErrorKind::Other, "Parameter not specified"))
@@ -41,16 +48,11 @@ fn main() {
 
     let mut emulator = Emulator::new(image_mem, bios_mem);
 
-    println!("FLAGS_START_ADDRESS = 0x{:08X}", osciemu::memory::address::FLAGS_START_ADDRESS);
-    println!("IVT_START_ADDRESS = 0x{:08X}", osciemu::memory::address::IVT_START_ADDRESS);
-    println!("REGISTERS_START_ADDRESS = 0x{:08X}", osciemu::memory::address::REGISTERS_START_ADDRESS);
-    println!("STACK_POINTER_ADDRESS = 0x{:08X}", osciemu::memory::address::STACK_POINTER_ADDRESS);
-
-    for count in RangeIterator::new(0, max_steps) {
+    for count in RangeIterator::new(1, max_steps) {
         if emulator.is_halted() {
             break;
         }
-        println!("count: {:4}, ip: 0x{:08X}, r0: 0x{:08X}, r1: 0x{:08X}, r2: 0x{:08X}, r3: \
+        println!("cycles: {:4}, ip: 0x{:08X}, r0: 0x{:08X}, r1: 0x{:08X}, r2: 0x{:08X}, r3: \
                   0x{:08X}",
                  count,
                  emulator.ip,
@@ -63,6 +65,15 @@ fn main() {
             let mut buffer = String::new();
             let _ = io::stdin().read_line(&mut buffer);
         }
+    }
+    if emulator.is_halted() && prints.is_some() {
+        let result = prints.unwrap()
+                           .iter()
+                           .map(|addr| format!("0x{:08X}", emulator.memory.get(*addr as usize)))
+                           .collect::<Vec<String>>()
+                           .join(", ");
+        println!("Final state:");
+        println!("{}", result);
     }
     if !emulator.is_halted() {
         std::process::exit(1);
