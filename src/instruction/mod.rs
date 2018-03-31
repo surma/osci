@@ -99,12 +99,11 @@ impl Instruction {
 
 impl fmt::Debug for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "Instruction {{ op_a: 0x{:08X}, op_b: 0x{:08X}, target: 0x{:08X}, jmp: 0x{:08X} }}",
-               self.op_a,
-               self.op_b,
-               self.target,
-               self.jmp)
+        write!(
+            f,
+            "Instruction {{ op_a: 0x{:08X}, op_b: 0x{:08X}, target: 0x{:08X}, jmp: 0x{:08X} }}",
+            self.op_a, self.op_b, self.target, self.jmp
+        )
     }
 }
 
@@ -144,7 +143,7 @@ mod tests {
             op_a: -2,
             op_b: -4,
             target: -1,
-            jmp: -5
+            jmp: -5,
         };
         i.execute(&mut ip, &mut m);
         assert_eq!(m.get(2), -1);
@@ -154,7 +153,9 @@ mod tests {
     #[test]
     fn execute_at() {
         let mut ip = 0;
-        let mut m = SliceMemory::from_slice(Box::new([12, 13, 14, 15, 12, 12, 14, 15, 0, 0, 0, 0, 2, 1, 0, 0]));
+        let mut m = SliceMemory::from_slice(Box::new([
+            12, 13, 14, 15, 12, 12, 14, 15, 0, 0, 0, 0, 2, 1, 0, 0
+        ]));
         super::Instruction::execute_at(&mut ip, &mut m);
         assert_eq!(m.get(14), 1);
         assert_eq!(ip, 4);

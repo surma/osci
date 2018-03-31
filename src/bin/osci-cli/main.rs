@@ -4,7 +4,7 @@ extern crate osciemu;
 
 use std::io;
 use std::path::Path;
-use osciemu::utils::{load_file};
+use osciemu::utils::load_file;
 use osciemu::memory::{Memory, SliceMemory};
 use osciemu::emulator::Emulator;
 
@@ -18,34 +18,38 @@ fn main() {
             (@arg STEP: --step "Walk through in stepping mode")
             (@arg MAX_STEP: --maxstep +takes_value "Maximum number of CPU cycles (0 means infinite)")
             (@arg PRINT: --print +takes_value "Addresses to print after CPU halts")
-        )
-        .get_matches();
+        ).get_matches();
 
-    let max_steps = matches.value_of("MAX_STEP")
-                        .map(|s| {
-                            s.parse::<usize>()
-                                .expect("--max-step needs to be a number")
-                        })
-                        .unwrap_or(0);
+    let max_steps = matches
+        .value_of("MAX_STEP")
+        .map(|s| s.parse::<usize>().expect("--max-step needs to be a number"))
+        .unwrap_or(0);
 
-    let prints = matches.value_of("PRINT")
-                    .map(|s| -> Vec<u32> {
-                        s.split(",")
-                         .map(|s| u32::from_str_radix(s.trim(), 16).expect("Invalid address"))
-                         .collect()
-                    });
+    let prints = matches.value_of("PRINT").map(|s| -> Vec<u32> {
+        s.split(",")
+            .map(|s| u32::from_str_radix(s.trim(), 16).expect("Invalid address"))
+            .collect()
+    });
 
-    let image_mem = matches.value_of("MEMORY")
-                            .ok_or(io::Error::new(io::ErrorKind::Other, "Parameter not specified"))
-                            .map(|path| Path::new(path))
-                            .and_then(load_file)
-                            .unwrap_or_else(|_err| Box::new(SliceMemory::new(0)));
+    let image_mem = matches
+        .value_of("MEMORY")
+        .ok_or(io::Error::new(
+            io::ErrorKind::Other,
+            "Parameter not specified",
+        ))
+        .map(|path| Path::new(path))
+        .and_then(load_file)
+        .unwrap_or_else(|_err| Box::new(SliceMemory::new(0)));
 
-    let bios_mem = matches.value_of("BIOS")
-                            .ok_or(io::Error::new(io::ErrorKind::Other, "Parameter not specified"))
-                            .map(|path| Path::new(path))
-                            .and_then(load_file)
-                            .expect("Could not load bios");
+    let bios_mem = matches
+        .value_of("BIOS")
+        .ok_or(io::Error::new(
+            io::ErrorKind::Other,
+            "Parameter not specified",
+        ))
+        .map(|path| Path::new(path))
+        .and_then(load_file)
+        .expect("Could not load bios");
 
     let step_mode = matches.is_present("STEP");
 
@@ -56,14 +60,16 @@ fn main() {
             println!("cycles: {:4}  HALTED\n", count);
             break;
         }
-        println!("cycles: {:4}, ip: 0x{:08X}, r0: 0x{:08X}, r1: 0x{:08X}, r2: 0x{:08X}, r3: \
-                  0x{:08X}",
-                 count,
-                 emulator.ip,
-                 emulator.get_register(0),
-                 emulator.get_register(1),
-                 emulator.get_register(2),
-                 emulator.get_register(3));
+        println!(
+            "cycles: {:4}, ip: 0x{:08X}, r0: 0x{:08X}, r1: 0x{:08X}, r2: 0x{:08X}, r3: \
+             0x{:08X}",
+            count,
+            emulator.ip,
+            emulator.get_register(0),
+            emulator.get_register(1),
+            emulator.get_register(2),
+            emulator.get_register(3)
+        );
         emulator.step();
         if step_mode {
             let mut buffer = String::new();
@@ -71,11 +77,12 @@ fn main() {
         }
     }
     if emulator.is_halted() && prints.is_some() {
-        let result = prints.unwrap()
-                           .iter()
-                           .map(|addr| format!("0x{:08X}", emulator.memory.get(*addr as usize)))
-                           .collect::<Vec<String>>()
-                           .join(", ");
+        let result = prints
+            .unwrap()
+            .iter()
+            .map(|addr| format!("0x{:08X}", emulator.memory.get(*addr as usize)))
+            .collect::<Vec<String>>()
+            .join(", ");
         println!("Final state:");
         println!("{}", result);
     }
@@ -86,15 +93,12 @@ fn main() {
 
 struct RangeIterator {
     count: usize,
-    max: usize
+    max: usize,
 }
 
 impl RangeIterator {
     fn new(start: usize, max: usize) -> RangeIterator {
-        RangeIterator {
-            count: start,
-            max,
-        }
+        RangeIterator { count: start, max }
     }
 }
 

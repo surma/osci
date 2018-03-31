@@ -33,7 +33,7 @@ impl Memory for NullMemory {
 
     #[inline]
     fn size(&self) -> usize {
-        2<<31
+        2 << 31
     }
 }
 

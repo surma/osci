@@ -8,19 +8,20 @@ pub struct Emulator {
     pub ip: usize,
 }
 
-impl Emulator
-{
+impl Emulator {
     pub fn new(img: Box<Memory>, bios: Box<Memory>) -> Emulator {
         let mut memory = memory::MappedMemory::new();
         memory.mount(0, Box::new(memory::NullMemory::new()));
 
         memory.mount(0, img);
-        let bios_memory_token = memory.mount(address::BIOS_START_ADDRESS,
-                                Box::new(memory::ReadOnlyMemory::new(bios)));
-
-        let controls_memory = Box::new(
-            memory::SliceMemory::new(address::MAX_ADDRESS - address::CONTROLS_ADDRESS + 1)
+        let bios_memory_token = memory.mount(
+            address::BIOS_START_ADDRESS,
+            Box::new(memory::ReadOnlyMemory::new(bios)),
         );
+
+        let controls_memory = Box::new(memory::SliceMemory::new(
+            address::MAX_ADDRESS - address::CONTROLS_ADDRESS + 1,
+        ));
         memory.mount(address::CONTROLS_ADDRESS, controls_memory);
 
         Emulator {
@@ -32,7 +33,8 @@ impl Emulator
 
     pub fn flag_is_set(&self, flag_idx: usize) -> bool {
         let bit = flag_idx % 32;
-        self.memory.get(address::FLAGS_START_ADDRESS + flag_idx / 32) & (1 << bit) != 0
+        self.memory
+            .get(address::FLAGS_START_ADDRESS + flag_idx / 32) & (1 << bit) != 0
     }
 
     pub fn get_register(&self, reg_idx: usize) -> i32 {
@@ -65,20 +67,20 @@ impl Emulator
 
 #[cfg(test)]
 mod tests {
-    use memory::{SliceMemory, NullMemory, address, Memory};
+    use memory::{address, Memory, NullMemory, SliceMemory};
 
     #[test]
     fn unmounts_bios() {
-        let bios = SliceMemory::from_slice(Box::new(
-                                               [address::BIOS_START_ADDRESS as i32 + 4,
-                                                 address::BIOS_START_ADDRESS as i32 + 5,
-                                                 address::FLAGS_START_ADDRESS as i32,
-                                                 0,
-
-                                                 2,
-                                                 0,
-                                                 0,
-                                                 0]));
+        let bios = SliceMemory::from_slice(Box::new([
+            address::BIOS_START_ADDRESS as i32 + 4,
+            address::BIOS_START_ADDRESS as i32 + 5,
+            address::FLAGS_START_ADDRESS as i32,
+            0,
+            2,
+            0,
+            0,
+            0,
+        ]));
         let mut emu = super::Emulator::new(Box::new(NullMemory::new()), Box::new(bios));
 
         assert!(!emu.flag_is_set(address::FLAG0_BIOS_DONE));
@@ -90,16 +92,16 @@ mod tests {
 
     #[test]
     fn is_halted() {
-        let bios = SliceMemory::from_slice(Box::new(
-                                               [address::BIOS_START_ADDRESS as i32 + 4,
-                                                 address::BIOS_START_ADDRESS as i32 + 5,
-                                                 address::FLAGS_START_ADDRESS as i32,
-                                                 0,
-
-                                                 1,
-                                                 0,
-                                                 0,
-                                                 0]));
+        let bios = SliceMemory::from_slice(Box::new([
+            address::BIOS_START_ADDRESS as i32 + 4,
+            address::BIOS_START_ADDRESS as i32 + 5,
+            address::FLAGS_START_ADDRESS as i32,
+            0,
+            1,
+            0,
+            0,
+            0,
+        ]));
         let mut emu = super::Emulator::new(Box::new(NullMemory::new()), Box::new(bios));
 
         assert!(!emu.is_halted());
@@ -109,16 +111,16 @@ mod tests {
 
     #[test]
     fn readonly_bios() {
-        let bios = SliceMemory::from_slice(Box::new(
-                                               [address::BIOS_START_ADDRESS as i32 + 4,
-                                                 address::BIOS_START_ADDRESS as i32 + 5,
-                                                 address::BIOS_START_ADDRESS as i32 + 6,
-                                                 0,
-
-                                                 1,
-                                                 0,
-                                                 0,
-                                                 0]));
+        let bios = SliceMemory::from_slice(Box::new([
+            address::BIOS_START_ADDRESS as i32 + 4,
+            address::BIOS_START_ADDRESS as i32 + 5,
+            address::BIOS_START_ADDRESS as i32 + 6,
+            0,
+            1,
+            0,
+            0,
+            0,
+        ]));
         let mut emu = super::Emulator::new(Box::new(NullMemory::new()), Box::new(bios));
         emu.step();
         assert_eq!(emu.memory.get(address::BIOS_START_ADDRESS + 6), 0);
@@ -126,7 +128,8 @@ mod tests {
 
     #[test]
     fn get_register() {
-        let mut emu = super::Emulator::new(Box::new(NullMemory::new()), Box::new(NullMemory::new()));
+        let mut emu =
+            super::Emulator::new(Box::new(NullMemory::new()), Box::new(NullMemory::new()));
         emu.memory.set(address::REGISTERS_START_ADDRESS + 1, 101);
         emu.memory.set(address::REGISTERS_START_ADDRESS, 100);
         assert_eq!(emu.get_register(1), 101);

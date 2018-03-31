@@ -131,7 +131,9 @@ mod tests {
     fn size_hook() {
         let mut hook_mem = super::HookMemory::new(SliceMemory::from_slice(Box::new([0, 0])));
         assert_eq!(hook_mem.size(), 2);
-        hook_mem.size_hook(Box::new(|size| { *size += 1; }));
+        hook_mem.size_hook(Box::new(|size| {
+            *size += 1;
+        }));
         assert_eq!(hook_mem.size(), 3);
     }
 }

@@ -1,6 +1,5 @@
-
 use memory::{Memory, SliceMemory};
-use std::io::{Read, ErrorKind, Error, BufReader, BufRead};
+use std::io::{BufRead, BufReader, Error, ErrorKind, Read};
 
 pub fn load<U: Read>(f: &mut U) -> Result<Box<Memory>, Error> {
     let mut vec = Vec::<i32>::new();
@@ -17,17 +16,20 @@ pub fn load<U: Read>(f: &mut U) -> Result<Box<Memory>, Error> {
                 break;
             }
             if !chunk.chars().all(|c| c.is_digit(16) || c == '-') {
-                return Err(Error::new(ErrorKind::Other, format!("Word contains non-hexnumeric characters: {}", chunk)));
+                return Err(Error::new(
+                    ErrorKind::Other,
+                    format!("Word contains non-hexnumeric characters: {}", chunk),
+                ));
             }
             if chunk.starts_with('-') {
                 match i32::from_str_radix(chunk, 16) {
                     Ok(n) => vec.push(n),
-                    Err(error) => return Err(Error::new(ErrorKind::Other, error))
+                    Err(error) => return Err(Error::new(ErrorKind::Other, error)),
                 }
             } else {
                 match u32::from_str_radix(chunk, 16) {
                     Ok(n) => vec.push(n as i32),
-                    Err(error) => return Err(Error::new(ErrorKind::Other, error))
+                    Err(error) => return Err(Error::new(ErrorKind::Other, error)),
                 }
             }
         }
@@ -41,9 +43,11 @@ mod tests {
 
     #[test]
     fn happy_path() {
-        let mut code = Cursor::new("
-        00010203 70717273 20 103
-        ");
+        let mut code = Cursor::new(
+            "
+            00010203 70717273 20 103
+            ",
+        );
         let mem = super::load(&mut code).unwrap();
         assert_eq!(mem.get(0), 0x00010203);
         assert_eq!(mem.get(1), 0x70717273);
@@ -53,9 +57,11 @@ mod tests {
 
     #[test]
     fn hex() {
-        let mut code = Cursor::new("
-        A a Bb CCc dDd
-        ");
+        let mut code = Cursor::new(
+            "
+            A a Bb CCc dDd
+            ",
+        );
         let mem = super::load(&mut code).unwrap();
         assert_eq!(mem.get(0), 0xA);
         assert_eq!(mem.get(1), 0xA);
@@ -66,12 +72,14 @@ mod tests {
 
     #[test]
     fn multiline() {
-        let mut code = Cursor::new("
-        00010203
-        70717273
-        20
-        103
-        ");
+        let mut code = Cursor::new(
+            "
+            00010203
+            70717273
+            20
+            103
+            ",
+        );
         let mem = super::load(&mut code).unwrap();
         assert_eq!(mem.get(0), 0x00010203);
         assert_eq!(mem.get(1), 0x70717273);
@@ -81,10 +89,12 @@ mod tests {
 
     #[test]
     fn negative_numbers() {
-        let mut code = Cursor::new("
-        -1
-        -100
-        ");
+        let mut code = Cursor::new(
+            "
+            -1
+            -100
+            ",
+        );
         let mem = super::load(&mut code).unwrap();
         assert_eq!(mem.get(0), -0x1);
         assert_eq!(mem.get(1), -0x100);
@@ -92,14 +102,16 @@ mod tests {
 
     #[test]
     fn comments() {
-        let mut code = Cursor::new("
-        #lol 00010203
-        00010203 #lol
-        #70717273
-        20
-        #oki
-        #103
-        ");
+        let mut code = Cursor::new(
+            "
+            #lol 00010203
+            00010203 #lol
+            #70717273
+            20
+            #oki
+            #103
+            ",
+        );
         let mem = super::load(&mut code).unwrap();
         assert_eq!(mem.get(0), 0x00010203);
         assert_eq!(mem.get(1), 0x20);
@@ -107,18 +119,22 @@ mod tests {
 
     #[test]
     fn invalid_digits() {
-        let mut code = Cursor::new("
-        0001020g
-        ");
+        let mut code = Cursor::new(
+            "
+            0001020g
+            ",
+        );
         let mem = super::load(&mut code);
         assert!(mem.is_err());
     }
 
     #[test]
     fn way_too_many_digits() {
-        let mut code = Cursor::new("
-        0001020123123
-        ");
+        let mut code = Cursor::new(
+            "
+            0001020123123
+            ",
+        );
         let mem = super::load(&mut code);
         assert!(mem.is_err());
     }

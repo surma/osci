@@ -129,10 +129,10 @@ impl MappedMemory {
             start_address,
             size,
             memory,
-            enabled: true
+            enabled: true,
         };
         self.memories.push(new_entry);
-        MemoryToken{id}
+        MemoryToken { id }
     }
 
     /// Unmounts a memory.
@@ -231,7 +231,7 @@ impl Memory for MappedMemory {
 
 #[cfg(test)]
 mod tests {
-    use memory::{Memory, SliceMemory, NullMemory};
+    use memory::{Memory, NullMemory, SliceMemory};
 
     #[test]
     #[allow(unused_variables)]
@@ -300,9 +300,18 @@ mod tests {
     #[allow(unused_variables)]
     fn disable_mount() {
         let mut mm = super::MappedMemory::new();
-        let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))));
-        let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2]))));
-        let m3 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([3, 3, 3, 3, 3]))));
+        let m1 = mm.mount(
+            0,
+            Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))),
+        );
+        let m2 = mm.mount(
+            0,
+            Box::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2]))),
+        );
+        let m3 = mm.mount(
+            0,
+            Box::new(SliceMemory::from_slice(Box::new([3, 3, 3, 3, 3]))),
+        );
 
         for i in 0..5 {
             assert_eq!(mm.get(i), 3);
@@ -321,8 +330,14 @@ mod tests {
     #[allow(unused_variables)]
     fn enable_mount() {
         let mut mm = super::MappedMemory::new();
-        let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))));
-        let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2]))));
+        let m1 = mm.mount(
+            0,
+            Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))),
+        );
+        let m2 = mm.mount(
+            0,
+            Box::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2]))),
+        );
 
         for i in 0..5 {
             assert_eq!(mm.get(i), 2);
@@ -341,8 +356,14 @@ mod tests {
     #[allow(unused_variables)]
     fn unmount() {
         let mut mm = super::MappedMemory::new();
-        let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))));
-        let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2]))));
+        let m1 = mm.mount(
+            0,
+            Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))),
+        );
+        let m2 = mm.mount(
+            0,
+            Box::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2]))),
+        );
 
         for i in 0..5 {
             assert_eq!(mm.get(i), 2);
@@ -358,8 +379,14 @@ mod tests {
     #[allow(unused_variables)]
     fn is_enabled_mount() {
         let mut mm = super::MappedMemory::new();
-        let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))));
-        let m2 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2]))));
+        let m1 = mm.mount(
+            0,
+            Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))),
+        );
+        let m2 = mm.mount(
+            0,
+            Box::new(SliceMemory::from_slice(Box::new([2, 2, 2, 2, 2]))),
+        );
 
         assert!(mm.is_enabled_mount(&m2));
         mm.disable_mount(&m2);
