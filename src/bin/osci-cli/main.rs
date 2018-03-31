@@ -50,6 +50,7 @@ fn main() {
 
     for count in RangeIterator::new(1, max_steps) {
         if emulator.is_halted() {
+            println!("cycles: {:4}  HALTED\n", count);
             break;
         }
         println!("cycles: {:4}, ip: 0x{:08X}, r0: 0x{:08X}, r1: 0x{:08X}, r2: 0x{:08X}, r3: \
