@@ -37,7 +37,6 @@ pub fn load<U: Read>(f: &mut U) -> Result<Box<Memory>, Error> {
 
 #[cfg(test)]
 mod tests {
-    use memory::Memory;
     use std::io::Cursor;
 
     #[test]

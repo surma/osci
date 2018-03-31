@@ -37,7 +37,7 @@ mod tests {
 
     #[test]
     fn write() {
-        let mut sm = SliceMemory::from_slice(Box::new([0, 1, 2, 3]));
+        let sm = SliceMemory::from_slice(Box::new([0, 1, 2, 3]));
         let mut m = super::ReadOnlyMemory::new(Box::new(sm));
         m.set(0, 9);
         assert_eq!(m.get(0), 0);

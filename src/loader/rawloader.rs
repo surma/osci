@@ -35,14 +35,13 @@ pub fn load<U: Read>(f: &mut U) -> Result<Box<Memory>, Error> {
 #[cfg(test)]
 mod tests {
     use std::io::Cursor;
-    use memory::Memory;
 
     #[test]
     fn load() {
         let mut bytes: &[u8] = &[0x00, 0x01, 0x02, 0x03, 0xF0, 0xF1, 0xF2, 0xF3];
         let mem = super::load(&mut bytes).unwrap();
         assert_eq!(mem.get(0), 0x00010203);
-        assert_eq!(mem.get(1), 0xF0F1F2F3);
+        assert_eq!(mem.get(1), 0xF0F1F2F3 as u32 as i32);
     }
 
     #[test]
@@ -50,6 +49,6 @@ mod tests {
         let mut bytes: Cursor<&[u8]> = Cursor::new(&[0x00, 0x01, 0x02, 0x03, 0xF0, 0xF1, 0xF2, 0xF3]);
         let mem = super::load_with_seek(&mut bytes).unwrap();
         assert_eq!(mem.get(0), 0x00010203);
-        assert_eq!(mem.get(1), 0xF0F1F2F3);
+        assert_eq!(mem.get(1), 0xF0F1F2F3 as u32 as i32);
     }
 }
