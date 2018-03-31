@@ -34,14 +34,12 @@ fn run_example(path: &Path) {
                     .expect(&format!("Could not parse expect file for {:?}", path));
 
     let bios = files.iter()
-                    .map(|path| path.as_os_str().to_str().unwrap())
-                    .find(|path| path.contains(".bios."))
+                    .find(|path| path.as_os_str().to_str().unwrap().contains(".bios."))
                     .map(|path| utils::load_file(path).unwrap())
                     .unwrap();
 
     let memory = files.iter()
-                    .map(|path| path.as_os_str().to_str().unwrap())
-                    .find(|path| path.contains(".memory."))
+                    .find(|path| path.as_os_str().to_str().unwrap().contains(".memory."))
                     .map(|path| utils::load_file(path).unwrap())
                     .unwrap_or_else(|| Box::new(SliceMemory::new(0)));
 

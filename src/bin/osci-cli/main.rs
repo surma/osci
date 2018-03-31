@@ -3,6 +3,7 @@ extern crate clap;
 extern crate osciemu;
 
 use std::io;
+use std::path::Path;
 use osciemu::utils::{load_file};
 use osciemu::memory::{Memory, SliceMemory};
 use osciemu::emulator::Emulator;
@@ -36,11 +37,13 @@ fn main() {
 
     let image_mem = matches.value_of("MEMORY")
                             .ok_or(io::Error::new(io::ErrorKind::Other, "Parameter not specified"))
+                            .map(|path| Path::new(path))
                             .and_then(load_file)
                             .unwrap_or_else(|_err| Box::new(SliceMemory::new(0)));
 
     let bios_mem = matches.value_of("BIOS")
                             .ok_or(io::Error::new(io::ErrorKind::Other, "Parameter not specified"))
+                            .map(|path| Path::new(path))
                             .and_then(load_file)
                             .expect("Could not load bios");
 
