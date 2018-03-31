@@ -16,3 +16,5 @@ pub fn load_file(filename: &str) -> Result<Box<Memory>, io::Error> {
             Err(io::Error::new(io::ErrorKind::Other, "Unknown file extension"))
     }
 }
+
+pub static SUPPORTED_FORMATS: [&str; 4] = ["img", "bin", "raw", "hex"];
