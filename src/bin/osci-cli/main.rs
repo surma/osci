@@ -12,8 +12,8 @@ fn main() {
             (version: "0.1.0")
             (author: "Surma <surma@surma.link>")
             (about: "Emulates an osci CPU")
-            (@arg IMAGE: -i --image +takes_value "Image to load into memory")
-            (@arg BIOS: -b --bios +required +takes_value "BIOS to load")
+            (@arg MEMORY: -m --memory +takes_value "Memory image to load")
+            (@arg BIOS: -b --bios +required +takes_value "BIOS image to load")
             (@arg STEP: --step "Walk through in stepping mode")
             (@arg MAX_STEP: --maxstep +takes_value "Maximum number of CPU cycles (0 means infinite)")
             (@arg PRINT: --print +takes_value "Addresses to print after CPU halts")
@@ -34,7 +34,7 @@ fn main() {
                          .collect()
                     });
 
-    let image_mem = matches.value_of("IMAGE")
+    let image_mem = matches.value_of("MEMORY")
                             .ok_or(io::Error::new(io::ErrorKind::Other, "Parameter not specified"))
                             .and_then(load_file)
                             .unwrap_or_else(|_err| Box::new(SliceMemory::new(0)));

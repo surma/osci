@@ -234,6 +234,7 @@ mod tests {
     use memory::{Memory, SliceMemory, NullMemory};
 
     #[test]
+    #[allow(unused_variables)]
     fn overlapping_mounts() {
         let mut mm = super::MappedMemory::new();
         let m1 = mm.mount(0, Box::new(NullMemory::new()));
@@ -246,6 +247,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(unused_variables)]
     fn get_and_set() {
         let mut mm = super::MappedMemory::new();
         let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1]))));
@@ -264,6 +266,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(unused_variables)]
     fn size() {
         let mut mm = super::MappedMemory::new();
         let m1 = Box::new(SliceMemory::from_slice(Box::new([1])));
@@ -278,6 +281,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(unused_variables)]
     fn size_with_overlap() {
         let mut mm = super::MappedMemory::new();
         let m1 = Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1])));
@@ -293,6 +297,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(unused_variables)]
     fn disable_mount() {
         let mut mm = super::MappedMemory::new();
         let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))));
@@ -313,6 +318,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(unused_variables)]
     fn enable_mount() {
         let mut mm = super::MappedMemory::new();
         let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))));
@@ -332,6 +338,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(unused_variables)]
     fn unmount() {
         let mut mm = super::MappedMemory::new();
         let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))));
@@ -348,6 +355,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(unused_variables)]
     fn is_enabled_mount() {
         let mut mm = super::MappedMemory::new();
         let m1 = mm.mount(0, Box::new(SliceMemory::from_slice(Box::new([1, 1, 1, 1, 1]))));
@@ -361,6 +369,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(unused_variables)]
     #[should_panic]
     fn read_disabled() {
         let mut mm = super::MappedMemory::new();
