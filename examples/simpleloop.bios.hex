@@ -1,30 +1,35 @@
-# &r[0] = 0x7FFFFFF9
-# &r[1] = 0x7FFFFFFA
-# &flags[0] = 0x7FFFFFFE
+# &register[0] = 0x7ffffff9
+# &register[1] = 0x7ffffffa
+# &flags[0] = 0x7ffffffe
 
 # start: BIOS_START_ADDRESS = 0x40000000
-# do something, jump to start (i.e. jump *over* data)
+# set register[0] to 0, jump to loop
+# register[0] = *0 - *0
 00000000 00000000 7ffffff9 40000008
 
 # data: (BIOS_START_ADDRESS + 4) = 0x40000004
 00000000 # data[0] = 0
-00000001 # data[1] = 1
-00000080 # data[2] = 128
-00000000 # data[3] = 0
+ffffffff # data[1] = -1
+0000000a # data[2] = 10
+00000001 # data[3] = 1
 
-# start: (BIOS_START_ADDRESS + 8) =0x40000008
-# r[0] = data[2] - data[0]; set r[0] to 128
-40000006 40000004 7ffffff9 4000000c
+# loop: (BIOS_START_ADDRESS + 8) = 0x40000008
+# increase register[0] by 1
+# register[0] = register[0] - data[0]
+7ffffff9 40000005 7ffffff9 00000000
 
-# loop: (BIOS_START_ADDRESS + 12) = 0x4000000c
-# r[0] = r[0] - data[1], goto end; decrease r[0] by 1, jump to end when we reach 0
-7ffffff9 40000005 7ffffff9 40000014
+# (BIOS_START_ADDRESS + 12) = 0x4000000c
+# check if counter is 10, and if so jmp to end
+# register[1] = data[2] - register[0], jmp to end
+40000006 7ffffff9 7ffffffa 40000014
 
 # (BIOS_START_ADDRESS + 16) = 0x40000010
-# r[1] = *0 - *0, goto loop; jmp to loop
-00000000 00000000 7ffffffa 4000000c
+# unconditional jump to loop
+# register[1] = *0 - *0, goto loop
+00000000 00000000 7ffffffa 40000008
 
 # end: (BIOS_START_ADDRESS + 20) = 0x40000014
-# flags[0] = data[1] - data[0]; set halt bit
-40000005 40000004 7ffffffe 00000000
+# set halt bit
+# flags[0] = data[3] - data[0]
+40000007 40000004 7ffffffe 00000000
 
