@@ -1,0 +1,15 @@
+<!doctype html>
+
+<script>
+    async function init() {
+        const isDebug = new URL(location).searchParams.has('debug');
+        const {instance} = await WebAssembly.instantiateStreaming(
+            fetch(`/target/wasm32-unknown-unknown/${isDebug ? 'debug' : 'release'}/osciemu.wasm`)
+        );
+        window.instance = instance;
+        const start = performance.now();
+        instance.exports.do_it();
+        console.log(performance.now() - start);
+    }
+    init();
+</script>

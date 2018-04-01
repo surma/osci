@@ -11,3 +11,5 @@ pub mod instruction;
 pub mod emulator;
 pub mod loader;
 pub mod utils;
+#[cfg(target_arch = "wasm32")]
+pub mod wasm;
