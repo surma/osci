@@ -6,6 +6,9 @@ use std::{error, fmt, io, num, result};
 use std::string::String;
 
 #[derive(Debug)]
+/// Error type for all loaders.
+///
+/// `LoadError` is just a union-type over a couple of built-in errors with the `From` trait implemented for each of them. This makes implementing loaders more convenient due to the `try!` macro and the `?` operator.
 pub enum LoadError {
     None,
     IoErr(io::Error),
@@ -13,6 +16,8 @@ pub enum LoadError {
     FormatErr(fmt::Error),
     Message(String),
 }
+
+// TODO: Remove None?!!
 
 impl LoadError {
     pub fn new() -> LoadError {

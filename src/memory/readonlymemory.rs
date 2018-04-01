@@ -1,3 +1,4 @@
+//! Make a memory read-only.
 use memory::Memory;
 
 /// Wraps another `Memory` and discards all writes.

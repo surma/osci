@@ -1,25 +1,31 @@
+//! osci instruction set.
+//!
+//! osci only has a single instruction inspired by [SUBLEQ]. osci has 4 operands instead of 3 to separate data source and data sink as well as support for indirect addressing.
+//!
+//! Each operand is a *signed* word á 32 bit. The operands are a set of addresses called `op_a`, `op_b`, `target` and `jmp`. If an operand is negative, it is considered indirect. The execution of an instruction is described by the following pseudo-code:
+//!
+//! ```text
+//! if(op_a < 0) op_a = *(-op_a)
+//! if(op_b < 0) op_b = *(-op_b)
+//! if(target < 0) target = *(-target)
+//! if(jmp < 0) jmp = *(-jmp)
+//!
+//! *target := *op_a - *op_b
+//! if (*target <= 0)
+//!   GOTO jmp;
+//! ```
+//!
+//! [SUBLEQ]: https://esolangs.org/wiki/Subleq
+
 use memory::Memory;
 use std::fmt;
 
-/// Data object for a single instruction.
-///
-/// An instruction consists of 4 words á 32 bit. Each instruction is a set of 4
-/// addresses ``op_a``, ``op_b``, ``target`` and ``jmp``. All 4 words are
-/// *signed* words. If a word is negative, it is considered indirect. The
-/// execution of an instruction is described by the following pseudo-code:
-///
-/// ```text
-/// if(op_a < 0) op_a = *(-op_a)
-/// if(op_b < 0) op_b = *(-op_b)
-/// if(target < 0) target = *(-target)
-/// if(jmp < 0) jmp = *(-jmp)
-///
-/// *target := *op_a - *op_b
-/// if (*target <= 0)
-///   GOTO jmp;
-/// ```
+// TODO: Consider a flag to switch between absolute and relative addressing.
+
+/// Data structure for a single instruction.
 ///
 /// # Examples
+///
 /// ```
 /// use osciemu::memory::SliceMemory;
 /// use osciemu::instruction::Instruction;
@@ -36,9 +42,9 @@ pub struct Instruction {
     pub op_a: i32,
     /// Address of operand B
     pub op_b: i32,
-    /// Address to store result of `*A - *B`
+    /// Address to store the result
     pub target: i32,
-    /// Address to jump to when `*target <= 0`
+    /// Address to jump to when result is non-positive
     pub jmp: i32,
 }
 
