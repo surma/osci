@@ -1,3 +1,4 @@
+//! Use a slice as memory.
 use memory::Memory;
 use std::boxed::Box;
 use std::vec::Vec;
@@ -38,7 +39,7 @@ impl SliceMemory {
         SliceMemory(v.into_boxed_slice())
     }
 
-    /// Initializes the new memory with the given `i32` slice data.
+    /// Initializes the new memory with the given `i32` slice.
     pub fn from_slice(data: Box<[i32]>) -> SliceMemory {
         SliceMemory(data)
     }
