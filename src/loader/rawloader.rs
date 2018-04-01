@@ -1,3 +1,6 @@
+//! Loader for binary files.
+//!
+//! This loader turns a binary streams into a `SliceMemory`. The file is read in network-endian byte order.
 extern crate byteorder;
 
 use memory::{Memory, SliceMemory};
@@ -5,6 +8,9 @@ use std::io::{Error, ErrorKind, Read, Seek, SeekFrom};
 use self::byteorder::{NetworkEndian, ReadBytesExt};
 use loader::{LoadError, Result};
 
+/// Loads a seekable stream into a memory.
+///
+/// This method only allocates the resulting slice once, as seeking allows to determine the size ahead of time. This method should be preferred over `load()`.
 pub fn load_with_seek<U: Read + Seek>(f: &mut U) -> Result<Box<Memory>> {
     let size: usize = (f.seek(SeekFrom::End(0))? as usize) / 4;
     f.seek(SeekFrom::Start(0))?;
@@ -15,9 +21,11 @@ pub fn load_with_seek<U: Read + Seek>(f: &mut U) -> Result<Box<Memory>> {
     Ok(Box::new(SliceMemory::from_slice(slice)))
 }
 
+/// Loads a stream into a memory.
 pub fn load<U: Read>(f: &mut U) -> Result<Box<Memory>> {
     let mut vec = Vec::<i32>::new();
     loop {
+        // TODO: Is there a more elegant way for this?
         match f.read_i32::<NetworkEndian>() {
             Ok(word) => vec.push(word),
             Err(err) => {
