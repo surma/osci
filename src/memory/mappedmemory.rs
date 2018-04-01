@@ -1,14 +1,13 @@
+//! Maps multiple `Memory`s into a single address space.
 use memory::Memory;
 use std::vec::Vec;
 use std::sync::atomic::{AtomicIsize, Ordering};
 
-/// Maps multiple `Memory`s into a single address space.
-///
 /// The `MappedMemory` allows to unify multiple `Memory`s in one address space.
-/// A `Memory` is mounted at a certain address and is from now on responsible
-/// for all reads and writes starting at that address (the “mount point”) and
-/// ending where the mounted memory ends. The read and write calls for the
-/// responsible `Memory` will be given an address _relative_ to e mount point.
+///
+/// A `Memory` is mounted at a certain address and is from now on responsible for all reads and writes starting at that address (the “mount point”) and ending where the mounted memory ends. The read and write calls for the responsible `Memory` will be given an address _relative_ to the mount point.
+///
+/// More recent mounts will shadow earlier mounts.
 ///
 /// ```text
 ///                   Unmapped
@@ -22,8 +21,7 @@ use std::sync::atomic::{AtomicIsize, Ordering};
 /// 0            0x100        0x200  0x280
 /// ```
 ///
-/// For example: `mapped_mem.get(0x208)` would yield the same value as
-/// `mem_b.get(0x008)`.
+/// For example: `mapped_mem.get(0x208)` would yield the same value as `mem_b.get(0x008)`.
 ///
 /// # Examples
 ///
@@ -43,8 +41,8 @@ use std::sync::atomic::{AtomicIsize, Ordering};
 /// `std::cell::RefCell`.
 ///
 /// ```
-/// use osciemu::memory::{Memory, NullMemory, SliceMemory, MappedMemory};
-/// use osciemu::memory::mappedmemory::MemoryToken;
+/// # use osciemu::memory::{Memory, NullMemory, SliceMemory, MappedMemory};
+/// # use osciemu::memory::mappedmemory::MemoryToken;
 ///
 /// let mut mm = MappedMemory::new();
 /// let m1 = mm.mount(0, Box::new(NullMemory::new()));
@@ -56,7 +54,7 @@ use std::sync::atomic::{AtomicIsize, Ordering};
 ///
 /// The `MemoryToken`s are also used to disable a mounted `Memory`. A disabled
 /// memory is effectively unmounted, but remains in the ownership of the
-/// `MappedMemory` and can be enabled using `enable_mount()`.
+/// `MappedMemory` and can be re-enabled using `enable_mount()`.
 ///
 /// ```
 /// # use osciemu::memory::{Memory, NullMemory, SliceMemory, MappedMemory};
@@ -71,7 +69,7 @@ use std::sync::atomic::{AtomicIsize, Ordering};
 /// assert_eq!(mm.borrow(&m2).get(0), 99);
 /// ```
 ///
-/// To move a memory out of the `MappedMemory`, a memory can be unmounted:
+/// To move a memory out of `MappedMemory`’s ownership, a memory can be unmounted. Note that the returned type will be `Box<Memory>` and the underlying type is lost.
 ///
 /// ```
 /// # use osciemu::memory::{Memory, NullMemory, SliceMemory, MappedMemory};
@@ -109,11 +107,13 @@ impl Entry {
 }
 
 #[derive(Clone)]
+/// Represents a `Memory` in the ownership of `MappedMemory`.
 pub struct MemoryToken {
     id: isize,
 }
 
 impl MappedMemory {
+    // Create a new `MappedMemory`.
     pub fn new() -> MappedMemory {
         MappedMemory {
             memories: Vec::new(),
@@ -121,6 +121,8 @@ impl MappedMemory {
     }
 
     /// Mounts a `Memory` at the given address.
+    ///
+    /// More recent mounts will take precedence over earlier mounts, effectively “shadowing” the earlier mounts.
     pub fn mount(&mut self, start_address: usize, memory: Box<Memory>) -> MemoryToken {
         let size = memory.size();
         let id = ID_COUNTER.fetch_add(1, Ordering::Relaxed);
@@ -147,7 +149,7 @@ impl MappedMemory {
         self.memories.remove(idx).memory
     }
 
-    // Checks if a mounted memory is enabled.
+    // Checks if a memory is enabled.
     pub fn is_enabled_mount(&self, token: &MemoryToken) -> bool {
         self.entry_for_token(token).enabled
     }
@@ -170,7 +172,7 @@ impl MappedMemory {
         &self.entry_for_token(token).memory
     }
 
-    /// Mutable borrows a memory.
+    /// Mutably borrows a memory.
     pub fn borrow_mut(&mut self, token: &MemoryToken) -> &mut Box<Memory> {
         &mut self.entry_for_token_mut(token).memory
     }
