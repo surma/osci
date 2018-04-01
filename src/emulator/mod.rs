@@ -16,7 +16,7 @@
 //! let mut bios = osciemu::loader::hexloader::load(&mut bios_code).unwrap();
 //! let mut emu = Emulator::from_bios_only(bios);
 //! emu.step();
-//! assert_eq!(emu.memory.get(0x7FFFFFF9), 0x10 - 0x3);
+//! assert_eq!(emu.get_register(0), 0x10 - 0x3);
 //! ```
 use super::memory::{self, address, Memory, SliceMemory};
 use super::memory::mappedmemory::MemoryToken;
