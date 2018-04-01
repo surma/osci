@@ -1,11 +1,13 @@
+//! Like `/dev/null`.
 use memory::Memory;
 
-/// Like `/dev/null`.
+/// A read-only memory full of zeros.
 ///
-/// The `NullMemory` is always 2^31 bytes large (osci’s memory size),
+/// The `NullMemory` is always 2<sup>31</sup> bytes large (osci’s memory size),
 /// reads `0` everywhere and discards all writes.
 ///
 /// # Examples
+///
 /// ```
 /// use osciemu::memory::{Memory, NullMemory};
 ///
