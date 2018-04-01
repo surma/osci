@@ -52,7 +52,7 @@ fn run_example(path: &Path) {
         .map(|path| utils::load_file(path).unwrap())
         .unwrap_or_else(|| Box::new(SliceMemory::new(0)));
 
-    let mut emu = Emulator::new(memory, bios);
+    let mut emu = Emulator::new(bios, memory);
 
     let max = 100;
     for i in 1..max {

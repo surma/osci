@@ -48,7 +48,7 @@ fn main() {
 
     let step_mode = matches.is_present("STEP");
 
-    let mut emulator = Emulator::new(image_mem, bios_mem);
+    let mut emulator = Emulator::new(bios_mem, image_mem);
 
     for count in RangeIterator::new(1, max_steps) {
         if emulator.is_halted() {
