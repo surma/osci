@@ -3,8 +3,9 @@ extern crate byteorder;
 use memory::{Memory, SliceMemory};
 use std::io::{Error, ErrorKind, Read, Seek, SeekFrom};
 use self::byteorder::{NetworkEndian, ReadBytesExt};
+use loader::{LoadError, Result};
 
-pub fn load_with_seek<U: Read + Seek>(f: &mut U) -> Result<Box<Memory>, Error> {
+pub fn load_with_seek<U: Read + Seek>(f: &mut U) -> Result<Box<Memory>> {
     let size: usize = (f.seek(SeekFrom::End(0))? as usize) / 4;
     f.seek(SeekFrom::Start(0))?;
     let mut vec = Vec::<i32>::with_capacity(size);
@@ -14,9 +15,8 @@ pub fn load_with_seek<U: Read + Seek>(f: &mut U) -> Result<Box<Memory>, Error> {
     Ok(Box::new(SliceMemory::from_slice(slice)))
 }
 
-pub fn load<U: Read>(f: &mut U) -> Result<Box<Memory>, Error> {
+pub fn load<U: Read>(f: &mut U) -> Result<Box<Memory>> {
     let mut vec = Vec::<i32>::new();
-    // let mut buf: [u8; 4];
     loop {
         match f.read_i32::<NetworkEndian>() {
             Ok(word) => vec.push(word),
@@ -24,7 +24,7 @@ pub fn load<U: Read>(f: &mut U) -> Result<Box<Memory>, Error> {
                 if err.kind() == ErrorKind::UnexpectedEof {
                     break;
                 }
-                return Err(err);
+                return Err(LoadError::IoErr(err));
             }
         }
     }

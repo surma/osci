@@ -1,10 +1,12 @@
 use memory::{Memory, SliceMemory};
 use std::io::{BufRead, BufReader, Error, ErrorKind, Read};
+use loader::{LoadError, Result};
 
-pub fn load<U: Read>(f: &mut U) -> Result<Box<Memory>, Error> {
+pub fn load<U: Read>(f: &mut U) -> Result<Box<Memory>> {
     let mut vec = Vec::<i32>::new();
     let buf = BufReader::new(f);
-    for line in buf.lines().map(|l| l.unwrap()) {
+    for line in buf.lines() {
+        let line = line?;
         if line.starts_with("#") {
             continue;
         }
@@ -16,21 +18,15 @@ pub fn load<U: Read>(f: &mut U) -> Result<Box<Memory>, Error> {
                 break;
             }
             if !chunk.chars().all(|c| c.is_digit(16) || c == '-') {
-                return Err(Error::new(
-                    ErrorKind::Other,
-                    format!("Word contains non-hexnumeric characters: {}", chunk),
-                ));
+                return Err(LoadError::from_message(format!(
+                    "Word contains non-hexnumeric characters: {}",
+                    chunk
+                )));
             }
             if chunk.starts_with('-') {
-                match i32::from_str_radix(chunk, 16) {
-                    Ok(n) => vec.push(n),
-                    Err(error) => return Err(Error::new(ErrorKind::Other, error)),
-                }
+                vec.push(i32::from_str_radix(chunk, 16)?);
             } else {
-                match u32::from_str_radix(chunk, 16) {
-                    Ok(n) => vec.push(n as i32),
-                    Err(error) => return Err(Error::new(ErrorKind::Other, error)),
-                }
+                vec.push(u32::from_str_radix(chunk, 16)? as i32);
             }
         }
     }
