@@ -71,8 +71,6 @@ mod slicememory;
 mod readonlymemory;
 pub mod mappedmemory;
 pub mod address;
-pub mod hookmemory;
-pub use self::hookmemory::HookMemory;
 pub use self::nullmemory::NullMemory;
 pub use self::slicememory::SliceMemory;
 pub use self::mappedmemory::MappedMemory;
