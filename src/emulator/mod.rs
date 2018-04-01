@@ -1,14 +1,47 @@
-use super::memory::{self, address, Memory};
+//! osci emulator.
+//!
+//! The `osci` module combines the other modules to form a full-fledged emulator for the osci architecture.
+//!
+//! # Examples
+//!
+//! ```
+//! # use osciemu::emulator::Emulator;
+//! # use osciemu::memory::Memory;
+//!
+//! let mut bios_code = std::io::Cursor::new("
+//!     ## Calculate 0x10 - 0x3 and store it in register 0
+//!     40000004 40000005 7FFFFFF9 0
+//!     10 3
+//! ");
+//! let mut bios = osciemu::loader::hexloader::load(&mut bios_code).unwrap();
+//! let mut emu = Emulator::from_bios_only(bios);
+//! emu.step();
+//! assert_eq!(emu.memory.get(0x7FFFFFF9), 0x10 - 0x3);
+//! ```
+use super::memory::{self, address, Memory, SliceMemory};
 use super::memory::mappedmemory::MemoryToken;
 use super::instruction::Instruction;
 
+// Emulator for osci.
 pub struct Emulator {
     bios_memory_token: MemoryToken,
+    /// Memory
     pub memory: memory::MappedMemory,
+    /// Instruction pointer
     pub ip: usize,
 }
 
 impl Emulator {
+    /// Initializes an `Emulator` with the given BIOS.
+    ///
+    /// Equivalent to calling `new()` with an empty `SliceMemory` as the main memory.
+    pub fn from_bios_only(bios: Box<Memory>) -> Emulator {
+        Emulator::new(Box::new(SliceMemory::new(0)), bios)
+    }
+
+    // TODO: Switch order of constructor paramters
+
+    /// Initializes an `Emulator` with the given BIOS and main memory.
     pub fn new(img: Box<Memory>, bios: Box<Memory>) -> Emulator {
         let mut memory = memory::MappedMemory::new();
         memory.mount(0, Box::new(memory::NullMemory::new()));
@@ -31,16 +64,25 @@ impl Emulator {
         }
     }
 
+    // TODO: Rename to `is_flag_set`.
+
+    /// Checks if a flag is set.
+    ///
+    /// Use with the constant from `osciemu::memory::address`.
     pub fn flag_is_set(&self, flag_idx: usize) -> bool {
         let bit = flag_idx % 32;
         self.memory
             .get(address::FLAGS_START_ADDRESS + flag_idx / 32) & (1 << bit) != 0
     }
 
+    /// Gets the current value of the given register.
     pub fn get_register(&self, reg_idx: usize) -> i32 {
         self.memory.get(address::REGISTERS_START_ADDRESS + reg_idx)
     }
 
+    /// Executes one cycle.
+    ///
+    /// This method will execute a cycle even if the halted flag is set.
     pub fn step(&mut self) {
         let instr = Instruction::from_memory(self.ip, &self.memory);
         instr.execute(&mut self.ip, &mut self.memory);
@@ -53,15 +95,18 @@ impl Emulator {
     }
 
     fn check_bios_mount(&mut self) {
-        if self.flag_is_set(address::FLAG0_BIOS_DONE) && self.is_bios_mounted() {
+        if self.flag_is_set(address::FLAG_BIOS_DONE) && self.is_bios_mounted() {
             self.memory.disable_mount(&self.bios_memory_token);
-        } else if !self.flag_is_set(address::FLAG0_BIOS_DONE) && !self.is_bios_mounted() {
+        } else if !self.flag_is_set(address::FLAG_BIOS_DONE) && !self.is_bios_mounted() {
             self.memory.enable_mount(&self.bios_memory_token);
         }
     }
 
+    /// Checks if the halted flag is set.
+    ///
+    /// Equivalent to calling `flag_is_set(osciemu::memory::address::FLAG_HALTED)`.
     pub fn is_halted(&self) -> bool {
-        self.flag_is_set(address::FLAG0_HALTED)
+        self.flag_is_set(address::FLAG_HALTED)
     }
 }
 
@@ -83,10 +128,10 @@ mod tests {
         ]));
         let mut emu = super::Emulator::new(Box::new(NullMemory::new()), Box::new(bios));
 
-        assert!(!emu.flag_is_set(address::FLAG0_BIOS_DONE));
+        assert!(!emu.flag_is_set(address::FLAG_BIOS_DONE));
         assert_eq!(emu.memory.get(address::BIOS_START_ADDRESS + 4), 2);
         emu.step();
-        assert!(emu.flag_is_set(address::FLAG0_BIOS_DONE));
+        assert!(emu.flag_is_set(address::FLAG_BIOS_DONE));
         assert_eq!(emu.memory.get(address::BIOS_START_ADDRESS + 4), 0);
     }
 

@@ -23,7 +23,11 @@ pub const STACK_POINTER_ADDRESS: usize = REGISTERS_START_ADDRESS - 1;
 /// Lowest address of all the control memory regions.
 pub const CONTROLS_ADDRESS: usize = STACK_POINTER_ADDRESS;
 
-/// Bit number of the `H` bit in the first flag word.
-pub const FLAG0_HALTED: usize = 0;
-/// Bit number of the `bD` bit in the first flag word.
-pub const FLAG0_BIOS_DONE: usize = 1;
+/// Flag index of the `H` bit.
+///
+/// For use with `Emulator.flag_is_set()`.
+pub const FLAG_HALTED: usize = 0;
+/// Flag index of the `bD` bit.
+///
+/// For use with `Emulator.flag_is_set()`.
+pub const FLAG_BIOS_DONE: usize = 1;
