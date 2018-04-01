@@ -23,7 +23,7 @@
 //! assert_eq!(mem.get(4), -5);
 //! ```
 use memory::{Memory, SliceMemory};
-use std::io::{BufRead, BufReader, Error, ErrorKind, Read};
+use std::io::{BufRead, BufReader, Read};
 use loader::{LoadError, Result};
 
 pub fn load<U: Read>(f: &mut U) -> Result<Box<Memory>> {

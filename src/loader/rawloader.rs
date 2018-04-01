@@ -4,7 +4,7 @@
 extern crate byteorder;
 
 use memory::{Memory, SliceMemory};
-use std::io::{Error, ErrorKind, Read, Seek, SeekFrom};
+use std::io::{ErrorKind, Read, Seek, SeekFrom};
 use self::byteorder::{NetworkEndian, ReadBytesExt};
 use loader::{LoadError, Result};
 

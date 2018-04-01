@@ -1,5 +1,4 @@
 //! Various utils to work with osci.
-use std::io;
 use std::fs::File;
 use std::path::Path;
 use memory::Memory;
