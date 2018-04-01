@@ -25,9 +25,9 @@ pub const CONTROLS_ADDRESS: usize = STACK_POINTER_ADDRESS;
 
 /// Flag index of the `H` bit.
 ///
-/// For use with `Emulator.flag_is_set()`.
+/// For use with `Emulator.is_flag_set()`.
 pub const FLAG_HALTED: usize = 0;
 /// Flag index of the `bD` bit.
 ///
-/// For use with `Emulator.flag_is_set()`.
+/// For use with `Emulator.is_flag_set()`.
 pub const FLAG_BIOS_DONE: usize = 1;

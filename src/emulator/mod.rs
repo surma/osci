@@ -64,12 +64,10 @@ impl Emulator {
         }
     }
 
-    // TODO: Rename to `is_flag_set`.
-
     /// Checks if a flag is set.
     ///
     /// Use with the constant from `osciemu::memory::address`.
-    pub fn flag_is_set(&self, flag_idx: usize) -> bool {
+    pub fn is_flag_set(&self, flag_idx: usize) -> bool {
         let bit = flag_idx % 32;
         self.memory
             .get(address::FLAGS_START_ADDRESS + flag_idx / 32) & (1 << bit) != 0
@@ -95,18 +93,18 @@ impl Emulator {
     }
 
     fn check_bios_mount(&mut self) {
-        if self.flag_is_set(address::FLAG_BIOS_DONE) && self.is_bios_mounted() {
+        if self.is_flag_set(address::FLAG_BIOS_DONE) && self.is_bios_mounted() {
             self.memory.disable_mount(&self.bios_memory_token);
-        } else if !self.flag_is_set(address::FLAG_BIOS_DONE) && !self.is_bios_mounted() {
+        } else if !self.is_flag_set(address::FLAG_BIOS_DONE) && !self.is_bios_mounted() {
             self.memory.enable_mount(&self.bios_memory_token);
         }
     }
 
     /// Checks if the halted flag is set.
     ///
-    /// Equivalent to calling `flag_is_set(osciemu::memory::address::FLAG_HALTED)`.
+    /// Equivalent to calling `is_flag_set(osciemu::memory::address::FLAG_HALTED)`.
     pub fn is_halted(&self) -> bool {
-        self.flag_is_set(address::FLAG_HALTED)
+        self.is_flag_set(address::FLAG_HALTED)
     }
 }
 
@@ -128,10 +126,10 @@ mod tests {
         ]));
         let mut emu = super::Emulator::new(Box::new(NullMemory::new()), Box::new(bios));
 
-        assert!(!emu.flag_is_set(address::FLAG_BIOS_DONE));
+        assert!(!emu.is_flag_set(address::FLAG_BIOS_DONE));
         assert_eq!(emu.memory.get(address::BIOS_START_ADDRESS + 4), 2);
         emu.step();
-        assert!(emu.flag_is_set(address::FLAG_BIOS_DONE));
+        assert!(emu.is_flag_set(address::FLAG_BIOS_DONE));
         assert_eq!(emu.memory.get(address::BIOS_START_ADDRESS + 4), 0);
     }
 
