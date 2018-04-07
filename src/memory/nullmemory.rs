@@ -1,4 +1,6 @@
 //! Like `/dev/null`.
+use std;
+
 use memory::Memory;
 
 /// A read-only memory full of zeros.
@@ -35,7 +37,7 @@ impl Memory for NullMemory {
 
     #[inline]
     fn size(&self) -> usize {
-        2 << 31
+        std::i32::MAX as usize
     }
 }
 
