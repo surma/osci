@@ -4,6 +4,18 @@ use std::io::Cursor;
 
 use loader::hexloader;
 use emulator::Emulator;
+use memory::Memory;
+
+extern "C" {
+    fn _js_print(addr: usize, size: usize);
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn js_print(s: &str) {
+    unsafe {
+        _js_print(s.as_ptr() as usize, s.len());
+    }
+}
 
 #[cfg(target_arch = "wasm32")]
 #[no_mangle]

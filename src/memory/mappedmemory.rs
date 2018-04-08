@@ -2,6 +2,7 @@
 use memory::Memory;
 use std::vec::Vec;
 use std::sync::atomic::{AtomicIsize, Ordering};
+use std::fmt;
 
 /// The `MappedMemory` allows to unify multiple `Memory`s in one address space.
 ///
@@ -86,6 +87,7 @@ use std::sync::atomic::{AtomicIsize, Ordering};
 ///
 /// # Panics
 /// `MappedMemory` panics when an unmapped address is read or written.
+#[derive(Debug)]
 pub struct MappedMemory {
     memories: Vec<Entry>,
 }
@@ -228,6 +230,16 @@ impl Memory for MappedMemory {
             .map(|entry| entry.start_address + entry.size)
             .max()
             .unwrap_or(0)
+    }
+}
+
+impl fmt::Debug for Entry {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Entry {{ id: {}, start_address: 0x{:08X}, size: 0x{:08X}, enabled: {}}}",
+            self.id, self.start_address, self.size, self.enabled
+        )
     }
 }
 
