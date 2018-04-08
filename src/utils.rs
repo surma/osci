@@ -3,6 +3,8 @@ use std::fs::File;
 use std::path::Path;
 use memory::Memory;
 use loader::{hexloader, rawloader, LoadError, Result};
+#[cfg(target_arch = "wasm32")]
+use wasm;
 
 /// Turn a file into a memory.
 ///
@@ -26,3 +28,14 @@ pub fn load_file(filename: &Path) -> Result<Box<Memory>> {
 ///
 /// The list contains file extensions that are recognized by `load_file`.
 pub static SUPPORTED_FORMATS: [&str; 4] = ["img", "bin", "raw", "hex"];
+
+/// Logs to the console, compatible with wasm.
+#[cfg(target_arch = "wasm32")]
+pub fn log(s: &str) {
+    wasm::js_print(s);
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn log(s: &str) {
+    println!("{}", s);
+}
