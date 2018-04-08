@@ -169,8 +169,7 @@ mod tests {
 
     #[test]
     fn get_register() {
-        let mut emu =
-            super::Emulator::from_bios_only(Box::new(NullMemory::new()));
+        let mut emu = super::Emulator::from_bios_only(Box::new(NullMemory::new()));
         emu.memory.set(address::REGISTERS_START_ADDRESS + 1, 101);
         emu.memory.set(address::REGISTERS_START_ADDRESS, 100);
         assert_eq!(emu.get_register(1), 101);
