@@ -1,26 +1,14 @@
 <!doctype html>
 
-<script>
-    async function init() {
-        const importObj = {
-            env: {
-                _js_print(addr, size) {
-                    const strBuf = new Uint8Array(importObj.instance.exports.memory.buffer, addr, size);
-                    const str = new TextDecoder().decode(strBuf);
-                    console.log(str);
-                }
-            }
-        };
-        const isDebug = new URL(location).searchParams.has('debug');
-        const {instance} = await WebAssembly.instantiateStreaming(
-            fetch(`/target/wasm32-unknown-unknown/${isDebug ? 'debug' : 'release'}/osciemu.wasm`),
-            importObj
-        );
-        importObj.instance = instance;
-        window.instance = instance;
-        const start = performance.now();
-        instance.exports.do_it();
-        console.log(performance.now() - start);
-    }
-    init();
+<script type="module">
+  import osciwasm from './tools/osciwasm/osciwasm.js';
+
+  async function init() {
+    const isDebug = new URL(location).searchParams.has('debug');
+    const osciasm = await osciwasm(`./target/wasm32-unknown-unknown/${isDebug ? 'debug' : 'release'}/osciemu.wasm`);
+    const start = performance.now();
+    osciasm.do_it();
+    console.log(performance.now() - start);
+  }
+  init();
 </script>
