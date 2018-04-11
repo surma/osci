@@ -1,9 +1,11 @@
 //! Bindings for wasm.
 
 use std::io::Cursor;
+use std::vec::Vec;
+use std::{slice, str, mem};
 
 use loader::hexloader;
-use emulator::Emulator;
+// use emulator::Emulator;
 use memory::Memory;
 
 extern "C" {
@@ -19,21 +21,41 @@ pub fn js_print(s: &str) {
 
 #[cfg(target_arch = "wasm32")]
 #[no_mangle]
-pub extern "C" fn do_it() -> i32 {
-    let mut bios_code = Cursor::new(
-        "
-        ## Calculate 0x10 - 0x3 and store it in register 0
-        40000008 40000009 7FFFFFF9 0
-        0 0 0 40000000
-        10 3
-        ",
-    );
-    let bios = hexloader::load(&mut bios_code).unwrap();
-    let mut emu = Emulator::from_bios_only(bios);
-    for _ in 0..2 {
-        for _ in 0..1_000_000 {
-            emu.step();
-        }
+pub extern "C" fn wasm__allocate_u8_slice(size: usize) -> usize {
+    let mut vec = Vec::<u8>::with_capacity(size);
+    vec.resize(size, 0);
+    let slice_ptr = Box::into_raw(vec.into_boxed_slice());
+    mem::forget(slice_ptr);
+    slice_ptr as *mut () as usize
+}
+
+#[cfg(target_arch = "wasm32")]
+#[no_mangle]
+pub extern "C" fn wasm__get_u8_slice_data_ptr(ptr: usize, len: usize) -> usize {
+    let slice: &[u8];
+    unsafe {
+        slice = slice::from_raw_parts(ptr as *const () as *const u8, len)
     }
-    emu.get_register(0)
+
+    &slice[0] as *const u8 as *const () as usize
+}
+
+#[cfg(target_arch = "wasm32")]
+#[no_mangle]
+pub extern "C" fn loader__hexloader__load(ptr: usize, len: usize) -> usize {
+    let slice;
+    unsafe {
+        slice = slice::from_raw_parts(ptr as *const () as *const u8, len);
+    }
+    let string = str::from_utf8(slice);
+    if string.is_err() {
+        return 0;
+    }
+    let mut c = Cursor::new(string.unwrap());
+    let memory = hexloader::load(&mut c);
+    if memory.is_err() {
+        return 0;
+    }
+
+    Box::into_raw(memory.unwrap()) as *mut Memory as *mut () as usize
 }
