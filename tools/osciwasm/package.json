@@ -4,7 +4,8 @@
   "description": "JavaScript bindings for osciemu",
   "main": "index.js",
   "scripts": {
-    "test": "karma start"
+    "test": "karma start",
+    "build": "tsc -p ."
   },
   "author": "Surma <surma@surma.link>",
   "license": "MIT",
