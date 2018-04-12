@@ -59,6 +59,33 @@ pub extern "C" fn loader__hexloader__load(ptr: usize, len: usize) -> usize {
     if memory.is_err() {
         return 0;
     }
-
     Box::into_raw(memory.unwrap()) as *mut Memory as *mut () as usize
+}
+
+#[cfg(test)]
+mod tests {
+    use std::slice;
+
+    #[test]
+    fn wasm__allocate_u8_slice() {
+        let ptr = super::wasm__allocate_u8_slice(2, 1);
+        let slice: &[u8];
+        unsafe {
+            slice = slice::from_raw_parts(ptr as *const u8, 2);
+        }
+        assert_eq!(slice[0], 1);
+        assert_eq!(slice[1], 1);
+    }
+
+    fn wasm__get_u8_slice_data_ptr() {
+        let ptr = super::wasm__allocate_u8_slice(2, 1);
+        let slice: &[u8];
+        unsafe {
+            slice = slice::from_raw_parts(ptr as *const u8, 2);
+        }
+        let data_ptr = super::wasm__get_u8_slice_data_ptr(ptr, 2) as *const u8;
+        unsafe {
+            assert_eq!(*data_ptr, 1);
+        }
+    }
 }
