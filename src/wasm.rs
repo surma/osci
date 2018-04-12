@@ -2,7 +2,7 @@
 
 use std::io::Cursor;
 use std::vec::Vec;
-use std::{slice, str, mem};
+use std::{mem, slice, str};
 
 use loader::hexloader;
 // use emulator::Emulator;
@@ -37,9 +37,7 @@ pub extern "C" fn wasm__allocate_u8_slice(size: usize, fill: u8) -> usize {
 #[no_mangle]
 pub extern "C" fn wasm__get_u8_slice_data_ptr(ptr: usize, len: usize) -> usize {
     let slice: &[u8];
-    unsafe {
-        slice = slice::from_raw_parts(ptr as *const () as *const u8, len)
-    }
+    unsafe { slice = slice::from_raw_parts(ptr as *const () as *const u8, len) }
 
     &slice[0] as *const u8 as *const () as usize
 }

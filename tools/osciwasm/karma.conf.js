@@ -1,22 +1,33 @@
 module.exports = function(config) {
   const configuration = {
-      basePath: '',
+      basePath: '../../',
       frameworks: ['mocha', 'chai', 'karma-typescript'],
       files: [
         {
-          pattern: 'src/osciwasm.ts',
+          pattern: 'tools/osciwasm/src/osciwasm.ts',
           included: false,
         },
         {
-          pattern: 'tests/*.test.js',
+          pattern: 'tools/osciwasm/tests/*.test.js',
           type: 'module'
+        },
+        {
+          pattern: 'tools/osciwasm/tests/helpers/**',
+          included: false
+        },
+        {
+          pattern: 'target/**',
+          included: false
         }
       ],
+      mime: {
+        'application/wasm': ['wasm']
+      },
       preprocessors: {
         '**/*.ts': ['karma-typescript'],
       },
       karmaTypescriptConfig: {
-        tsconfig: './tsconfig.json',
+        tsconfig: 'tools/osciwasm/tsconfig.json',
         coverageOptions: {
           exclude: [/\.ts$/i, /.*node_modules.*/]
         },
@@ -30,8 +41,8 @@ module.exports = function(config) {
       concurrency: Infinity,
       // Remove these 2 lines once this PR lands
       // https://github.com/karma-runner/karma/pull/2834
-      customContextFile: 'tests/context.html',
-      customDebugFile: 'tests/debug.html',
+      customContextFile: 'tools/osciwasm/tests/context.html',
+      customDebugFile: 'tools/osciwasm/tests/debug.html',
       browsers: ['ChromeCanaryHeadless'],
       customLaunchers: {
         DockerChrome: {
