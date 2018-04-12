@@ -3,26 +3,23 @@ interface FatPointer {
     size: number
 };
 
-function getStrFromMemory(memory: WebAssembly.Memory, addr: number, size: number): string
+function getStr(instance: WebAssembly.Instance, str: FatPointer): string
  {
-  const strBuf = new Uint8Array(memory.buffer, addr, size);
+  const strBuf = new Uint8Array(instance.exports.memory.buffer, str.addr, str.size);
   return new TextDecoder().decode(strBuf);
 }
 
-function copyArrayBufferIntoSlice(data: ArrayBuffer, memory: WebAssembly.Memory, slice: FatPointer) {
-  if(data.byteLength !== slice.size) {
-    throw new Error("Data must have exact length of slice (for now)");
-  }
-  new Uint8Array(memory.buffer).set(new Uint8Array(data), slice.addr);
+function loadU8Buffer(data: Uint8Array, instance: WebAssembly.Instance): FatPointer {
+  const sliceAddr = instance.exports.wasm__allocate_u8_slice(data.byteLength, 0);
+  const slicePtrAddr = instance.exports.wasm__get_u8_slice_data_ptr(sliceAddr, data.byteLength);
+  const slice = {addr: slicePtrAddr, size: data.byteLength};
+  new Uint8Array(instance.exports.memory.buffer).set(data, slice.addr);
+  return slice;
 }
 
 function loadString(str: string, instance: WebAssembly.Instance): FatPointer {
     const buf = new TextEncoder().encode(str);
-    const sliceAddr = instance.exports.wasm__allocate_u8_slice(buf.byteLength, 0);
-    const slicePtrAddr = instance.exports.wasm__get_u8_slice_data_ptr(sliceAddr, buf.byteLength);
-    const slice = {addr: slicePtrAddr, size: buf.byteLength};
-    copyArrayBufferIntoSlice(buf.buffer, instance.exports.memory, slice);
-    return slice;
+    return loadU8Buffer(buf, instance);
 }
 
 
@@ -32,7 +29,7 @@ export default async function (path = 'osciasm.wasm') {
   const importObj = {
     env: {
       _js_print: (addr: number, size: number) => {
-        console.log(getStrFromMemory(instance.exports.memory, addr, size));
+        console.log(getStr(instance, {addr, size}));
       },
     },
   };
