@@ -9,6 +9,7 @@ use loader::hexloader;
 use memory::Memory;
 
 extern "C" {
+    #[cfg(target_arch = "wasm32")]
     fn _js_print(addr: usize, size: usize);
 }
 
@@ -19,7 +20,11 @@ pub fn js_print(s: &str) {
     }
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(not(target_arch = "wasm32"))]
+pub fn js_print(s: &str) {
+    println!("{}", s);
+}
+
 #[no_mangle]
 pub extern "C" fn wasm__allocate_u8_slice(size: usize) -> usize {
     let mut vec = Vec::<u8>::with_capacity(size);
@@ -29,7 +34,6 @@ pub extern "C" fn wasm__allocate_u8_slice(size: usize) -> usize {
     slice_ptr as *mut () as usize
 }
 
-#[cfg(target_arch = "wasm32")]
 #[no_mangle]
 pub extern "C" fn wasm__get_u8_slice_data_ptr(ptr: usize, len: usize) -> usize {
     let slice: &[u8];
@@ -40,7 +44,6 @@ pub extern "C" fn wasm__get_u8_slice_data_ptr(ptr: usize, len: usize) -> usize {
     &slice[0] as *const u8 as *const () as usize
 }
 
-#[cfg(target_arch = "wasm32")]
 #[no_mangle]
 pub extern "C" fn loader__hexloader__load(ptr: usize, len: usize) -> usize {
     let slice;
