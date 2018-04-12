@@ -26,9 +26,9 @@ pub fn js_print(s: &str) {
 }
 
 #[no_mangle]
-pub extern "C" fn wasm__allocate_u8_slice(size: usize) -> usize {
+pub extern "C" fn wasm__allocate_u8_slice(size: usize, fill: u8) -> usize {
     let mut vec = Vec::<u8>::with_capacity(size);
-    vec.resize(size, 0);
+    vec.resize(size, fill);
     let slice_ptr = Box::into_raw(vec.into_boxed_slice());
     mem::forget(slice_ptr);
     slice_ptr as *mut () as usize
