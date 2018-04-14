@@ -7,15 +7,15 @@ fn main() {
         return;
     }
 
-    let osciwasm_path = &Path::new("./tools/osciwasm");
+    let osciwasm_path = Path::new("./tools/osciwasm");
     Command::new("npm")
         .args(&["i"])
-        .current_dir(osciwasm_path)
+        .current_dir(&osciwasm_path)
         .status()
-        .unwrap();
+        .expect("npm install failed");
     Command::new("npm")
         .args(&["run", "build"])
-        .current_dir(osciwasm_path)
+        .current_dir(&osciwasm_path)
         .status()
-        .unwrap();
+        .expect("Building osciwasm JavaScript bindings failed");
 }
