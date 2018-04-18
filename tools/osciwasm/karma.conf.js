@@ -43,10 +43,10 @@ module.exports = function(config) {
       // https://github.com/karma-runner/karma/pull/2834
       customContextFile: 'tools/osciwasm/tests/context.html',
       customDebugFile: 'tools/osciwasm/tests/debug.html',
-      browsers: ['ChromeCanaryHeadless'],
+      browsers: ['ChromeHeadless'],
       customLaunchers: {
         DockerChrome: {
-            base: 'ChromeCanaryHeadless',
+            base: 'ChromeHeadless',
             flags: ['--no-sandbox'],
         },
       },
