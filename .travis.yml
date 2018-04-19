@@ -5,4 +5,4 @@ services:
 
 script:
   - docker build -t osci-tester .
-  - docker run --rm -i -t -v `pwd`:/usr/src osci-tester
+  - docker run --rm -i -t -e RUST_BACKTRACE=1 -v `pwd`:/usr/src osci-tester
