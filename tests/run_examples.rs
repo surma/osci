@@ -20,6 +20,30 @@ fn run_examples() {
     }
 }
 
+fn is_supported_format(path: &Path) -> bool {
+    let ext = path.extension();
+    if ext.is_none() {
+        return false;
+    }
+    let ext = ext.and_then(|ext| ext.to_str());
+    utils::SUPPORTED_FORMATS
+        .iter()
+        .find(|supported_format| Some(**supported_format) == ext)
+        .is_some()
+}
+
+fn is_bios_file(path: &Path) -> bool {
+    return path.as_os_str().to_str().unwrap().contains(".bios.");
+}
+
+fn is_expect_file(path: &Path) -> bool {
+    return path.as_os_str().to_str().unwrap().contains(".expect.");
+}
+
+fn is_memory_file(path: &Path) -> bool {
+    return path.as_os_str().to_str().unwrap().contains(".memory.");
+}
+
 fn run_example(path: &Path) {
     let files: Vec<PathBuf> = fs::read_dir(path)
         .unwrap()
@@ -28,27 +52,23 @@ fn run_example(path: &Path) {
 
     let expect_file = files
         .iter()
-        .find(|file| {
-            file.file_name()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .contains(".expect.")
-        })
+        .find(|path| is_expect_file(path))
         .expect(&format!("No expect file found for {:?}", path));
 
     let expect =
         parse_expect(&expect_file).expect(&format!("Could not parse expect file for {:?}", path));
 
-    let bios = files
+    let bios_file = files
         .iter()
-        .find(|path| path.as_os_str().to_str().unwrap().contains(".bios."))
-        .map(|path| utils::load_file(path).unwrap())
-        .unwrap();
+        .filter(|path| is_supported_format(path))
+        .find(|path| is_bios_file(path))
+        .expect(&format!("No bios file found for {:?}", expect_file));
+    let bios =
+        utils::load_file(bios_file).expect(&format!("Could not load bios file {:?}", bios_file));
 
     let memory = files
         .iter()
-        .find(|path| path.as_os_str().to_str().unwrap().contains(".memory."))
+        .find(|path| is_memory_file(path))
         .map(|path| utils::load_file(path).unwrap())
         .unwrap_or_else(|| Box::new(SliceMemory::new(0)));
 
